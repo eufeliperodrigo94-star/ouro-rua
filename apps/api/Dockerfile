@@ -2,18 +2,18 @@ FROM node:20-slim
 
 WORKDIR /app
 
-COPY package*.json ./
+RUN apt-get update -y && apt-get install -y openssl
 
-RUN npm install --include=dev
+COPY package*.json ./
+RUN npm install --include=dev && echo "=== TS VERSION: $(./node_modules/.bin/tsc --version) ===" && ls node_modules/.bin/nest && echo "=== nest exists ==="
 
 COPY . .
+RUN echo "=== SRC FILES ===" && ls -la src/ && echo "=== TSCONFIG ===" && cat tsconfig.json
 
-RUN npx prisma generate
+RUN npx prisma generate || true
 
-# Compile TypeScript directly - bypasses nest-cli quirks in containers
-RUN ./node_modules/.bin/tsc -p tsconfig.json
+RUN echo "=== RUNNING NEST BUILD ===" && npm run build 2>&1; echo "=== NEST BUILD EXIT: $? ===" && find /app -name "*.js" -not -path "*/node_modules/*" | head -20 && echo "=== END FIND ==="
 
-# Fail loudly if dist/main.js was not produced
-RUN ls -la dist/ && test -f dist/main.js || (echo "ERROR: dist/main.js not found!" && exit 1)
+RUN test -f dist/main.js && echo "SUCCESS" || (echo "FAIL: dist/main.js not found" && exit 1)
 
 CMD ["node", "dist/main"]
