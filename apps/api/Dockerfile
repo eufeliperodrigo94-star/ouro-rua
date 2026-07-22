@@ -2,11 +2,13 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copy only the API package files (from repo root context)
+COPY apps/api/package*.json ./
 
 RUN npm install
 
-COPY . .
+# Copy the full API source (not the whole repo)
+COPY apps/api/ .
 
 RUN npx prisma generate
 
