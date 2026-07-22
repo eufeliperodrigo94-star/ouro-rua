@@ -1,20 +1,19 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
 COPY package*.json ./
 
-# Explicitly install all deps including devDependencies for nest build
 RUN npm install --include=dev
 
 COPY . .
 
 RUN npx prisma generate
 
-# Use full path to nest CLI to avoid PATH issues
-RUN ./node_modules/.bin/nest build
+# Compile TypeScript directly - bypasses nest-cli quirks in containers
+RUN ./node_modules/.bin/tsc -p tsconfig.json
 
-# Verify dist was created - will fail the build loudly if missing
-RUN ls -la dist/ && ls dist/main.js
+# Fail loudly if dist/main.js was not produced
+RUN ls -la dist/ && test -f dist/main.js || (echo "ERROR: dist/main.js not found!" && exit 1)
 
 CMD ["node", "dist/main"]
