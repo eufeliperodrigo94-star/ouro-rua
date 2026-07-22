@@ -2,18 +2,19 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy only the API package files (from repo root context)
-COPY apps/api/package*.json ./
+COPY package*.json ./
 
-RUN npm install
+# Explicitly install all deps including devDependencies for nest build
+RUN npm install --include=dev
 
-# Copy the full API source (not the whole repo)
-COPY apps/api/ .
+COPY . .
 
 RUN npx prisma generate
 
-RUN npm run build
+# Use full path to nest CLI to avoid PATH issues
+RUN ./node_modules/.bin/nest build
 
-EXPOSE 3000
+# Verify dist was created - will fail the build loudly if missing
+RUN ls -la dist/ && ls dist/main.js
 
 CMD ["node", "dist/main"]
