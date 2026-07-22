@@ -13,6 +13,7 @@ RUN npx prisma generate
 
 RUN npm run build
 
-RUN test -f dist/main.js || (echo "ERROR: dist/main.js missing after build" && find /app -name "*.js" -not -path "*/node_modules/*" | head -10 && exit 1)
+RUN test -f dist/main.js || (echo "ERROR: dist/main.js missing" && exit 1)
 
-CMD ["node", "dist/main"]
+# Push schema to DB on startup, then start server
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && node dist/main"]
