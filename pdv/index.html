@@ -2003,20 +2003,51 @@ function carregarResultados() {
       return;
     }
     el.innerHTML = '';
-    lista.forEach(function(s) {
-      var resultado = s.result != null ? String(s.result) : '–';
+    lista.forEach(function(s, idx) {
+      var resultado = s.result != null ? String(s.result).trim() : '';
       var data = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR') : '';
       var hora = s.hora ? s.hora.substring(0,5) : '';
       var card = document.createElement('div');
       card.style.cssText = 'background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:4px solid #2E7D32';
-      card.innerHTML =
-        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
-          '<div>' +
+      // cabeçalho do card
+      var headerHtml =
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
+          '<div style="flex:1">' +
             '<div style="font-weight:700;font-size:14px;color:#1B4332">' + (s.title || 'Sorteio #' + s.id) + '</div>' +
             '<div style="font-size:12px;color:#888;margin-top:2px">' + data + (hora ? ' · ' + hora : '') + '</div>' +
           '</div>' +
-          '<div style="background:#E8F5E9;padding:6px 12px;border-radius:20px;font-weight:700;font-size:18px;color:#2E7D32;min-width:60px;text-align:center">' + resultado + '</div>' +
+          '<button onclick="imprimirBilheteResultado(' + idx + ')" style="background:#2E7D32;border:none;border-radius:8px;color:#fff;font-size:15px;padding:6px 10px;cursor:pointer" title="Imprimir">🖨</button>' +
         '</div>';
+      // corpo: resultado formatado (multi-linha) ou fallback
+      var bodyHtml = '';
+      if (resultado) {
+        // detecta se é multi-linha (formato 01  XXXX  NN - ANIMAL)
+        if (resultado.indexOf('\n') >= 0 || /^\d{2}\s/.test(resultado)) {
+          var linhas = resultado.split('\n').filter(function(l){ return l.trim(); });
+          bodyHtml = '<div style="background:#F1F8E9;border-radius:6px;padding:10px">';
+          linhas.forEach(function(linha) {
+            var partes = linha.trim().match(/^(\d{2})\s+(\d{4})\s+(\d{1,2})\s*-\s*(.+)$/);
+            if (partes) {
+              bodyHtml +=
+                '<div style="display:flex;gap:8px;align-items:center;padding:3px 0;border-bottom:1px solid #E8F5E9">' +
+                  '<span style="font-weight:700;color:#555;font-size:12px;width:20px">' + partes[1] + '</span>' +
+                  '<span style="font-family:monospace;font-weight:700;font-size:16px;color:#1B4332;width:48px">' + partes[2] + '</span>' +
+                  '<span style="font-size:12px;color:#388E3C;width:20px;text-align:center">' + partes[3] + '</span>' +
+                  '<span style="font-size:13px;color:#333;font-weight:600">' + partes[4].trim() + '</span>' +
+                '</div>';
+            } else {
+              bodyHtml += '<div style="font-size:13px;color:#444;padding:2px 0">' + linha.trim() + '</div>';
+            }
+          });
+          bodyHtml += '</div>';
+        } else {
+          // resultado simples (número ou texto curto)
+          bodyHtml = '<div style="background:#E8F5E9;padding:8px 14px;border-radius:20px;font-weight:700;font-size:20px;color:#2E7D32;display:inline-block">' + resultado + '</div>';
+        }
+      } else {
+        bodyHtml = '<div style="color:#aaa;font-size:13px">Resultado não informado</div>';
+      }
+      card.innerHTML = headerHtml + bodyHtml;
       el.appendChild(card);
     });
   }).catch(function(e) {
@@ -2274,23 +2305,110 @@ function _imprimirTelaGenerica(hideIds, getTextFn) {
   }, 250);
 }
 
-// ── Imprimir Resultados ───────────────────────────────────────────────────────
+// ── Bilhete individual de resultado ──────────────────────────────────────────
+function imprimirBilheteResultado(idx) {
+  var s = _resultadosCache[idx];
+  if (!s) return;
+  if (!window.NativePrinter) { alert('Impressora não disponível neste dispositivo.'); return; }
+  var SEP  = '================================';
+  var W    = 32;
+  var data = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR') : '';
+  var hora = s.hora ? s.hora.substring(0, 5) : '';
+  var extr = s.title || ('Sorteio #' + s.id);
+  var agora = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  var t = '\n';
+  t += centrar('MONTE DE OURO', W) + '\n';
+  t += ' \n';
+  t += colunas('Data:', data, W) + '\n';
+  t += 'Extracao: ' + extr + (hora ? ' ' + hora + ' HS' : '') + '\n';
+  t += ' \n';
+
+  // resultado pode ser multi-linha (formato: "01  4946  12 - ELEFANTE\n...")
+  if (s.result != null) {
+    var linhas = String(s.result).trim().split('\n');
+    linhas.forEach(function(linha) {
+      if (linha.trim()) t += linha + '\n';
+    });
+  } else {
+    t += centrar('Sem resultado', W) + '\n';
+  }
+
+  t += ' \n';
+  t += SEP + '\n';
+  t += centrar('Impresso: ' + agora, W) + '\n';
+  t += '\n';
+
+  try {
+    var raw = window.NativePrinter.printText(t);
+    var r   = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!r || !r.ok) alert('Falha ao imprimir. Verifique a impressora.');
+  } catch(e) {
+    try { window.NativePrinter.printScreen(); } catch(e2) {}
+  }
+}
+
+// ── Imprimir 2ª via (tela Repetir) ───────────────────────────────────────────
+function imprimirRepetir() {
+  if (!_repBets || !_repBets.length) { alert('Nenhum bilhete carregado para imprimir.'); return; }
+  if (!window.NativePrinter) { alert('Impressora não disponível neste dispositivo.'); return; }
+  var SEP   = '================================';
+  var W     = 32;
+  var code  = document.getElementById('inp-repetir-cod').value.trim().toUpperCase();
+  var total = _repBets.reduce(function(acc, b) { return acc + Number(b.amount || 0); }, 0);
+  var agora = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  var t = '\n';
+  t += centrar('MONTE DE OURO', W) + '\n';
+  t += centrar('2a VIA DO BILHETE', W) + '\n';
+  t += SEP + '\n';
+  t += colunas('Bilhete:', code, W) + '\n';
+  t += colunas('Total:', 'R$ ' + total.toFixed(2), W) + '\n';
+  t += SEP + '\n';
+  _repBets.forEach(function(b, i) {
+    var nums = typeof b.numbers === 'string' ? b.numbers : JSON.stringify(b.numbers);
+    t += (i + 1) + '. ' + (b.bet_type || '–') + '\n';
+    t += '   Nums: ' + nums + '\n';
+    t += '   Valor: R$ ' + Number(b.amount).toFixed(2) + '\n';
+  });
+  t += SEP + '\n';
+  t += centrar('Impresso: ' + agora, W) + '\n';
+  t += '\n';
+
+  try {
+    var raw = window.NativePrinter.printText(t);
+    var r   = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!r || !r.ok) alert('Falha ao imprimir. Verifique a impressora.');
+  } catch(e) {
+    try { window.NativePrinter.printScreen(); } catch(e2) {}
+  }
+}
+
+// ── Imprimir Resultados (lista completa) ─────────────────────────────────────
 function imprimirResultados() {
   _imprimirTelaGenerica(
     ['res-btn-back', 'res-btn-print', 'res-btn-ref'],
     function() {
-      var SEP = '================================';
-      var W   = 32;
-      var t   = centrar('MONTE DE OURO', W) + '\n';
-      t += centrar('RESULTADOS', W) + '\n';
+      var SEP   = '================================';
+      var W     = 32;
+      var agora = new Date().toLocaleString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      var t     = centrar('MONTE DE OURO', W) + '\n';
+      t += centrar('RESULTADOS DO DIA', W) + '\n';
+      t += centrar(agora, W) + '\n';
       t += SEP + '\n';
       _resultadosCache.forEach(function(s) {
-        var resultado = s.result != null ? String(s.result) : '-';
         var data = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR') : '';
         var hora = s.hora ? s.hora.substring(0,5) : '';
-        t += (s.title || 'Sorteio #' + s.id) + '\n';
-        t += '  Data: ' + data + (hora ? ' ' + hora : '') + '\n';
-        t += '  Resultado: ' + resultado + '\n';
+        var extr = s.title || ('Sorteio #' + s.id);
+        t += ' \n';
+        t += colunas('Data:', data, W) + '\n';
+        t += 'Extracao: ' + extr + (hora ? ' ' + hora + ' HS' : '') + '\n';
+        t += ' \n';
+        if (s.result != null) {
+          String(s.result).trim().split('\n').forEach(function(linha) {
+            if (linha.trim()) t += linha + '\n';
+          });
+        }
         t += SEP + '\n';
       });
       if (!_resultadosCache.length) t += centrar('Sem resultados', W) + '\n';
@@ -2385,7 +2503,7 @@ function imprimirCotacoes() {
   <div class="hdr-green">
     <button class="back" onclick="go('s-main')">‹</button>
     <span>Repetir Bilhete</span>
-    <span></span>
+    <button id="rep-btn-print" onclick="imprimirRepetir()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px" title="Imprimir 2ª via">🖨</button>
   </div>
   <div class="scroll-y" style="padding:12px">
     <div style="margin-bottom:14px">
