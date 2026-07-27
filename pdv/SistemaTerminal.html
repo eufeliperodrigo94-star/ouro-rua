@@ -1946,8 +1946,9 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
     t += centrar('COD. BILHETE', W) + '\n';
     t += centrar(String(ticketCode), W) + '\n';
     t += SEP + '\n';
-    // Linha NSU: aciona impressão nativa de QR code pelo APK
-    t += 'NSU: ' + String(ticketCode) + '\n';
+    // ESC a 1 = centralizar; NSU aciona QR code nativo no driver
+    t += '\x1b\x61\x01NSU: ' + String(ticketCode) + '\n';
+    t += '\x1b\x61\x00'; // volta alinhamento esquerdo
   }
   t += '\n\n';
 
