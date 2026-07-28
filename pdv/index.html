@@ -166,6 +166,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .tipo-search-wrap {
   padding: 10px 10px 2px; background: #F4F7F4;
   -webkit-flex-shrink: 0; flex-shrink: 0;
+  position: relative;
+}
+.hdr-date .back {
+  position:absolute; left:14px; top:0; height:54px;
+  background:none; border:none; color:#D4A017;
+  font-size:30px; cursor:pointer; padding:0 14px 0 0;
 }
 .tipo-search {
   width: 100%; height: 44px; box-sizing: border-box;
@@ -278,6 +284,61 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   border-radius: 4px;
 }
 .k:active { background: #C8E6C9; }
+.n-mode-row {
+  display:-webkit-flex; display:flex; gap:6px; padding:6px 8px;
+  background:#ECEFF1; -webkit-flex-shrink:0; flex-shrink:0;
+}
+.n-mode-btn {
+  -webkit-flex:1; flex:1; height:34px; border:1px solid #A5D6A7;
+  border-radius:7px; background:#FFF; color:#1B4332;
+  font-size:12px; font-weight:700; cursor:pointer;
+}
+.n-mode-btn.on { background:#1B4332; color:#FFF; border-color:#1B4332; }
+.dez-table {
+  -webkit-flex:1; flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+  background:#E0E0E0; padding:4px 4px 0;
+}
+.dez-grid { display:-webkit-flex; display:flex; -webkit-flex-wrap:wrap; flex-wrap:wrap; }
+.dez-animal {
+  width:25%; box-sizing:border-box; background:#FFF; border:3px solid #E0E0E0;
+  padding:7px 4px; text-align:center; min-height:116px; border-radius:8px;
+}
+.dez-animal-title { font-size:11px; font-weight:800; color:#1B4332; margin-bottom:6px; }
+.dez-animal-title span { display:block; font-size:25px; line-height:27px; }
+.dez-options { display:-webkit-flex; display:flex; -webkit-flex-wrap:wrap; flex-wrap:wrap; gap:4px; }
+.dez-option {
+  width:calc(50% - 2px); height:30px; border:none; border-radius:5px;
+  background:#E8F5E9; color:#1B4332; font-size:14px; font-weight:900; cursor:pointer;
+}
+.dez-option:active { background:#D4A017; }
+.dez-actions {
+  position:-webkit-sticky; position:sticky; bottom:0; z-index:3;
+  display:-webkit-flex; display:flex; gap:5px;
+  background:#263238; padding:7px 5px;
+  box-shadow:0 -3px 8px rgba(0,0,0,.25);
+}
+.dez-action {
+  height:48px; border:none; border-radius:7px; color:#FFF;
+  font-size:13px; font-weight:800; cursor:pointer;
+}
+.dez-action-del { width:72px; background:#E53935; }
+.dez-action-clear { width:72px; background:#546E7A; }
+.dez-action-ok {
+  -webkit-flex:1; flex:1; background:#2E7D32;
+  color:#FFF; font-size:17px;
+}
+#s-num.table-mode .n-lista-wrap {
+  -webkit-flex:0 0 66px; flex:0 0 66px; min-height:66px;
+  padding:5px 12px; line-height:1.6; cursor:pointer;
+}
+#s-num.table-mode .n-lista-wrap:after {
+  content:'Toque aqui para voltar ao teclado';
+  display:block; color:#A5D6A7; font-size:10px;
+  line-height:1.2; letter-spacing:0; text-align:center;
+}
+#s-num.table-mode .n-instr,
+#s-num.table-mode .n-disp,
+#s-num.table-mode #n-hint { display:none !important; }
 .k.empty  { background: #3D4F5E; cursor: default; }
 .ks { -webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: #2D3748; padding: 2px; gap: 2px; }
 .k-del { -webkit-flex: 1; flex: 1; background: #E53935; border: none; color: #FFF; font-size: 24px; cursor: pointer; border-radius: 4px; }
@@ -513,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 6.9 · TESTE</div>
+    <div class="login-version">versão 7.4 · TESTE</div>
   </div>
 </div>
 
@@ -540,13 +601,16 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 6.9 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.4 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
 <!-- ═══════════ SORTEIOS ═══════════ -->
 <div id="s-ext" class="sc">
-  <div class="hdr-date" id="hdr-dt"></div>
+  <div class="hdr-date">
+    <button class="back" onclick="go('s-main')" aria-label="Voltar ao menu">‹</button>
+    <span id="hdr-dt"></span>
+  </div>
   <div class="scroll-y lst-pad" id="list-ext"></div>
 </div>
 
@@ -593,7 +657,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <span class="g-cnt" id="n-cnt">0</span>
   </div>
   <!-- Área JBet: números como texto grande -->
-  <div class="n-lista-wrap" id="n-lista-wrap" style="color:#AAA;font-size:15px;letter-spacing:2px">Nenhum número adicionado</div>
+  <div class="n-lista-wrap" id="n-lista-wrap" onclick="exitDezenaTable()"
+    style="color:#AAA;font-size:15px;letter-spacing:2px">Nenhum número adicionado</div>
   <!-- Barra de quantidade de palpites / apagar -->
   <div class="jbet-info">
     <div class="jbi-box" style="-webkit-flex:1;flex:1">
@@ -602,11 +667,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="jbi-del" onclick="nDel()">⌫</button>
   </div>
+  <div class="n-mode-row">
+    <button class="n-mode-btn on" id="n-mode-key" onclick="setNumMode('keyboard')">⌨ Teclado</button>
+    <button class="n-mode-btn" id="n-mode-table" onclick="setNumMode('table')">🐾 Tabela do bicho</button>
+  </div>
   <!-- Dígitos em digitação -->
   <div id="n-hint" style="display:none;text-align:center;font-size:12px;font-weight:600;padding:2px;background:#FFF9C4;color:#F57F17"></div>
   <div class="n-instr" id="n-ex" style="background:#f5f5f5;color:#888">Digite os dígitos — confirma automaticamente</div>
   <div class="n-disp"  id="n-disp">____</div>
-  <div class="teclado-row">
+  <div class="teclado-row" id="num-keyboard">
     <div class="numpad">
       <button class="k" onclick="nAdd('1')">1</button><button class="k" onclick="nAdd('2')">2</button><button class="k" onclick="nAdd('3')">3</button>
       <button class="k" onclick="nAdd('4')">4</button><button class="k" onclick="nAdd('5')">5</button><button class="k" onclick="nAdd('6')">6</button>
@@ -616,6 +685,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <div class="ks">
       <button class="k-del" style="opacity:.4;pointer-events:none">⌫</button>
       <button class="k-ok dim" id="btn-ok-n" onclick="nOk()">✓</button>
+    </div>
+  </div>
+  <div class="dez-table" id="num-table" style="display:none">
+    <div class="dez-grid" id="dez-grid"></div>
+    <div class="dez-actions">
+      <button class="dez-action dez-action-del" onclick="nDel()">⌫ Apagar</button>
+      <button class="dez-action dez-action-clear" onclick="nClearAll()">Limpar</button>
+      <button class="dez-action dez-action-ok" onclick="nOk()">OK / Continuar ✓</button>
     </div>
   </div>
 </div>
@@ -1588,6 +1665,8 @@ function setupNum() {
   var q   = st.mod ? st.mod.q   : 2;
   var min = st.mod ? (st.mod.min || 1) : 1;
   st.nums = '';
+  st.tableSuffix = '';
+  st.numMode = 'keyboard';
   // Se vier de "Novo Jogo" e os números têm o mesmo tamanho de dígitos, pré-preenche
   if (st._prevNList && st._prevNList.length > 0 && st._prevQ === q) {
     st.nList = st._prevNList.slice();
@@ -1610,10 +1689,97 @@ function setupNum() {
   if (countEl) countEl.textContent = '0';
   updN();
   updNList();
+  buildDezenaTable();
+  setNumMode('keyboard');
+}
+
+function setNumMode(mode) {
+  st.numMode = mode === 'table' ? 'table' : 'keyboard';
+  if (st.numMode === 'table') {
+    st.nums = '';
+    st.tableSuffix = '';
+  }
+  document.getElementById('num-keyboard').style.display = st.numMode === 'keyboard' ? '' : 'none';
+  document.getElementById('num-table').style.display = st.numMode === 'table' ? '' : 'none';
+  document.getElementById('s-num').classList.toggle('table-mode', st.numMode === 'table');
+  document.getElementById('n-mode-key').className =
+    'n-mode-btn' + (st.numMode === 'keyboard' ? ' on' : '');
+  document.getElementById('n-mode-table').className =
+    'n-mode-btn' + (st.numMode === 'table' ? ' on' : '');
+  document.getElementById('n-ex').textContent = st.numMode === 'table'
+    ? 'Toque em uma dezena do animal'
+    : (st.tableSuffix
+      ? 'Digite ' + Math.max(1, Number(st.mod && st.mod.q || 2) - 2) +
+        ' dígito(s) do começo · final ' + st.tableSuffix
+      : 'Digite ' + Number(st.mod && st.mod.q || 2) + ' dígito(s)');
+  updN();
+}
+
+function exitDezenaTable() {
+  if (st.numMode === 'table') setNumMode('keyboard');
+}
+
+function buildDezenaTable() {
+  var grid = document.getElementById('dez-grid');
+  if (grid.children.length) return;
+  BICHOS.forEach(function(bicho) {
+    var card = document.createElement('div');
+    card.className = 'dez-animal';
+    var title = document.createElement('div');
+    title.className = 'dez-animal-title';
+    title.innerHTML = '<span>' + bicho[2] + '</span>' + pad(bicho[0]) + ' ' + bicho[1].substring(0,7);
+    card.appendChild(title);
+    var options = document.createElement('div');
+    options.className = 'dez-options';
+    var first = (bicho[0] - 1) * 4 + 1;
+    for (var offset = 0; offset < 4; offset++) {
+      var value = (first + offset) % 100;
+      var button = document.createElement('button');
+      button.className = 'dez-option';
+      button.textContent = pad(value);
+      button.onclick = (function(dezena) {
+        return function() { nSelectDezena(dezena); };
+      })(pad(value));
+      options.appendChild(button);
+    }
+    card.appendChild(options);
+    grid.appendChild(card);
+  });
+}
+
+function nSelectDezena(dezena) {
+  var q = Number(st.mod && st.mod.q || 2);
+  if (q <= 2) {
+    st.nList.push(dezena);
+    st.nums = '';
+    updN();
+    updNList();
+    return;
+  }
+  st.tableSuffix = dezena;
+  st.nums = '';
+  st.numMode = 'keyboard';
+  document.getElementById('s-num').classList.remove('table-mode');
+  document.getElementById('num-keyboard').style.display = '';
+  document.getElementById('num-table').style.display = 'none';
+  document.getElementById('n-mode-key').className = 'n-mode-btn';
+  document.getElementById('n-mode-table').className = 'n-mode-btn on';
+  document.getElementById('n-ex').textContent =
+    'Digite ' + (q - 2) + ' dígito(s) do começo · final ' + dezena;
+  updN();
 }
 
 function nAdd(c) {
   var q = st.mod ? st.mod.q : 2;
+  if (st.tableSuffix) {
+    var prefixLength = Math.max(0, q - 2);
+    if (st.nums.length < prefixLength) {
+      st.nums += c;
+      updN();
+      if (st.nums.length === prefixLength) setTimeout(nConfirm, 200);
+    }
+    return;
+  }
   if (st.nums.length < q) {
     st.nums += c;
     updN();
@@ -1629,6 +1795,9 @@ function nDel() {
     // apaga o último dígito do número em digitação
     st.nums = st.nums.slice(0, -1);
     updN();
+  } else if (st.tableSuffix) {
+    st.tableSuffix = '';
+    setNumMode('table');
   } else if (st.nList.length) {
     // se não há digitação, remove o último palpite confirmado
     st.nList.pop();
@@ -1638,6 +1807,15 @@ function nDel() {
 
 function nConfirm() {
   var q = st.mod ? st.mod.q : 2;
+  if (st.tableSuffix) {
+    if (st.nums.length < q - 2) return;
+    st.nList.push(st.nums + st.tableSuffix);
+    st.nums = '';
+    st.tableSuffix = '';
+    updNList();
+    setNumMode('table');
+    return;
+  }
   if (st.nums.length < q) return;
   st.nList.push(st.nums);
   st.nums = '';
@@ -1647,6 +1825,12 @@ function nConfirm() {
 
 function updN() {
   var q   = st.mod ? st.mod.q : 2;
+  if (st.tableSuffix) {
+    var prefix = st.nums;
+    for (var p = prefix.length; p < q - 2; p++) prefix += '_';
+    document.getElementById('n-disp').textContent = prefix + st.tableSuffix;
+    return;
+  }
   var str = st.nums;
   for (var i = str.length; i < q; i++) str += '_';
   document.getElementById('n-disp').textContent = str;
@@ -1694,7 +1878,10 @@ function nOk() {
   var q   = st.mod ? st.mod.q   : 2;
   var min = st.mod ? (st.mod.min || 1) : 1;
   if (st.nums.length >= q) { nConfirm(); }
-  if (!st.nList.length) return;
+  if (!st.nList.length) {
+    alert('Selecione ao menos um palpite para continuar.');
+    return;
+  }
   if (st.nList.length < min) {
     alert('Esta modalidade exige ' + min + ' palpite(s).\nAdicionados: ' + st.nList.length); return;
   }
@@ -1827,6 +2014,14 @@ function updV() {
     document.getElementById('r-dt').textContent = 'Total: R$ ' + totalDiv.toFixed(2).replace('.',',');
     document.getElementById('r-mt').textContent = 'Total: R$ ' + totalMul.toFixed(2).replace('.',',');
   }
+}
+
+function nClearAll() {
+  st.nums = '';
+  st.tableSuffix = '';
+  st.nList = [];
+  updN();
+  updNList();
 }
 
 function setModoPalpite(m) {
