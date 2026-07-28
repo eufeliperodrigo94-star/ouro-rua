@@ -272,6 +272,22 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .k-ok  { -webkit-flex: 3; flex: 3; background: #D4A017; border: none; color: #1B4332; font-size: 30px; font-weight: 900; cursor: pointer; border-radius: 4px; }
 .k-del:active, .k-ok:active { opacity: .85; }
 .k-ok.dim { opacity: .3; pointer-events: none; }
+.valor-ticket-total {
+  display: -webkit-flex; display: flex;
+  -webkit-align-items: center; align-items: center;
+  -webkit-justify-content: space-between; justify-content: space-between;
+  min-height: 58px; padding: 8px 18px;
+  background: #1B4332; border-top: 4px solid #D4A017;
+  color: #FFF; -webkit-flex-shrink: 0; flex-shrink: 0;
+  box-shadow: 0 -2px 8px rgba(0,0,0,.18);
+}
+.valor-ticket-total .vtt-label {
+  font-size: 13px; font-weight: 700; letter-spacing: .6px;
+  color: #A5D6A7; text-transform: uppercase;
+}
+.valor-ticket-total .vtt-value {
+  font-size: 28px; line-height: 1; font-weight: 900; color: #D4A017;
+}
 
 /* ══════════ TECLADO VALOR ══════════ */
 .v-mm   { text-align: center; color: #777; font-size: 12px; padding: 4px; -webkit-flex-shrink: 0; flex-shrink: 0; background: #ECEFF1; }
@@ -347,7 +363,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   -webkit-align-items: stretch; align-items: stretch;
   background: #1B4332; border-bottom: 2px solid #2E7D32;
   -webkit-flex-shrink: 0; flex-shrink: 0;
-  height: 74px;
+  height: 104px;
 }
 .jvb-box {
   display: -webkit-flex; display: flex;
@@ -374,6 +390,28 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   text-align: center; font-size: 13px; font-weight: 700;
   padding: 5px 8px; -webkit-flex-shrink: 0; flex-shrink: 0;
   letter-spacing: .3px; border-bottom: 1px solid #C8E6C9;
+}
+.valor-jogos {
+  max-height: 142px; overflow-y: auto; padding: 6px 10px;
+  background: #FFF; border-bottom: 1px solid #C8E6C9;
+  -webkit-flex-shrink: 1; flex-shrink: 1;
+}
+.valor-jogos-title {
+  color: #1B4332; font-size: 12px; font-weight: 800;
+  text-align: center; padding-bottom: 4px;
+}
+.valor-jogo-row {
+  display: -webkit-flex; display: flex;
+  -webkit-justify-content: space-between; justify-content: space-between;
+  gap: 10px; padding: 3px 5px; border-top: 1px solid #EEF3EE;
+  color: #263238; font-size: 12px; font-weight: 700;
+}
+.valor-jogo-row .vj-num { color: #1B4332; }
+.valor-jogo-row .vj-val { color: #1565C0; white-space: nowrap; }
+.valor-jogos-foot {
+  margin-top: 4px; padding: 5px; border-radius: 5px;
+  background: #E8F5E9; color: #1B4332;
+  text-align: center; font-size: 11px; font-weight: 800;
 }
 .jbet-prize {
   background: #FFF8E1; color: #E65100;
@@ -433,7 +471,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 5.4 · TESTE</div>
+    <div class="login-version">versão 6.4 · TESTE</div>
   </div>
 </div>
 
@@ -460,7 +498,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 5.4 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 6.4 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -508,13 +546,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   </div>
   <!-- Área JBet: números como texto grande -->
   <div class="n-lista-wrap" id="n-lista-wrap" style="color:#AAA;font-size:15px;letter-spacing:2px">Nenhum número adicionado</div>
-  <!-- Barra JBet: Prêmio / palpites / apagar -->
+  <!-- Barra de quantidade de palpites / apagar -->
   <div class="jbet-info">
-    <div class="jbi-box">
-      <span class="jbi-lbl">Prêmio</span>
-      <span class="jbi-val" id="jbi-premio">–</span>
-    </div>
-    <div class="jbi-sep">|</div>
     <div class="jbi-box" style="-webkit-flex:1;flex:1">
       <span class="jbi-lbl">Palpites</span>
       <span class="jbi-val" id="jbi-count">0</span>
@@ -548,34 +581,47 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   </div>
   <div class="v-mm" id="v-mm">Máx/nº: R$ –</div>
 
-  <!-- ── Barra JBet: Prêmio | Valor digitado | Ou | Total | ✓ ── -->
-  <div class="jbet-val-bar">
-    <div class="jvb-box">
-      <span class="jvb-lbl">Prêmio</span>
-      <span class="jvb-num" id="jvb-premio">–</span>
+  <!-- ── Barra de valor do jogo e total calculado ── -->
+  <div class="jbet-val-bar" style="display:block;position:relative">
+    <div class="jvb-box" style="width:100%;padding-bottom:5px">
+      <span class="jvb-lbl">Valor do jogo</span>
+      <span class="jvb-num" id="jvb-valor">0,00</span>
     </div>
-    <div class="jvb-sep"></div>
-    <div class="jvb-box" style="-webkit-flex:1;flex:1">
-      <span class="jvb-lbl">Valor</span>
-      <span class="jvb-num" id="jvb-valor">0</span>
+    <div style="display:-webkit-flex;display:flex;border-top:1px solid rgba(255,255,255,.3);padding-top:5px">
+      <div class="jvb-box" style="-webkit-flex:1;flex:1">
+        <span class="jvb-lbl" id="jvb-individual-label">R$ por aposta (1º prêmio)</span>
+        <span class="jvb-num" id="jvb-individual">0,00</span>
+      </div>
+      <div class="jvb-box jvb-total" style="-webkit-flex:1;flex:1">
+        <span class="jvb-lbl">Total a pagar</span>
+        <span class="jvb-num" id="jvb-total">0,00</span>
+      </div>
     </div>
-    <div class="jvb-ou">Ou</div>
-    <div class="jvb-box jvb-total" style="-webkit-flex:1;flex:1">
-      <span class="jvb-lbl">Total</span>
-      <span class="jvb-num" id="jvb-total">0,00</span>
-    </div>
-    <button class="jvb-ok" onclick="vOk()">✓</button>
   </div>
 
   <!-- Fórmula viva: X a YP x R$V = R$T -->
   <div class="jbet-formula-v" id="jvb-formula">–</div>
-  <!-- Prêmio potencial -->
-  <div class="jbet-prize" id="jvb-prize" style="display:none"></div>
+  <div class="valor-jogos" id="valor-jogos">
+    <div class="valor-jogos-title" id="valor-jogos-title"></div>
+    <div id="valor-jogos-list"></div>
+    <div class="valor-jogos-foot" id="valor-jogos-foot"></div>
+  </div>
+  <!-- 1º controle: valor ×/÷ quantidade de jogos/palpites -->
+  <div id="palpite-controle">
+    <div style="font-size:11px;color:#666;text-align:center;margin:4px 0">1. Valor por quantidade de jogos</div>
+    <div class="modo-row" style="height:52px">
+      <button class="btn-modo m-on"  id="m-div" onclick="setModoPalpite('d')">÷ Dividir<br><span id="v-dt" style="font-size:10px">–</span></button>
+      <button class="btn-modo m-off" id="m-mul" onclick="setModoPalpite('m')">× Multiplicar<br><span id="v-mt" style="font-size:10px">–</span></button>
+    </div>
+  </div>
 
-  <!-- Modo dividir/multiplicar compacto -->
-  <div class="modo-row" style="height:52px">
-    <button class="btn-modo m-on"  id="m-div" onclick="setModo('d')">÷ Dividir<br><span id="v-dt" style="font-size:10px">–</span></button>
-    <button class="btn-modo m-off" id="m-mul" onclick="setModo('m')">× Multiplicar<br><span id="v-mt" style="font-size:10px">–</span></button>
+  <!-- 2º controle: resultado ×/÷ chances OU permutações -->
+  <div id="regra-controle" style="display:none">
+    <div style="font-size:11px;color:#666;text-align:center;margin:4px 0" id="regra-titulo">2. Aplicar regra da modalidade</div>
+    <div class="modo-row" style="height:52px">
+      <button class="btn-modo m-on"  id="r-div" onclick="setModoRegra('d')">÷ Dividir<br><span id="r-dt" style="font-size:10px">–</span></button>
+      <button class="btn-modo m-off" id="r-mul" onclick="setModoRegra('m')">× Multiplicar<br><span id="r-mt" style="font-size:10px">–</span></button>
+    </div>
   </div>
 
   <div class="teclado-row">
@@ -589,6 +635,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="k-del" onclick="vDel()">⌫</button>
       <button class="k-ok"  onclick="vOk()">✓</button>
     </div>
+  </div>
+  <div class="valor-ticket-total">
+    <span class="vtt-label">Total do bilhete</span>
+    <span class="vtt-value" id="v-ticket-total">R$ 0,00</span>
   </div>
 </div>
 
@@ -890,7 +940,7 @@ function apiPublic(path) {
 // ─── Estado ───────────────────────────────────────────────────────────────────
 var st = {
   user: null, draw: null, mod: null,
-  grupos: [], nums: '', nList: [], val: '', modo: 'd', entrada: null,
+  grupos: [], nums: '', nList: [], val: '', modoPalpite: 'd', modoRegra: 'd', entrada: null,
   apostas: []
 };
 
@@ -1065,6 +1115,9 @@ function loadMods() {
       btn.innerHTML = '<span>' + (mod.label || modLabel(mod)) + '</span>' +
         '<span style="font-size:13px;opacity:.85">' + mult + '</span>' + cm;
       btn.onclick = function() {
+        var previousMod = st.mod;
+        var previousNumbers = st.nList ? st.nList.slice() : [];
+        var previousGroups = st.grupos ? st.grupos.slice() : [];
         st.mod = {
           bet_type: mod.bet_type,
           label:    mod.label || modLabel(mod),
@@ -1073,8 +1126,22 @@ function loadMods() {
           factor: mod.factor ? Number(mod.factor) : 1,
           q: info.q, g: info.g, min: info.min
         };
-        if (info.g) { setupGrupo(); go('s-grupo'); }
-        else        { setupNum();   go('s-num');   }
+        if (info.g) {
+          if (previousMod && previousMod.g && previousGroups.length) {
+            st._prevGroups = previousGroups;
+          }
+          setupGrupo(); go('s-grupo');
+        } else {
+          if (
+            previousMod && !previousMod.g &&
+            Number(previousMod.q) === Number(info.q) &&
+            previousNumbers.length
+          ) {
+            st._prevNList = previousNumbers;
+            st._prevQ = info.q;
+          }
+          setupNum(); go('s-num');
+        }
       };
       el.appendChild(btn);
     });
@@ -1096,8 +1163,12 @@ function factorFromBetType(bt) {
 }
 
 function uniqueOrderedCount(value, size) {
+  return uniqueOrderedValues(value, size).length;
+}
+
+function uniqueOrderedValues(value, size) {
   var digits = String(value || '').replace(/\D/g, '').split('');
-  if (!size || digits.length < size) return 0;
+  if (!size || digits.length < size) return [];
   var found = {};
   function walk(prefix, remaining) {
     if (prefix.length === size) { found[prefix] = true; return; }
@@ -1111,7 +1182,7 @@ function uniqueOrderedCount(value, size) {
     }
   }
   walk('', digits);
-  return Object.keys(found).length;
+  return Object.keys(found).sort();
 }
 
 function modalityRuleForNumber(mod, number) {
@@ -1126,19 +1197,199 @@ function modalityRuleForNumber(mod, number) {
   } else {
     permutations = uniqueOrderedCount(number, 3);
   }
+  // Invertida com faixa cobre cada permutação em todas as chances da faixa.
   return Math.max(1, permutations) * Math.max(1, positions);
 }
 
-function calculatedModeTotal(value, mode, mod, entry) {
+function gameEntries(mod, entry) {
   var min = (mod && mod.min) || 1;
-  var numbers = min > 1 ? [entry || ''] : (entry ? entry.split(',') : ['']);
-  var count = numbers.length || 1;
-  var total = 0;
-  numbers.forEach(function(number) {
-    var rule = modalityRuleForNumber(mod, number);
-    total += mode === 'm' ? (value * rule) : ((value / count) / rule);
+  var numbers = entry ? entry.split(',').filter(function(item) { return item !== ''; }) : [];
+  if (min <= 1) return numbers.length ? numbers : [''];
+  var games = [];
+  for (var i = 0; i + min <= numbers.length; i += min) {
+    games.push(numbers.slice(i, i + min).join(','));
+  }
+  return games.length ? games : [''];
+}
+
+function modalityRuleInfo(mod, entry) {
+  var games = gameEntries(mod, entry);
+  var rules = games.map(function(game) { return modalityRuleForNumber(mod, game); });
+  var totalRules = rules.reduce(function(total, rule) { return total + rule; }, 0);
+  return {
+    games: games,
+    count: games.length || 1,
+    rules: rules,
+    factor: rules.length ? totalRules / rules.length : 1,
+    variable: rules.some(function(rule) { return rule !== rules[0]; }),
+    inverted: String(mod && mod.bet_type || '').toUpperCase().indexOf('INVERTID') >= 0
+  };
+}
+
+function calculatedModeValues(value, palpiteMode, regraMode, mod, entry) {
+  var info = modalityRuleInfo(mod, entry);
+  // Primeiro controle:
+  // - Dividir distribui o valor informado entre os jogos.
+  // - Multiplicar aplica o valor informado integralmente a cada jogo.
+  var perGameBase = info.count <= 1 || palpiteMode === 'm'
+    ? value
+    : value / info.count;
+  var baseTotal = perGameBase * info.count;
+
+  // Segundo controle aplica a regra em cada jogo, preservando diferenças de
+  // permutação entre palpites.
+  var gameTotals = info.rules.map(function(rule) {
+    return regraMode === 'm' ? perGameBase * Math.max(1, rule) : perGameBase;
   });
-  return total;
+  var total = gameTotals.reduce(function(sum, gameTotal) {
+    return sum + gameTotal;
+  }, 0);
+  return {
+    base: perGameBase,
+    perGameBase: perGameBase,
+    baseTotal: baseTotal,
+    gameTotals: gameTotals,
+    total: total,
+    info: info
+  };
+}
+
+function calculatedModeTotal(value, palpiteMode, regraMode, mod, entry) {
+  return calculatedModeValues(value, palpiteMode, regraMode, mod, entry).total;
+}
+
+function backendCombinationCount(mod, game) {
+  var bt = String(mod && mod.bet_type || '').toUpperCase().replace(/-/g, '_');
+  if (bt.indexOf('INVERTID') >= 0) {
+    if (bt.indexOf('MILHAR') >= 0 && bt.indexOf('CENTENA') >= 0) {
+      return Math.max(1, uniqueOrderedCount(game, 4) + uniqueOrderedCount(game, 3));
+    }
+    return Math.max(1, uniqueOrderedCount(game, bt.indexOf('MILHAR') >= 0 ? 4 : 3));
+  }
+  // Duques e Ternos já chegam separados em jogos completos; cada bloco é uma
+  // combinação registrada pela API.
+  return 1;
+}
+
+function betAccounting(mod, entry, total, gameTotals) {
+  var games = gameEntries(mod, entry);
+  var charge = (mod && mod.charge_multiplier) ? Number(mod.charge_multiplier) : 1;
+  var divisors = games.map(function(game) {
+    return Math.max(1, backendCombinationCount(mod, game)) * Math.max(1, charge);
+  });
+  var atomicCount = divisors.reduce(function(sum, divisor) { return sum + divisor; }, 0) || 1;
+  var resolvedGameTotals = gameTotals && gameTotals.length === games.length
+    ? gameTotals
+    : divisors.map(function(divisor) { return total * divisor / atomicCount; });
+  var unitAmounts = resolvedGameTotals.map(function(gameTotal, index) {
+    return gameTotal / divisors[index];
+  });
+  return {
+    games: games,
+    divisors: divisors,
+    atomicCount: atomicCount,
+    gameTotals: resolvedGameTotals,
+    unitAmounts: unitAmounts,
+    individualAmount: total / atomicCount
+  };
+}
+
+function detailedMoney(value) {
+  var decimals = Math.abs(value) > 0 && Math.abs(value) < 0.01 ? 6 : 2;
+  return Number(value || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  });
+}
+
+function individualBetLabel(mod) {
+  var bt = String(mod && mod.bet_type || '').toUpperCase().replace(/-/g, '_');
+  if (/_1_10$/.test(bt)) return 'R$ por aposta (1º ao 10º)';
+  if (/_6_10$/.test(bt)) return 'R$ por aposta (6º ao 10º)';
+  if (/_1_5$/.test(bt) || /_1_AO_5$/.test(bt)) {
+    return 'R$ por aposta (1º ao 5º)';
+  }
+  return 'R$ por aposta (1º prêmio)';
+}
+
+function invertedPermutationRows(mod, entry) {
+  var bt = String(mod && mod.bet_type || '').toUpperCase().replace(/-/g, '_');
+  var rows = [];
+  gameEntries(mod, entry).forEach(function(game, gameIndex) {
+    if (bt.indexOf('MILHAR') >= 0 && bt.indexOf('CENTENA') >= 0) {
+      uniqueOrderedValues(game, 4).forEach(function(number) {
+        rows.push({ number: number + ' (milhar)', source: game, gameIndex: gameIndex });
+      });
+      uniqueOrderedValues(game, 3).forEach(function(number) {
+        rows.push({ number: number + ' (centena)', source: game, gameIndex: gameIndex });
+      });
+    } else {
+      var size = bt.indexOf('MILHAR') >= 0 ? 4 : 3;
+      uniqueOrderedValues(game, size).forEach(function(number) {
+        rows.push({ number: number, source: game, gameIndex: gameIndex });
+      });
+    }
+  });
+  return rows;
+}
+
+function renderValueGames(total, accounting, info) {
+  var box = document.getElementById('valor-jogos');
+  var title = document.getElementById('valor-jogos-title');
+  var list = document.getElementById('valor-jogos-list');
+  var foot = document.getElementById('valor-jogos-foot');
+  if (!box || !title || !list || !foot) return;
+
+  title.textContent = modLabel(st.mod);
+  list.innerHTML = '';
+  var positions = (st.mod && st.mod.charge_multiplier)
+    ? Math.max(1, Number(st.mod.charge_multiplier)) : 1;
+  var rows = [];
+
+  if (info.inverted) {
+    var permutations = invertedPermutationRows(st.mod, st.entrada);
+    permutations.forEach(function(item) {
+      rows.push({
+        number: item.number,
+        value: accounting.unitAmounts[item.gameIndex] * positions,
+        suffix: positions > 1 ? ' (' + positions + ' chances)' : ''
+      });
+    });
+    var sameUnit = accounting.unitAmounts.every(function(amount) {
+      return Math.abs(amount - accounting.unitAmounts[0]) < 0.0000001;
+    });
+    foot.textContent = permutations.length + ' permutaç' +
+      (permutations.length === 1 ? 'ão' : 'ões') + ' × ' +
+      (positions > 1 ? positions + ' chances × ' : '') +
+      (sameUnit ? 'R$ ' + detailedMoney(accounting.unitAmounts[0]) + ' = ' : '') +
+      'R$ ' + detailedMoney(total);
+  } else {
+    accounting.games.forEach(function(game, index) {
+      rows.push({
+        number: game.replace(/,/g, ' + '),
+        value: accounting.gameTotals[index],
+        suffix: accounting.divisors[index] > 1
+          ? ' (' + accounting.divisors[index] + ' chances)' : ''
+      });
+    });
+    foot.textContent = rows.length + ' jogo' + (rows.length === 1 ? '' : 's') +
+      ' = R$ ' + detailedMoney(total);
+  }
+
+  rows.forEach(function(item) {
+    var row = document.createElement('div');
+    row.className = 'valor-jogo-row';
+    var number = document.createElement('span');
+    number.className = 'vj-num';
+    number.textContent = item.number;
+    var value = document.createElement('span');
+    value.className = 'vj-val';
+    value.textContent = 'R$ ' + detailedMoney(item.value) + item.suffix;
+    row.appendChild(number);
+    row.appendChild(value);
+    list.appendChild(row);
+  });
+  box.style.display = rows.length ? '' : 'none';
 }
 
 function modInfo(bt) {
@@ -1180,7 +1431,9 @@ var BICHOS = [
 ];
 
 function setupGrupo() {
-  st.grupos = [];
+  st.grupos = st._prevGroups && st._prevGroups.length
+    ? st._prevGroups.slice() : [];
+  st._prevGroups = null;
   document.getElementById('g-title').textContent = modLabel(st.mod || 'Grupo');
   updG();
   var g = document.getElementById('an-grid');
@@ -1222,8 +1475,12 @@ function gOk()  {
   if (st.grupos.length < min) {
     alert('Esta modalidade exige ' + min + ' grupo(s).\nVocê selecionou: ' + st.grupos.length); return;
   }
-  // Para DUQUE/TERNO: só envia os primeiros "min" grupos
-  st.entrada = st.grupos.slice(0, min > 1 ? min : st.grupos.length).join(',');
+  if (min > 1 && st.grupos.length % min !== 0) {
+    alert('Complete todos os jogos.\n' +
+      (min === 2 ? 'Duque exige grupos de 2 em 2.' : 'Terno exige grupos de 3 em 3.') +
+      '\nSelecionados: ' + st.grupos.length); return;
+  }
+  st.entrada = st.grupos.join(',');
   setupVal(); go('s-val');
 }
 
@@ -1342,24 +1599,21 @@ function nOk() {
   if (st.nList.length < min) {
     alert('Esta modalidade exige ' + min + ' palpite(s).\nAdicionados: ' + st.nList.length); return;
   }
-  // DUQUE/TERNO: envia apenas os primeiros "min" palpites como uma entrada única
-  var lista = (min > 1) ? st.nList.slice(0, min) : st.nList;
-  st.entrada = lista.join(',');
+  if (min > 1 && st.nList.length % min !== 0) {
+    alert('Complete todos os jogos.\n' +
+      (min === 2 ? 'Duque exige palpites de 2 em 2.' : 'Terno exige palpites de 3 em 3.') +
+      '\nAdicionados: ' + st.nList.length); return;
+  }
+  st.entrada = st.nList.join(',');
   setupVal(); go('s-val');
 }
 
 // ─── Teclado Valor ───────────────────────────────────────────────────────────
 function setupVal() {
-  st.val = ''; st.modo = 'd';
+  st.val = ''; st.modoPalpite = 'd'; st.modoRegra = 'd';
   document.getElementById('v-title').textContent = modLabel(st.mod || 'Valor');
   var mx = (st.draw && st.draw.max_value_per_number) || 500;
   document.getElementById('v-mm').textContent = 'Máx/nº: R$ ' + Number(mx).toFixed(2);
-  // Prêmio inicial na barra JBet
-  var jvbPremio = document.getElementById('jvb-premio');
-  if (jvbPremio) {
-    var mult = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
-    jvbPremio.textContent = mult ? mult + 'x' : '–';
-  }
   var jvbFormula = document.getElementById('jvb-formula');
   if (jvbFormula) jvbFormula.textContent = '–';
   updV(); updModo();
@@ -1369,71 +1623,85 @@ function vAdd(c) { st.val += c; updV(); }
 function vCom()  { if (st.val.indexOf(',') < 0) { st.val = (st.val || '0') + ','; updV(); } }
 function vClr()  { st.val = ''; updV(); }
 function vDel()  { if (st.val.length) { st.val = st.val.slice(0,-1); updV(); } }
+function moneyMask(value) {
+  var parsed = parseFloat(String(value || '0').replace(',','.')) || 0;
+  return parsed.toFixed(2).replace('.',',');
+}
 function updV() {
   var v      = parseFloat((st.val || '0').replace(',','.')) || 0;
-  var cm     = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
-  var min    = (st.mod && st.mod.min) ? st.mod.min : 1;
-  var mult   = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
-  var count  = (min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
-
-  var numberList = st.entrada ? st.entrada.split(',') : [''];
-  var rules = numberList.map(function(number) { return modalityRuleForNumber(st.mod, number); });
-  var sameRule = rules.every(function(rule) { return rule === rules[0]; });
-  var rule = rules[0] || cm || 1;
-  var unitDiv = count > 0 ? v / count : 0;
-  var totalDiv = rules.reduce(function(total, itemRule) {
-    return total + (unitDiv / itemRule);
+  var info   = modalityRuleInfo(st.mod, st.entrada);
+  var count  = info.count;
+  var perGameDiv = count <= 1 ? v : v / count;
+  var perGameMul = v;
+  var baseTotalDiv = perGameDiv * count;
+  var baseTotalMul = perGameMul * count;
+  var selectedBaseTotal = st.modoPalpite === 'm' ? baseTotalMul : baseTotalDiv;
+  var totalDiv = selectedBaseTotal;
+  var totalMul = info.rules.reduce(function(sum, rule) {
+    return sum + (st.modoPalpite === 'm' ? perGameMul : perGameDiv) * Math.max(1, rule);
   }, 0);
-  var totalMul = rules.reduce(function(total, itemRule) {
-    return total + (v * itemRule);
-  }, 0);
+  var values = calculatedModeValues(v, st.modoPalpite, st.modoRegra, st.mod, st.entrada);
 
-  var jvbPremio  = document.getElementById('jvb-premio');
   var jvbValor   = document.getElementById('jvb-valor');
+  var jvbIndividualLabel = document.getElementById('jvb-individual-label');
+  var jvbIndividual = document.getElementById('jvb-individual');
   var jvbTotal   = document.getElementById('jvb-total');
+  var ticketTotalBottom = document.getElementById('v-ticket-total');
   var jvbFormula = document.getElementById('jvb-formula');
-  var jvbPrize   = document.getElementById('jvb-prize');
 
-  if (jvbPremio) jvbPremio.textContent = mult ? mult + 'x' : '–';
-  if (jvbValor)  jvbValor.textContent  = (st.val || '0');
+  if (jvbValor)  jvbValor.textContent = moneyMask(st.val);
+  if (jvbIndividualLabel) {
+    jvbIndividualLabel.textContent = individualBetLabel(st.mod);
+  }
 
-  var totalReal = st.modo === 'd' ? totalDiv : totalMul;
+  var totalReal = values.total;
+  var accounting = betAccounting(st.mod, st.entrada, totalReal, values.gameTotals);
+  var previousTotal = totalCustoReal(st.apostas);
+  var ticketTotal = previousTotal + totalReal;
   var totalFmt  = totalReal.toFixed(2).replace('.',',');
-  if (jvbTotal) jvbTotal.textContent = totalFmt;
+  if (jvbIndividual) {
+    jvbIndividual.textContent = accounting.individualAmount.toFixed(2).replace('.',',');
+  }
+  if (jvbTotal) jvbTotal.textContent = ticketTotal.toFixed(2).replace('.',',');
+  if (ticketTotalBottom) {
+    ticketTotalBottom.textContent = 'R$ ' + ticketTotal.toFixed(2).replace('.',',');
+  }
+  renderValueGames(totalReal, accounting, info);
 
   // ── Fórmula legível ───────────────────────────────────────────────────────
   if (jvbFormula) {
     var vFmt    = v.toFixed(2).replace('.',',');
-    var unitFmt = unitDiv.toFixed(2).replace('.',',');
     var f = '';
-    if (st.modo === 'd') {
-      f = '(R$ ' + vFmt + ' ÷ ' + count + ' palpite' + (count > 1 ? 's' : '') + ')';
-      if (sameRule && rule > 1) f += ' ÷ regra ' + rule;
-      f += ' = R$ ' + (unitDiv / rule).toFixed(2).replace('.',',') + '/palpite';
-      if (!sameRule) f += ' (regra variável por permutação)';
-      f += ' · Total R$ ' + totalFmt;
+    if (count <= 1) {
+      f = '1 jogo · Valor-base R$ ' + values.perGameBase.toFixed(2).replace('.',',');
     } else {
-      f = '(R$ ' + vFmt + ' × ' + count + ' palpite' + (count > 1 ? 's' : '') + ')';
-      if (sameRule && rule > 1) f += ' × regra ' + rule;
-      f += ' = R$ ' + totalFmt;
-      if (!sameRule) f += ' (regra variável por permutação)';
+      if (st.modoPalpite === 'm') {
+        f = 'R$ ' + vFmt + ' por jogo × ' + count + ' jogos = R$ ' +
+          values.baseTotal.toFixed(2).replace('.',',');
+      } else {
+        f = 'R$ ' + vFmt + ' ÷ ' + count + ' jogos = R$ ' +
+          values.perGameBase.toFixed(2).replace('.',',') +
+          ' por jogo · Total R$ ' + values.baseTotal.toFixed(2).replace('.',',');
+      }
     }
+    if (info.factor > 1) {
+      var fatorTexto = Number(info.factor.toFixed(4)).toLocaleString('pt-BR');
+      var hasPositionRange = info.inverted &&
+        Number(st.mod && st.mod.charge_multiplier || 1) > 1;
+      var regraTexto = info.variable ? 'fator médio ' :
+        (hasPositionRange ? 'permutações × chances ' :
+          (info.inverted ? 'permutações ' : 'chances '));
+      if (st.modoRegra === 'm') {
+        f += ' × ' + regraTexto + fatorTexto;
+      } else {
+        f += ' · dividido entre ' + regraTexto + fatorTexto +
+          ' = R$ ' + accounting.individualAmount.toFixed(2).replace('.',',') +
+          ' por aposta';
+      }
+    }
+    f += ' · Jogo R$ ' + totalFmt + ' · Bilhete R$ ' +
+      ticketTotal.toFixed(2).replace('.',',');
     jvbFormula.textContent = f;
-  }
-
-  // ── Prêmio potencial ──────────────────────────────────────────────────────
-  if (jvbPrize) {
-    if (mult && v > 0) {
-      // Para dividir: prêmio por nº = unitDiv × mult
-      // Para multiplicar: prêmio por nº = v × mult
-      var amtPerNum = st.modo === 'd' ? unitDiv : v;
-      var prize = amtPerNum * mult;
-      var prizeFmt = prize.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-      jvbPrize.textContent = '🏆 Se ganhar 1 nº: R$ ' + prizeFmt;
-      jvbPrize.style.display = '';
-    } else {
-      jvbPrize.style.display = 'none';
-    }
   }
 
   // v-disp oculto (compat)
@@ -1441,63 +1709,81 @@ function updV() {
   if (vd) vd.textContent = 'R$ ' + (st.val || '0');
 
   // Labels nos botões Dividir/Multiplicar
-  var dtTxt = 'Total: R$ ' + totalDiv.toFixed(2).replace('.',',');
-  if (count > 1 || cm > 1) dtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'P' : '') + ')';
-  var mtTxt = 'Total: R$ ' + totalMul.toFixed(2).replace('.',',');
-  if (count > 1 || cm > 1) mtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'P' : '') + ')';
+  var dtTxt = 'R$ ' + perGameDiv.toFixed(2).replace('.',',') +
+    '/jogo · Total R$ ' + baseTotalDiv.toFixed(2).replace('.',',');
+  var mtTxt = 'R$ ' + perGameMul.toFixed(2).replace('.',',') +
+    '/jogo · Total R$ ' + baseTotalMul.toFixed(2).replace('.',',');
   document.getElementById('v-dt').textContent = dtTxt;
   document.getElementById('v-mt').textContent = mtTxt;
+  document.getElementById('palpite-controle').style.display = count > 1 ? '' : 'none';
+
+  var regraBox = document.getElementById('regra-controle');
+  regraBox.style.display = info.factor > 1 ? '' : 'none';
+  if (info.factor > 1) {
+    var regraNome = info.inverted && Number(st.mod && st.mod.charge_multiplier || 1) > 1
+      ? 'permutações × chances' : (info.inverted ? 'permutações' : 'chances');
+    document.getElementById('regra-titulo').textContent =
+      (count > 1 ? '2. ' : '') + 'Aplicar ' + regraNome + ': fator ' +
+      Number(info.factor.toFixed(4)).toLocaleString('pt-BR');
+    document.getElementById('r-dt').textContent = 'Total: R$ ' + totalDiv.toFixed(2).replace('.',',');
+    document.getElementById('r-mt').textContent = 'Total: R$ ' + totalMul.toFixed(2).replace('.',',');
+  }
 }
 
-function setModo(m) {
-  st.modo = m;
+function setModoPalpite(m) {
+  st.modoPalpite = m;
+  updModo();
+  updV();
+}
+function setModoRegra(m) {
+  st.modoRegra = m;
   updModo();
   updV();
 }
 function updModo() {
-  document.getElementById('m-div').className = 'btn-modo ' + (st.modo === 'd' ? 'm-on' : 'm-off');
-  document.getElementById('m-mul').className = 'btn-modo ' + (st.modo === 'm' ? 'm-on' : 'm-off');
+  document.getElementById('m-div').className = 'btn-modo ' + (st.modoPalpite === 'd' ? 'm-on' : 'm-off');
+  document.getElementById('m-mul').className = 'btn-modo ' + (st.modoPalpite === 'm' ? 'm-on' : 'm-off');
+  document.getElementById('r-div').className = 'btn-modo ' + (st.modoRegra === 'd' ? 'm-on' : 'm-off');
+  document.getElementById('r-mul').className = 'btn-modo ' + (st.modoRegra === 'm' ? 'm-on' : 'm-off');
 }
 function vOk() {
   var v     = parseFloat(st.val.replace(',','.'));
   var mx    = (st.draw && st.draw.max_value_per_number) || 500;
-  var count = (st.entrada ? st.entrada.split(',').length : 1) || 1;
-  // Dividir: cada número recebe v/count → limite por número
-  // Multiplicar: cada número recebe v → limite direto
-  var amtCheck = st.modo === 'd' ? v / count : v;
+  var count = gameEntries(st.mod, st.entrada).length || 1;
+  var calcCheck = calculatedModeValues(
+    v, st.modoPalpite, st.modoRegra, st.mod, st.entrada
+  );
+  var amtCheck = Math.max.apply(Math, calcCheck.gameTotals);
   if (!v || isNaN(v) || v <= 0) {
     alert('Valor inválido. Informe um valor maior que zero.'); return;
   }
   if (amtCheck > mx) {
     alert('Valor por número excede o limite!\nMáx por número: R$ ' + Number(mx).toFixed(2) +
-      '\nCom ' + count + ' número(s) no modo ' + (st.modo === 'd' ? 'Dividir' : 'Multiplicar') +
-      ', o valor por número seria R$ ' + amtCheck.toFixed(2)); return;
+      '\nCom ' + count + ' jogo(s), o valor médio seria R$ ' + amtCheck.toFixed(2)); return;
   }
-  st.apostas.push({ draw: st.draw, mod: st.mod, entrada: st.entrada, valor: v, modo: st.modo });
+  st.apostas.push({
+    draw: st.draw, mod: st.mod, entrada: st.entrada, valor: v,
+    modoPalpite: st.modoPalpite, modoRegra: st.modoRegra
+  });
   // Atualiza linha de resumo no dialog
   var lbl   = modLabel(st.mod);
-  var cm    = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
-  var cnt   = (st.mod && st.mod.min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
-  var real  = calculatedModeTotal(v, st.modo, st.mod, st.entrada);
-  var fEff2 = (st.mod && st.mod.factor && st.mod.factor > 1)
-    ? Number(st.mod.factor) : factorFromBetType(st.mod ? st.mod.bet_type : '');
-  var P2    = fEff2 > 1 ? Math.round(cm / fEff2) : cm;
-  var cmLbl = P2 > 1 ? '1 a ' + P2 + 'P' : '1P';
+  var calc  = calculatedModeValues(v, st.modoPalpite, st.modoRegra, st.mod, st.entrada);
+  var real  = calc.total;
   var dlgLinha = document.getElementById('dlg-resumo-linha');
   if (dlgLinha) {
     var vDlg = v.toFixed(2).replace('.',',');
-    var regraDlg = cm > 1 ? (st.modo === 'd' ? ' ÷ regra ' : ' × regra ') + cm : '';
-    var formulaDlg = st.modo === 'd'
-      ? '((R$ ' + vDlg + ' ÷ ' + cnt + ')' + regraDlg + ') × ' + cnt
-      : '(R$ ' + vDlg + ' × ' + cnt + ')' + regraDlg;
+    var formulaDlg = 'R$ ' + vDlg +
+      (st.modoPalpite === 'm' ? ' × ' : ' ÷ ') + calc.info.count + ' jogo(s)';
+    if (calc.info.factor > 1) {
+      formulaDlg += (st.modoRegra === 'm' ? ' × ' : ' ÷ ') +
+        Number(calc.info.factor.toFixed(4)).toLocaleString('pt-BR');
+    }
     dlgLinha.textContent = lbl + ' → ' + formulaDlg + ' = R$ ' + real.toFixed(2).replace('.',',');
   }
   // Total acumulado
   var totAc = 0;
   st.apostas.forEach(function(a) {
-    var ac = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-    var nc = (a.mod && a.mod.min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
-    totAc += calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
+    totAc += calculatedModeTotal(a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
   });
   document.getElementById('dlg').classList.add('on');
 }
@@ -1513,7 +1799,7 @@ function novoJogo() {
 
 // ─── Resumo ──────────────────────────────────────────────────────────────────
 function totalAposta(a) {
-  return calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
+  return calculatedModeTotal(a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
 }
 
 function totalCustoReal(apostas) {
@@ -1567,18 +1853,17 @@ function buildRsm() {
 
   // ── Lista compacta de jogos ────────────────────────────────────────────
   st.apostas.forEach(function(a, i) {
-    var cm   = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-    var min  = (a.mod && a.mod.min) || 1;
-    var cnt  = (min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
-    var real  = calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
-    // P = contagem real de prêmios (cm já pode embutir F)
-    var fEff  = (a.mod && a.mod.factor && a.mod.factor > 1)
-      ? Number(a.mod.factor) : factorFromBetType(a.mod ? a.mod.bet_type : '');
-    var P     = fEff > 1 ? Math.round(cm / fEff) : cm;
-    var cmLbl = P > 1 ? '1 a ' + P + 'P' : '1P';
+    var calc  = calculatedModeValues(a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
+    var real  = calc.total;
     var vFmt  = a.valor.toFixed(2).replace('.',',');
     var rFmt  = real.toFixed(2).replace('.',',');
-    var forma = cmLbl + ' × R$ ' + vFmt + ' = R$ ' + rFmt;
+    var forma = 'R$ ' + vFmt +
+      (a.modoPalpite === 'm' ? ' × ' : ' ÷ ') + calc.info.count + ' jogo(s)';
+    if (calc.info.factor > 1) {
+      forma += (a.modoRegra === 'm' ? ' × ' : ' ÷ ') +
+        Number(calc.info.factor.toFixed(4)).toLocaleString('pt-BR');
+    }
+    forma += ' = R$ ' + rFmt;
 
     var div = document.createElement('div');
     div.className = 'jogo-item';
@@ -1627,48 +1912,31 @@ function finBilhete() {
   }
   if (!confirm(msgConfirm)) return;
 
-  // Monta bets
+  // Monta bets. A API aplica charge_multiplier automaticamente; por isso o
+  // valor-base enviado é ajustado para que a soma registrada seja exatamente
+  // o total aprovado na tela.
   var bets = [];
   st.apostas.forEach(function(a) {
-    var min = (a.mod && a.mod.min) || 1;
-
-    // bet_type: a API aceita minúsculo (docs usam "milhar_1_5"), enviamos lowercase
+    var games = gameEntries(a.mod, a.entrada);
+    var values = calculatedModeValues(
+      a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada
+    );
+    var desiredTotal = values.total;
+    var accounting = betAccounting(
+      a.mod, a.entrada, desiredTotal, values.gameTotals
+    );
     var btype = (a.mod.bet_type || '').toLowerCase();
 
-    if (min > 1) {
-      // DUQUE/TERNO: entrada inteira é UM bet (ex: "50,73" para duque de dezena)
-      var comboRule = modalityRuleForNumber(a.mod, a.entrada);
-      var comboDesiredValue = a.modo === 'm'
-        ? (a.valor * comboRule)
-        : (a.valor / comboRule);
+    games.forEach(function(game, gameIndex) {
       var bet = {
         draw_id:  a.draw.id,
-        numbers:  a.entrada,
-        amount:   parseFloat((comboDesiredValue / comboRule).toFixed(6)),
+        numbers:  game.trim(),
+        amount:   parseFloat(accounting.unitAmounts[gameIndex].toFixed(6)),
         bet_type: btype
       };
       if (a.mod.multiplier != null) bet.multiplier = Number(a.mod.multiplier);
       bets.push(bet);
-    } else {
-      // Normal: cada número → bet separado
-      var nums   = a.entrada ? a.entrada.split(',') : [''];
-      var count  = nums.length;
-      nums.forEach(function(num, idx) {
-        var gameRule = modalityRuleForNumber(a.mod, num.trim());
-        var desiredValue = a.modo === 'm'
-          ? (a.valor * gameRule)
-          : ((a.valor / count) / gameRule);
-        var amt = desiredValue / gameRule;
-        var bet = {
-          draw_id:  a.draw.id,
-          numbers:  num.trim(),
-          amount:   parseFloat(amt.toFixed(6)),
-          bet_type: btype
-        };
-        if (a.mod.multiplier != null) bet.multiplier = Number(a.mod.multiplier);
-        bets.push(bet);
-      });
-    }
+    });
   });
 
   // customer_phone: opcional nos docs, enviamos quando disponível
@@ -2018,14 +2286,13 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
     var mergedOrder = [];
     g.items.forEach(function(a) {
       var bt  = (a.mod && a.mod.bet_type) ? a.mod.bet_type.toLowerCase() : prizeLabel(a);
-      var cm  = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-      var min = (a.mod && a.mod.min) || 1;
-      var cnt = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
-      var f   = (a.mod && a.mod.factor) ? Number(a.mod.factor) : 1;
       var v   = Number(a.valor);
-      var tot = calculatedModeTotal(v, a.modo, a.mod, a.entrada);
+      var tot = calculatedModeTotal(v, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
       if (!mergedMap[bt]) {
-        mergedMap[bt] = { plabel: prizeLabel(a), valor: 0, totBet: 0, _cm: cm, _count: cnt, _factor: f, _modo: a.modo };
+        mergedMap[bt] = {
+          plabel: prizeLabel(a), valor: 0, totBet: 0,
+          _modoPalpite: a.modoPalpite, _modoRegra: a.modoRegra
+        };
         mergedOrder.push(bt);
       }
       mergedMap[bt].valor  += v;
@@ -2034,27 +2301,10 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
 
     mergedOrder.forEach(function(bt) {
       var m   = mergedMap[bt];
-      var cm2   = mergedMap[bt]._cm || 1;
-      var cnt   = mergedMap[bt]._count || 1;
-      var fac   = mergedMap[bt]._factor || 1;
-      var modo2 = mergedMap[bt]._modo || 'd';
-      // Extrai contagem real de prêmios P (evita "1 a 20P" quando cm=P×F)
-      var P = (function() {
-        var pl = m.plabel || '';
-        // "1 a 10 prêmios" ou "ao 10" → captura X
-        var ma = pl.match(/(?:a|ao)\s*(\d+)/i);
-        if (ma) return parseInt(ma[1]);
-        // "1/10P" → captura 10
-        var mb = pl.match(/\/(\d+)\s*[Pp]/);
-        if (mb) return parseInt(mb[1]);
-        // Fallback: divide cm pelo fator (API ou inferido do bet_type)
-        var fEff = fac > 1 ? fac : factorFromBetType(bt);
-        return fEff > 1 ? Math.round(cm2 / fEff) : cm2;
-      })();
-      var cmLbl = P > 1 ? '1 a ' + P + 'P' : '1P';
       var totalDisp = m.totBet;
-      t += (modo2 === 'm' ? 'MULTIPLICAR' : 'DIVIDIR') +
-        ' · regra ' + cmLbl + ' aplicada = ' + brNum(totalDisp) + '\n';
+      t += 'PALPITES ' + (m._modoPalpite === 'm' ? 'MULTIPLICAR' : 'DIVIDIR') +
+        ' · REGRA ' + (m._modoRegra === 'm' ? 'MULTIPLICAR' : 'DIVIDIR') +
+        ' = ' + brNum(totalDisp) + '\n';
     });
 
     t += SEP + '\n';
