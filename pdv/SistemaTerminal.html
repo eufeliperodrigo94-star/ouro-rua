@@ -90,6 +90,19 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   -webkit-appearance: none; color: #1B4332;
 }
 .login-inp:focus { border-color: #1B4332; }
+.login-pass-wrap {
+  position: relative; width: 100%; margin-bottom: 14px;
+}
+.login-pass-wrap .login-inp {
+  margin-bottom: 0; padding-right: 54px;
+}
+.login-pass-toggle {
+  position: absolute; top: 0; right: 0; width: 52px; height: 52px;
+  border: 0; background: transparent; color: #1B4332; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; padding: 0;
+}
+.login-pass-toggle svg { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 2; }
+.login-version { margin-top: 14px; color: #888; font-size: 12px; }
 .btn-login {
   width: 100%; height: 54px; background: #1B4332; color: #D4A017;
   border: none; border-radius: 10px; font-size: 18px; font-weight: 700; cursor: pointer;
@@ -410,11 +423,17 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <div class="login-title">Acesso do Operador</div>
     <div class="login-sub">Digite seu telefone e senha</div>
     <div class="login-label">Telefone</div>
-    <input id="inp-phone" class="login-inp" type="tel" placeholder="Ex: 83999990001" inputmode="tel" autocomplete="off">
+    <input id="inp-phone" class="login-inp" type="tel" value="11999990002" placeholder="Ex: 83999990001" inputmode="tel" autocomplete="off">
     <div class="login-label">Senha</div>
-    <input id="inp-pass" class="login-inp" type="password" placeholder="••••••••" autocomplete="off">
+    <div class="login-pass-wrap">
+      <input id="inp-pass" class="login-inp" type="password" value="adm123456" placeholder="••••••••" autocomplete="off">
+      <button id="btn-pass-toggle" class="login-pass-toggle" type="button" onclick="toggleLoginPassword()" aria-label="Mostrar senha" title="Mostrar senha">
+        <svg id="ico-pass-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
+    <div class="login-version">versão 5.4 · TESTE</div>
   </div>
 </div>
 
@@ -441,7 +460,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 1.0 · MonteDeOuroPOS</div>
+    <div class="ver">versão 5.4 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -688,8 +707,8 @@ function gerarTicketCode() {
   return 'SO-' + ts + '-' + rnd;
 }
 
-// ─── Compatibilidade: api() e apiPublic() redirecionam para Supabase ──────────
-function api(path, opts) {
+// ─── Adaptador legado do Supabase (mantido apenas como referência) ───────────
+function supabaseApi(path, opts) {
   opts = opts || {};
   var method = opts.method || 'GET';
   var body   = opts.body ? JSON.parse(opts.body) : undefined;
@@ -808,13 +827,64 @@ function api(path, opts) {
   return Promise.reject(new Error('Rota não mapeada: ' + path));
 }
 
-function apiPublic(path) { return api(path, {}); }
+function supabaseApiPublic(path) { return supabaseApi(path, {}); }
 
 function toArray(data) {
   if (!data) return [];
   if (Array.isArray(data)) return data;
   if (data.results && Array.isArray(data.results)) return data.results;
   return [];
+}
+
+// API oficial do projeto Sorte Ouro. Estas declarações substituem o adaptador
+// Supabase acima sem alterar as telas e recursos próprios do ouro-rua.
+var API = 'https://webapp414930.ip-45-79-2-160.cloudezapp.io/api';
+
+function api(path, opts) {
+  opts = opts || {};
+  var token = localStorage.getItem('token');
+  var headers = { 'Content-Type': 'application/json' };
+  if (token) headers.Authorization = 'Bearer ' + token;
+
+  return fetch(API + path, {
+    method: opts.method || 'GET',
+    headers: headers,
+    body: opts.body || undefined
+  }).then(function(res) {
+    return res.text().then(function(text) {
+      var data = null;
+      try { data = JSON.parse(text); } catch(e) {}
+      if (res.status === 401) {
+        if (!opts.noAutoLogout) logout();
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
+      if (res.status === 403) throw new Error('Conta desativada. Contate o administrador.');
+      if (!res.ok) {
+        throw new Error((data && (data.error || data.detail || data.message)) || ('Erro HTTP ' + res.status));
+      }
+      return data;
+    });
+  }, function() {
+    throw new Error('Sem conexão com a API Sorte Ouro.');
+  });
+}
+
+function apiPublic(path) {
+  return fetch(API + path, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' }
+  }).then(function(res) {
+    return res.text().then(function(text) {
+      var data = null;
+      try { data = JSON.parse(text); } catch(e) {}
+      if (!res.ok) {
+        throw new Error((data && (data.error || data.detail || data.message)) || ('Erro HTTP ' + res.status));
+      }
+      return data;
+    });
+  }, function() {
+    throw new Error('Sem conexão com a API Sorte Ouro.');
+  });
 }
 
 // ─── Estado ───────────────────────────────────────────────────────────────────
@@ -842,8 +912,9 @@ function pad(n) { return n < 10 ? '0'+n : ''+n; }
 
 // Restaura sessão
 (function() {
+  var token = localStorage.getItem('token');
   var user = localStorage.getItem('user');
-  if (user) {
+  if (token && user) {
     try {
       st.user = JSON.parse(user);
       if (st.user && st.user.id) { updateUI(); go('s-main'); }
@@ -852,6 +923,15 @@ function pad(n) { return n < 10 ? '0'+n : ''+n; }
 })();
 
 // ─── Login ────────────────────────────────────────────────────────────────────
+function toggleLoginPassword() {
+  var input = document.getElementById('inp-pass');
+  var button = document.getElementById('btn-pass-toggle');
+  var showing = input.type === 'text';
+  input.type = showing ? 'password' : 'text';
+  button.setAttribute('aria-label', showing ? 'Mostrar senha' : 'Ocultar senha');
+  button.setAttribute('title', showing ? 'Mostrar senha' : 'Ocultar senha');
+}
+
 function doLogin() {
   var phone = document.getElementById('inp-phone').value.trim();
   var pass  = document.getElementById('inp-pass').value;
@@ -863,10 +943,12 @@ function doLogin() {
   btn.disabled = true; btn.textContent = 'Entrando...';
   api('/login', { method: 'POST', body: JSON.stringify({ phone: phone, password: pass }) })
     .then(function(data) {
+      localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
       st.user = data.user;
       updateUI();
-      document.getElementById('inp-pass').value = '';
+      // Versão de teste: mantém a credencial preenchida para agilizar novos acessos.
+      document.getElementById('inp-pass').value = 'adm123456';
       go('s-main');
     })
     .catch(function(e) { errEl.textContent = e.message; })
@@ -874,8 +956,11 @@ function doLogin() {
 }
 
 function logout() {
+  localStorage.removeItem('token');
   localStorage.removeItem('user');
   st.user = null; st.apostas = [];
+  document.getElementById('inp-phone').value = '11999990002';
+  document.getElementById('inp-pass').value = 'adm123456';
   go('s-login');
 }
 
@@ -1008,6 +1093,54 @@ function factorFromBetType(bt) {
   // Cercado cobre 3 posições → F=3
   if (b.indexOf('CERCADO') >= 0) return 3;
   return 1;
+}
+
+// Quantidade de permutações ordenadas únicas, sem contar resultados repetidos.
+function uniqueOrderedCount(value, size) {
+  var digits = String(value || '').replace(/\D/g, '').split('');
+  if (!size || digits.length < size) return 0;
+  var found = {};
+  function walk(prefix, remaining) {
+    if (prefix.length === size) { found[prefix] = true; return; }
+    var used = {};
+    for (var i = 0; i < remaining.length; i++) {
+      if (used[remaining[i]]) continue;
+      used[remaining[i]] = true;
+      var next = remaining.slice();
+      var digit = next.splice(i, 1)[0];
+      walk(prefix + digit, next);
+    }
+  }
+  walk('', digits);
+  return Object.keys(found).length;
+}
+
+// Regra aplicada pela API: posições da modalidade × permutações (nas invertidas).
+function modalityRuleForNumber(mod, number) {
+  var positions = (mod && mod.charge_multiplier) ? Number(mod.charge_multiplier) : 1;
+  var bt = String(mod && mod.bet_type || '').toUpperCase().replace(/-/g, '_');
+  if (bt.indexOf('INVERTID') < 0) return positions > 0 ? positions : 1;
+  var permutations;
+  if (bt.indexOf('MILHAR') >= 0 && bt.indexOf('CENTENA') >= 0) {
+    permutations = uniqueOrderedCount(number, 4) + uniqueOrderedCount(number, 3);
+  } else if (bt.indexOf('MILHAR') >= 0) {
+    permutations = uniqueOrderedCount(number, 4);
+  } else {
+    permutations = uniqueOrderedCount(number, 3);
+  }
+  return Math.max(1, permutations) * Math.max(1, positions);
+}
+
+function calculatedModeTotal(value, mode, mod, entry) {
+  var min = (mod && mod.min) || 1;
+  var numbers = min > 1 ? [entry || ''] : (entry ? entry.split(',') : ['']);
+  var count = numbers.length || 1;
+  var total = 0;
+  numbers.forEach(function(number) {
+    var rule = modalityRuleForNumber(mod, number);
+    total += mode === 'm' ? (value * rule) : ((value / count) / rule);
+  });
+  return total;
 }
 
 function modInfo(bt) {
@@ -1241,20 +1374,22 @@ function vDel()  { if (st.val.length) { st.val = st.val.slice(0,-1); updV(); } }
 function updV() {
   var v      = parseFloat((st.val || '0').replace(',','.')) || 0;
   var cm     = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
-  var factor = (st.mod && st.mod.factor && st.mod.factor > 1)
-    ? Number(st.mod.factor)
-    : factorFromBetType(st.mod ? st.mod.bet_type : '');
   var min    = (st.mod && st.mod.min) ? st.mod.min : 1;
   var mult   = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
   var count  = (min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
 
-  // ── Fórmula: TOTAL = N × P × F × VALOR ───────────────────────────────────
-  // Dividir  : usuário entra com TOTAL → unit = TOTAL ÷ (N × P × F)
-  //            amount enviado à API = unit (API aplica P)
-  // Multiplicar: usuário entra por palpite → TOTAL = v × N × P
-  var unitDiv = (count > 0 && cm > 0 && factor > 0) ? v / count / cm / factor : 0;
-  var totalDiv = v;                   // total dividir = o que o usuário digitou
-  var totalMul = v * count * cm;      // total multiplicar
+  var numberList = st.entrada ? st.entrada.split(',') : [''];
+  var rules = numberList.map(function(number) { return modalityRuleForNumber(st.mod, number); });
+  var sameRule = rules.every(function(rule) { return rule === rules[0]; });
+  var rule = rules[0] || cm || 1;
+  // Dividir divide pela regra; Multiplicar multiplica pela regra.
+  var unitDiv = count > 0 ? v / count : 0;
+  var totalDiv = rules.reduce(function(total, itemRule) {
+    return total + (unitDiv / itemRule);
+  }, 0);
+  var totalMul = rules.reduce(function(total, itemRule) {
+    return total + (v * itemRule);
+  }, 0);
 
   var jvbPremio  = document.getElementById('jvb-premio');
   var jvbValor   = document.getElementById('jvb-valor');
@@ -1275,15 +1410,16 @@ function updV() {
     var unitFmt = unitDiv.toFixed(2).replace('.',',');
     var f = '';
     if (st.modo === 'd') {
-      f = 'R$ ' + vFmt;
-      if (count > 1)  f += ' ÷ ' + count + 'nº';
-      if (cm > 1)     f += ' ÷ ' + cm + 'P';
-      if (factor > 1) f += ' ÷ ' + factor + 'F';
-      f += ' = R$ ' + unitFmt + '/un';
+      f = '(R$ ' + vFmt + ' ÷ ' + count + ' palpite' + (count > 1 ? 's' : '') + ')';
+      if (sameRule && rule > 1) f += ' ÷ regra ' + rule;
+      f += ' = R$ ' + (unitDiv / rule).toFixed(2).replace('.',',') + '/palpite';
+      if (!sameRule) f += ' (regra variável por permutação)';
+      f += ' · Total R$ ' + totalFmt;
     } else {
-      f = count > 1 ? count + 'nº × R$ ' + vFmt : 'R$ ' + vFmt;
-      if (cm > 1) f += ' × ' + cm + 'P';
+      f = '(R$ ' + vFmt + ' × ' + count + ' palpite' + (count > 1 ? 's' : '') + ')';
+      if (sameRule && rule > 1) f += ' × regra ' + rule;
       f += ' = R$ ' + totalFmt;
+      if (!sameRule) f += ' (regra variável por permutação)';
     }
     jvbFormula.textContent = f;
   }
@@ -1316,7 +1452,11 @@ function updV() {
   document.getElementById('v-mt').textContent = mtTxt;
 }
 
-function setModo(m) { st.modo = m; updModo(); }
+function setModo(m) {
+  st.modo = m;
+  updModo();
+  updV();
+}
 function updModo() {
   document.getElementById('m-div').className = 'btn-modo ' + (st.modo === 'd' ? 'm-on' : 'm-off');
   document.getElementById('m-mul').className = 'btn-modo ' + (st.modo === 'm' ? 'm-on' : 'm-off');
@@ -1341,19 +1481,26 @@ function vOk() {
   var lbl   = modLabel(st.mod);
   var cm    = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
   var cnt   = (st.mod && st.mod.min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
-  var real  = st.modo === 'd' ? v : (v * cnt * cm);
+  var real  = calculatedModeTotal(v, st.modo, st.mod, st.entrada);
   var fEff2 = (st.mod && st.mod.factor && st.mod.factor > 1)
     ? Number(st.mod.factor) : factorFromBetType(st.mod ? st.mod.bet_type : '');
   var P2    = fEff2 > 1 ? Math.round(cm / fEff2) : cm;
   var cmLbl = P2 > 1 ? '1 a ' + P2 + 'P' : '1P';
   var dlgLinha = document.getElementById('dlg-resumo-linha');
-  if (dlgLinha) dlgLinha.textContent = lbl + ' → ' + cmLbl + ' × R$ ' + v.toFixed(2).replace('.',',') + ' = R$ ' + real.toFixed(2).replace('.',',');
+  if (dlgLinha) {
+    var vDlg = v.toFixed(2).replace('.',',');
+    var regraDlg = cm > 1 ? (st.modo === 'd' ? ' ÷ regra ' : ' × regra ') + cm : '';
+    var formulaDlg = st.modo === 'd'
+      ? '((R$ ' + vDlg + ' ÷ ' + cnt + ')' + regraDlg + ') × ' + cnt
+      : '(R$ ' + vDlg + ' × ' + cnt + ')' + regraDlg;
+    dlgLinha.textContent = lbl + ' → ' + formulaDlg + ' = R$ ' + real.toFixed(2).replace('.',',');
+  }
   // Total acumulado
   var totAc = 0;
   st.apostas.forEach(function(a) {
     var ac = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
     var nc = (a.mod && a.mod.min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
-    totAc += a.modo === 'd' ? (a.valor * ac) : (a.valor * nc * ac);
+    totAc += calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
   });
   document.getElementById('dlg').classList.add('on');
 }
@@ -1369,12 +1516,7 @@ function novoJogo() {
 
 // ─── Resumo ──────────────────────────────────────────────────────────────────
 function totalAposta(a) {
-  // Dividir: a.valor já É o total que o usuário quer pagar
-  // Multiplicar: a.valor é por palpite → total = v × count × cm
-  var min   = (a.mod && a.mod.min) || 1;
-  var count = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
-  var cm    = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-  return a.modo === 'm' ? (a.valor * count * cm) : a.valor;
+  return calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
 }
 
 function totalCustoReal(apostas) {
@@ -1431,8 +1573,7 @@ function buildRsm() {
     var cm   = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
     var min  = (a.mod && a.mod.min) || 1;
     var cnt  = (min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
-    // dividir: total = a.valor; multiplicar: total = v × N × cm
-    var real  = a.modo === 'd' ? a.valor : (a.valor * cnt * cm);
+    var real  = calculatedModeTotal(a.valor, a.modo, a.mod, a.entrada);
     // P = contagem real de prêmios (cm já pode embutir F)
     var fEff  = (a.mod && a.mod.factor && a.mod.factor > 1)
       ? Number(a.mod.factor) : factorFromBetType(a.mod ? a.mod.bet_type : '');
@@ -1499,10 +1640,14 @@ function finBilhete() {
 
     if (min > 1) {
       // DUQUE/TERNO: entrada inteira é UM bet (ex: "50,73" para duque de dezena)
+      var comboRule = modalityRuleForNumber(a.mod, a.entrada);
+      var comboDesiredValue = a.modo === 'm'
+        ? (a.valor * comboRule)
+        : (a.valor / comboRule);
       var bet = {
         draw_id:  a.draw.id,
         numbers:  a.entrada,
-        amount:   parseFloat(a.valor.toFixed(2)),
+        amount:   parseFloat((comboDesiredValue / comboRule).toFixed(6)),
         bet_type: btype
       };
       if (a.mod.multiplier != null) bet.multiplier = Number(a.mod.multiplier);
@@ -1511,25 +1656,17 @@ function finBilhete() {
       // Normal: cada número → bet separado
       var nums   = a.entrada ? a.entrada.split(',') : [''];
       var count  = nums.length;
-      var cm     = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-      var factor = (a.mod && a.mod.factor && a.mod.factor > 1)
-        ? Number(a.mod.factor)
-        : factorFromBetType(a.mod ? a.mod.bet_type : '');
-      // Dividir: TOTAL ÷ N ÷ P ÷ F → amount por bet enviado à API
-      // (API aplica P e F → restaura TOTAL ✓)
-      // Multiplicar: usuário entrou por palpite → amount = v direto
-      var amtPer = a.modo === 'd'
-        ? Math.floor((a.valor / count / cm / factor) * 10000) / 10000
-        : a.valor;
-      var resto  = a.modo === 'd'
-        ? parseFloat((a.valor / cm / factor - amtPer * count).toFixed(4))
-        : 0;
       nums.forEach(function(num, idx) {
-        var amt = amtPer + (idx === nums.length - 1 ? resto : 0);
+        var gameRule = modalityRuleForNumber(a.mod, num.trim());
+        var desiredValue = a.modo === 'm'
+          ? (a.valor * gameRule)
+          : ((a.valor / count) / gameRule);
+        // A API multiplica pela regra: convertemos o total desejado em valor-base.
+        var amt = desiredValue / gameRule;
         var bet = {
           draw_id:  a.draw.id,
           numbers:  num.trim(),
-          amount:   parseFloat(amt.toFixed(2)),
+          amount:   parseFloat(amt.toFixed(6)),
           bet_type: btype
         };
         if (a.mod.multiplier != null) bet.multiplier = Number(a.mod.multiplier);
@@ -1576,8 +1713,7 @@ function finBilhete() {
         det += (i+1) + '. ' + modLabel(a.mod) +
           '\n   Nº: ' + a.entrada +
           (min > 1 ? ' (combo ' + min + ' em 1 bet)' : ' (' + c + ' bet(s))') +
-          '\n   Valor: R$ ' + tot.toFixed(2) +
-          (cm > 1 ? ' | Custo real: R$ ' + (tot * cm).toFixed(2) : '') +
+          '\n   Valor total: R$ ' + tot.toFixed(2) +
           '\n   Sorteio: ' + a.draw.title + '\n';
       });
 
@@ -1889,10 +2025,7 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
       var cnt = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
       var f   = (a.mod && a.mod.factor) ? Number(a.mod.factor) : 1;
       var v   = Number(a.valor);
-      // total real:
-      //   dividir     → v (é o total que o usuário quer pagar)
-      //   multiplicar → v × cnt × cm
-      var tot = a.modo === 'd' ? v : (v * cnt * cm);
+      var tot = calculatedModeTotal(v, a.modo, a.mod, a.entrada);
       if (!mergedMap[bt]) {
         mergedMap[bt] = { plabel: prizeLabel(a), valor: 0, totBet: 0, _cm: cm, _count: cnt, _factor: f, _modo: a.modo };
         mergedOrder.push(bt);
@@ -1921,17 +2054,9 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
         return fEff > 1 ? Math.round(cm2 / fEff) : cm2;
       })();
       var cmLbl = P > 1 ? '1 a ' + P + 'P' : '1P';
-      // Multiplicar: unit = valor/palpite (a.valor), total = valor × N × cm
-      // Dividir:     unit = total ÷ (N × P × F), total = valor digitado
-      var unit, totalDisp;
-      if (modo2 === 'm') {
-        unit      = cnt > 0 ? m.valor / cnt : m.valor; // m.valor = soma de a.valor (por palpite) → por nº
-        totalDisp = m.totBet;
-      } else {
-        unit      = (cnt > 0 && cm2 > 0 && fac > 0) ? m.valor / cnt / cm2 / fac : m.valor;
-        totalDisp = m.valor;
-      }
-      t += cmLbl + ' x ' + brNum(unit) + ' = ' + brNum(totalDisp) + '\n';
+      var totalDisp = m.totBet;
+      t += (modo2 === 'm' ? 'MULTIPLICAR' : 'DIVIDIR') +
+        ' · regra ' + cmLbl + ' aplicada = ' + brNum(totalDisp) + '\n';
     });
 
     t += SEP + '\n';
