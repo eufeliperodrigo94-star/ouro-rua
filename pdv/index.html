@@ -163,6 +163,18 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 }
 .msg-load { text-align: center; color: #888; padding: 24px; font-size: 14px; }
 .msg-err  { text-align: center; color: #C62828; padding: 20px; font-size: 14px; line-height: 1.6; }
+.tipo-search-wrap {
+  padding: 10px 10px 2px; background: #F4F7F4;
+  -webkit-flex-shrink: 0; flex-shrink: 0;
+}
+.tipo-search {
+  width: 100%; height: 44px; box-sizing: border-box;
+  border: 2px solid #C8E6C9; border-radius: 10px;
+  background: #FFF; color: #1B4332; font-size: 15px;
+  padding: 0 13px; outline: none;
+}
+.tipo-search:focus { border-color: #2E7D32; }
+.tipo-empty { display:none; text-align:center; color:#777; padding:24px 12px; font-size:14px; }
 
 /* ══════════ GRUPO ══════════ */
 .g-display {
@@ -349,6 +361,36 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .dlg-msg   { font-size: 14px; color: #555; margin-bottom: 18px; line-height: 1.5; }
 .dlg-btns  { display: -webkit-flex; display: flex; -webkit-justify-content: flex-end; justify-content: flex-end; }
 .dlg-btns button { background: none; border: none; font-size: 14px; font-weight: 700; color: #1B4332; cursor: pointer; padding: 4px 8px; letter-spacing: .5px; text-transform: uppercase; }
+.conf-grid {
+  margin: 10px 0 16px; border-top: 1px solid #E0E0E0;
+  max-height: 62vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+}
+.conf-row {
+  display:-webkit-flex; display:flex; -webkit-justify-content:space-between; justify-content:space-between;
+  gap:12px; padding:9px 0; border-bottom:1px solid #EEEEEE; font-size:13px;
+}
+.conf-row span:first-child { color:#777; }
+.conf-row span:last-child { color:#1B4332; font-weight:700; text-align:right; word-break:break-word; }
+.conf-group { margin-top:12px; }
+.conf-group:first-child { margin-top:0; }
+.conf-group-title {
+  color:#1B4332; font-size:14px; font-weight:800;
+  padding:7px 0; border-bottom:2px solid #C8E6C9;
+}
+.conf-bet-row, .conf-subtotal, .conf-total {
+  display:-webkit-flex; display:flex; -webkit-justify-content:space-between; justify-content:space-between;
+  gap:12px; padding:8px 0; font-size:13px;
+}
+.conf-bet-row { border-bottom:1px solid #EEEEEE; color:#444; }
+.conf-bet-row span:last-child { color:#1565C0; font-weight:700; white-space:nowrap; }
+.conf-subtotal { color:#1B4332; font-weight:800; border-top:1px solid #C8E6C9; }
+.conf-total {
+  margin-top:14px; padding:12px 0 4px; border-top:3px solid #D4A017;
+  color:#1B4332; font-size:16px; font-weight:900;
+}
+.conf-total span:last-child { color:#D4A017; font-size:18px; }
+.jogo-item { cursor:pointer; }
+.jogo-item:active { background:#E8F5E9; }
 
 /* ══════════ TICKET ══════════ */
 .ticket-dlg  { background: #FFF; border-radius: 10px; padding: 14px 14px 10px; margin: 12px; width: calc(100% - 24px); max-height: 92vh; overflow-y: auto; }
@@ -471,7 +513,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 6.4 · TESTE</div>
+    <div class="login-version">versão 6.9 · TESTE</div>
   </div>
 </div>
 
@@ -498,7 +540,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 6.4 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 6.9 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -515,7 +557,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <span id="tipo-hdr">Tipo de Jogo</span>
     <span></span>
   </div>
+  <div class="tipo-search-wrap">
+    <input id="tipo-search" class="tipo-search" type="search"
+      placeholder="Buscar modalidade..." autocomplete="off"
+      oninput="filterMods(this.value)">
+  </div>
   <div class="scroll-y lst-pad" id="list-tipo"></div>
+  <div class="tipo-empty" id="tipo-empty">Nenhuma modalidade encontrada.</div>
 </div>
 
 <!-- ═══════════ GRUPO ═══════════ -->
@@ -672,7 +720,20 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
         <button onclick="novoJogo()" style="color:#388E3C">+ NOVO JOGO</button>
         <button onclick="clonar()" style="color:#1565C0">REPETIR</button>
       </div>
-      <button onclick="finAp()" style="color:#E53935">FINALIZAR →</button>
+      <button onclick="finAp()" style="color:#E53935">FINALIZAR / IMPRIMIR →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de conferência do jogo no bilhete -->
+<div class="dlg-bg" id="dlg-conf" onclick="closeGameConference(event)">
+  <div class="dlg" onclick="event.stopPropagation()">
+    <div class="dlg-title" id="conf-title">Conferência do bilhete</div>
+    <div class="conf-grid" id="conf-grid"></div>
+    <div class="dlg-btns" style="gap:10px">
+      <button id="conf-back" onclick="closeGameConference()">Voltar</button>
+      <button id="conf-confirm" onclick="confirmCurrentBet()"
+        style="display:none;background:#2E7D32;color:#FFF;border-radius:7px;padding:9px 14px">Confirmar</button>
     </div>
   </div>
 </div>
@@ -1074,6 +1135,10 @@ function loadDraws() {
 // ─── Modalidades ─────────────────────────────────────────────────────────────
 function loadMods() {
   var el = document.getElementById('list-tipo');
+  var search = document.getElementById('tipo-search');
+  if (search) search.value = '';
+  var empty = document.getElementById('tipo-empty');
+  if (empty) empty.style.display = 'none';
   el.innerHTML = '<div class="msg-load">Carregando modalidades...</div>';
   document.getElementById('tipo-hdr').textContent = (st.draw && st.draw.title) || 'Tipo de Jogo';
 
@@ -1109,6 +1174,9 @@ function loadMods() {
       };
       var btn  = document.createElement('button');
       btn.className = 'btn-tipo';
+      btn.setAttribute('data-search', normalizeSearch(
+        (mod.label || modLabel(mod)) + ' ' + (mod.bet_type || '')
+      ));
       var mult = mod.multiplier ? Number(mod.multiplier).toLocaleString('pt-BR') + 'x' : '';
       var cm   = (mod.charge_multiplier && Number(mod.charge_multiplier) > 1)
         ? ' <span style="font-size:11px;color:#FFA726">×' + Number(mod.charge_multiplier) + ' sorteios</span>' : '';
@@ -1302,6 +1370,27 @@ function detailedMoney(value) {
   });
 }
 
+function normalizeSearch(value) {
+  var text = String(value || '').toLowerCase();
+  if (text.normalize) {
+    text = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+  return text;
+}
+
+function filterMods(value) {
+  var query = normalizeSearch(value).trim();
+  var buttons = document.querySelectorAll('#list-tipo .btn-tipo');
+  var visible = 0;
+  for (var i = 0; i < buttons.length; i++) {
+    var match = !query || (buttons[i].getAttribute('data-search') || '').indexOf(query) >= 0;
+    buttons[i].style.display = match ? '' : 'none';
+    if (match) visible++;
+  }
+  var empty = document.getElementById('tipo-empty');
+  if (empty) empty.style.display = buttons.length && !visible ? 'block' : 'none';
+}
+
 function individualBetLabel(mod) {
   var bt = String(mod && mod.bet_type || '').toUpperCase().replace(/-/g, '_');
   if (/_1_10$/.test(bt)) return 'R$ por aposta (1º ao 10º)';
@@ -1352,7 +1441,10 @@ function renderValueGames(total, accounting, info) {
       rows.push({
         number: item.number,
         value: accounting.unitAmounts[item.gameIndex] * positions,
-        suffix: positions > 1 ? ' (' + positions + ' chances)' : ''
+        suffix: positions > 1 ? ' (' + positions + ' chances)' : '',
+        gameIndex: item.gameIndex,
+        source: item.source,
+        permutation: true
       });
     });
     var sameUnit = accounting.unitAmounts.every(function(amount) {
@@ -1369,7 +1461,10 @@ function renderValueGames(total, accounting, info) {
         number: game.replace(/,/g, ' + '),
         value: accounting.gameTotals[index],
         suffix: accounting.divisors[index] > 1
-          ? ' (' + accounting.divisors[index] + ' chances)' : ''
+          ? ' (' + accounting.divisors[index] + ' chances)' : '',
+        gameIndex: index,
+        source: game,
+        permutation: false
       });
     });
     foot.textContent = rows.length + ' jogo' + (rows.length === 1 ? '' : 's') +
@@ -1379,6 +1474,10 @@ function renderValueGames(total, accounting, info) {
   rows.forEach(function(item) {
     var row = document.createElement('div');
     row.className = 'valor-jogo-row';
+    row.style.cursor = 'pointer';
+    row.onclick = (function(selected) {
+      return function() { openValueConference(selected, total, accounting, info); };
+    })(item);
     var number = document.createElement('span');
     number.className = 'vj-num';
     number.textContent = item.number;
@@ -1761,30 +1860,41 @@ function vOk() {
     alert('Valor por número excede o limite!\nMáx por número: R$ ' + Number(mx).toFixed(2) +
       '\nCom ' + count + ' jogo(s), o valor médio seria R$ ' + amtCheck.toFixed(2)); return;
   }
-  st.apostas.push({
+  st._pendingBet = {
     draw: st.draw, mod: st.mod, entrada: st.entrada, valor: v,
     modoPalpite: st.modoPalpite, modoRegra: st.modoRegra
-  });
+  };
+  openBetsConference(
+    st.apostas.concat([st._pendingBet]),
+    'Confira antes de confirmar',
+    true
+  );
+}
+
+function confirmCurrentBet() {
+  var pending = st._pendingBet;
+  if (!pending) return;
+  st._pendingBet = null;
+  document.getElementById('dlg-conf').classList.remove('on');
+  st.apostas.push(pending);
   // Atualiza linha de resumo no dialog
-  var lbl   = modLabel(st.mod);
-  var calc  = calculatedModeValues(v, st.modoPalpite, st.modoRegra, st.mod, st.entrada);
+  var lbl   = modLabel(pending.mod);
+  var calc  = calculatedModeValues(
+    pending.valor, pending.modoPalpite, pending.modoRegra, pending.mod, pending.entrada
+  );
   var real  = calc.total;
   var dlgLinha = document.getElementById('dlg-resumo-linha');
   if (dlgLinha) {
-    var vDlg = v.toFixed(2).replace('.',',');
+    var vDlg = pending.valor.toFixed(2).replace('.',',');
     var formulaDlg = 'R$ ' + vDlg +
-      (st.modoPalpite === 'm' ? ' × ' : ' ÷ ') + calc.info.count + ' jogo(s)';
+      (pending.modoPalpite === 'm' ? ' × ' : ' ÷ ') + calc.info.count + ' jogo(s)';
     if (calc.info.factor > 1) {
-      formulaDlg += (st.modoRegra === 'm' ? ' × ' : ' ÷ ') +
+      formulaDlg += (pending.modoRegra === 'm' ? ' × ' : ' ÷ ') +
         Number(calc.info.factor.toFixed(4)).toLocaleString('pt-BR');
     }
     dlgLinha.textContent = lbl + ' → ' + formulaDlg + ' = R$ ' + real.toFixed(2).replace('.',',');
   }
   // Total acumulado
-  var totAc = 0;
-  st.apostas.forEach(function(a) {
-    totAc += calculatedModeTotal(a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
-  });
   document.getElementById('dlg').classList.add('on');
 }
 function clonar() { document.getElementById('dlg').classList.remove('on'); st.val = ''; updV(); }
@@ -1867,15 +1977,204 @@ function buildRsm() {
 
     var div = document.createElement('div');
     div.className = 'jogo-item';
+    div.onclick = (function(index) {
+      return function() { openGameConference(index); };
+    })(i);
     div.innerHTML =
       '<div class="jogo-info">' +
         '<div class="jogo-nome">' + modLabel(a.mod) + '</div>' +
         '<div class="jogo-nums">' + (a.entrada || '').replace(/,/g, '  ') + '</div>' +
         '<div class="jogo-form">' + forma + '</div>' +
       '</div>' +
-      '<button class="jogo-del" onclick="remAp(' + i + ')">✕</button>';
+      '<button class="jogo-del" onclick="event.stopPropagation();remAp(' + i + ')">✕</button>';
     list.appendChild(div);
   });
+}
+
+function showConferenceRows(rows) {
+  var grid = document.getElementById('conf-grid');
+  grid.innerHTML = '';
+  rows.forEach(function(item) {
+    var row = document.createElement('div');
+    row.className = 'conf-row';
+    var label = document.createElement('span');
+    var value = document.createElement('span');
+    label.textContent = item[0];
+    value.textContent = item[1];
+    row.appendChild(label);
+    row.appendChild(value);
+    grid.appendChild(row);
+  });
+  document.getElementById('dlg-conf').classList.add('on');
+}
+
+function openValueConference(item, total, accounting, info) {
+  var value = parseFloat((st.val || '0').replace(',','.')) || 0;
+  var draft = st.apostas.slice();
+  draft.push({
+    mod: st.mod, entrada: st.entrada, valor: value,
+    modoPalpite: st.modoPalpite, modoRegra: st.modoRegra,
+    draw: st.draw
+  });
+  openBetsConference(draft, 'Conferência antes de adicionar');
+}
+
+function openGameConference(index) {
+  if (!st.apostas[index]) return;
+  openBetsConference(st.apostas, 'Conferência do bilhete');
+}
+
+function conferenceItemsForBet(a, calc, accounting) {
+  var items = [];
+  var bt = String(a.mod && a.mod.bet_type || '').toUpperCase().replace(/-/g, '_');
+  var positions = Math.max(1, Number(a.mod && a.mod.charge_multiplier || 1));
+  var range = [];
+  var start = /_6_10$/.test(bt) ? 6 : 1;
+  var end = /_1_10$/.test(bt) ? 10 : (/_1_5$/.test(bt) || /_6_10$/.test(bt) ? start + 4 : 0);
+  for (var p = start; end && p <= end; p++) range.push(p);
+
+  function ordinal(value) { return value + 'º'; }
+  function positionCombos(size) {
+    var result = [];
+    function walk(from, chosen) {
+      if (chosen.length === size) {
+        result.push(chosen.map(ordinal).join(' + '));
+        return;
+      }
+      for (var i = from; i < range.length; i++) walk(i + 1, chosen.concat(range[i]));
+    }
+    walk(0, []);
+    return result;
+  }
+
+  if (calc.info.inverted) {
+    invertedPermutationRows(a.mod, a.entrada).forEach(function(item) {
+      var labels = range.length ? range.map(function(pos) { return ordinal(pos) + ' prêmio'; }) : [''];
+      labels.forEach(function(label) {
+        items.push({
+          number: item.number + (label ? ' · ' + label : ''),
+          value: accounting.unitAmounts[item.gameIndex]
+        });
+      });
+    });
+  } else {
+    accounting.games.forEach(function(game, index) {
+      var number = game.replace(/,/g, ' + ');
+      var atomic = [];
+      if (bt.indexOf('MILHAR') >= 0 && bt.indexOf('CENTENA') >= 0) {
+        var raw = game.replace(/\D/g, '');
+        var types = [
+          { number: raw, label: 'milhar' },
+          { number: raw.slice(-3), label: 'centena' }
+        ];
+        types.forEach(function(type) {
+          if (range.length) {
+            range.forEach(function(pos) {
+              atomic.push(type.number + ' (' + type.label + ' · ' + ordinal(pos) + ' prêmio)');
+            });
+          } else {
+            atomic.push(type.number + ' (' + type.label + ')');
+          }
+        });
+      } else if ((bt.indexOf('DUQUE') >= 0 || bt.indexOf('TERNO') >= 0) && range.length && positions > 1) {
+        var size = bt.indexOf('TERNO') >= 0 ? 3 : 2;
+        positionCombos(size).forEach(function(combo) {
+          atomic.push(number + ' (' + combo + ')');
+        });
+      } else if (range.length && positions > 1) {
+        range.forEach(function(pos) {
+          atomic.push(number + ' (' + ordinal(pos) + ' prêmio)');
+        });
+      } else if (range.length) {
+        atomic.push(number + ' (' + ordinal(range[0]) + ' ao ' + ordinal(range[range.length - 1]) + ')');
+      } else {
+        atomic.push(number);
+      }
+      atomic.slice(0, accounting.divisors[index]).forEach(function(atomicNumber) {
+        items.push({
+          number: atomicNumber,
+          value: accounting.unitAmounts[index]
+        });
+      });
+    });
+  }
+  return items;
+}
+
+function openBetsConference(apostas, title, canConfirm) {
+  var groups = [];
+  var byName = {};
+  var grandTotal = 0;
+  apostas.forEach(function(a) {
+    var calc = calculatedModeValues(a.valor, a.modoPalpite, a.modoRegra, a.mod, a.entrada);
+    var accounting = betAccounting(a.mod, a.entrada, calc.total, calc.gameTotals);
+    var name = modLabel(a.mod);
+    if (!byName[name]) {
+      byName[name] = { name: name, items: [], subtotal: 0 };
+      groups.push(byName[name]);
+    }
+    var group = byName[name];
+    conferenceItemsForBet(a, calc, accounting).forEach(function(item) {
+      group.items.push(item);
+    });
+    group.subtotal += calc.total;
+    grandTotal += calc.total;
+  });
+
+  var titleEl = document.getElementById('conf-title');
+  if (titleEl) titleEl.textContent = title || 'Conferência do bilhete';
+  var grid = document.getElementById('conf-grid');
+  grid.innerHTML = '';
+  groups.forEach(function(group) {
+    var section = document.createElement('div');
+    section.className = 'conf-group';
+    var heading = document.createElement('div');
+    heading.className = 'conf-group-title';
+    heading.textContent = group.name;
+    section.appendChild(heading);
+    group.items.forEach(function(item) {
+      var row = document.createElement('div');
+      row.className = 'conf-bet-row';
+      var number = document.createElement('span');
+      var value = document.createElement('span');
+      number.textContent = item.number;
+      value.textContent = 'R$ ' + detailedMoney(item.value);
+      row.appendChild(number);
+      row.appendChild(value);
+      section.appendChild(row);
+    });
+    var subtotal = document.createElement('div');
+    subtotal.className = 'conf-subtotal';
+    var subtotalLabel = document.createElement('span');
+    var subtotalValue = document.createElement('span');
+    subtotalLabel.textContent = 'Subtotal';
+    subtotalValue.textContent = 'R$ ' + detailedMoney(group.subtotal);
+    subtotal.appendChild(subtotalLabel);
+    subtotal.appendChild(subtotalValue);
+    section.appendChild(subtotal);
+    grid.appendChild(section);
+  });
+  var total = document.createElement('div');
+  total.className = 'conf-total';
+  var totalLabel = document.createElement('span');
+  var totalValue = document.createElement('span');
+  totalLabel.textContent = 'Total a pagar';
+  totalValue.textContent = 'R$ ' + detailedMoney(grandTotal);
+  total.appendChild(totalLabel);
+  total.appendChild(totalValue);
+  grid.appendChild(total);
+  var confirm = document.getElementById('conf-confirm');
+  var back = document.getElementById('conf-back');
+  if (confirm) confirm.style.display = canConfirm ? '' : 'none';
+  if (back) back.textContent = canConfirm ? 'Voltar' : 'Fechar';
+  if (!canConfirm) st._pendingBet = null;
+  document.getElementById('dlg-conf').classList.add('on');
+}
+
+function closeGameConference(event) {
+  if (event && event.target !== document.getElementById('dlg-conf')) return;
+  st._pendingBet = null;
+  document.getElementById('dlg-conf').classList.remove('on');
 }
 
 function remAp(i) { st.apostas.splice(i, 1); buildRsm(); }
