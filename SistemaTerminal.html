@@ -255,9 +255,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .k:active { background: #C8E6C9; }
 .k.empty  { background: #3D4F5E; cursor: default; }
 .ks { -webkit-flex: 1; flex: 1; display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; background: #2D3748; padding: 2px; gap: 2px; }
-.k-del { -webkit-flex: 1; flex: 1; background: #E53935; border: none; color: #FFF; font-size: 24px; cursor: pointer; border-radius: 4px; }
-.k-ok  { -webkit-flex: 3; flex: 3; background: #D4A017; border: none; color: #1B4332; font-size: 30px; font-weight: 900; cursor: pointer; border-radius: 4px; }
-.k-del:active, .k-ok:active { opacity: .85; }
+.k-del  { -webkit-flex: 1; flex: 1; background: #E53935; border: none; color: #FFF; font-size: 24px; cursor: pointer; border-radius: 4px; }
+.k-prox { -webkit-flex: 2; flex: 2; background: #1565C0; border: none; color: #FFF; font-size: 16px; font-weight: 900; cursor: pointer; border-radius: 4px; line-height: 1.2; }
+.k-ok   { -webkit-flex: 3; flex: 3; background: #D4A017; border: none; color: #1B4332; font-size: 28px; font-weight: 900; cursor: pointer; border-radius: 4px; }
+.k-del:active, .k-prox:active, .k-ok:active { opacity: .85; }
 .k-ok.dim { opacity: .3; pointer-events: none; }
 
 /* ══════════ TECLADO VALOR ══════════ */
@@ -382,6 +383,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .jogo-nums { font-size: 12px; color: #555; letter-spacing: 1px; }
 .jogo-form  { font-size: 12px; color: #2E7D32; font-weight: 600; margin-top: 1px; }
 .jogo-ganho { font-size: 11px; color: #1565C0; font-weight: 600; margin-top: 2px; }
+.premio-sel-row { display:-webkit-flex;display:flex;gap:4px;padding:5px 8px;background:#F5F5F5;border-bottom:1px solid #E0E0E0;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-wrap:nowrap; }
+.btn-premio { -webkit-flex-shrink:0;flex-shrink:0;min-width:38px;height:32px;border:1.5px solid #B0BEC5;border-radius:6px;font-size:11px;font-weight:700;background:#FFF;color:#546E7A;cursor:pointer;padding:0 4px;white-space:nowrap; }
+.btn-premio.on { background:#2D6A4F;color:#FFF;border-color:#2D6A4F; }
 .jogo-del   { background: none; border: none; color: #C62828; font-size: 20px; padding: 4px 6px; cursor: pointer; }
 .rsm-total-bar {
   display: -webkit-flex; display: flex;
@@ -397,7 +401,90 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   height: 44px; background: #2D6A4F; color: #FFF;
   border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
 }
+
+/* ══ BOTÃO LOTE na tela de números ══ */
+.btn-lote {
+  display: block; width: calc(100% - 16px); margin: 4px 8px 0;
+  height: 40px; background: #1565C0; color: #FFF;
+  border: none; border-radius: 8px; font-size: 13px; font-weight: 700;
+  cursor: pointer; letter-spacing: .5px;
+}
+
+/* ══ OVERLAY LOTE ══ */
+.lote-overlay {
+  display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.75); z-index: 900;
+  -webkit-align-items: flex-start; align-items: flex-start;
+  -webkit-justify-content: center; justify-content: center;
+}
+.lote-overlay.on { display: -webkit-flex; display: flex; }
+.lote-box {
+  background: #FFF; border-radius: 12px; width: calc(100% - 32px);
+  max-width: 440px; margin-top: 40px; padding: 0; overflow: hidden;
+}
+.lote-hdr {
+  background: #1565C0; color: #FFF; padding: 12px 16px;
+  display: -webkit-flex; display: flex;
+  -webkit-align-items: center; align-items: center;
+  -webkit-justify-content: space-between; justify-content: space-between;
+  font-size: 15px; font-weight: 700;
+}
+.lote-body { padding: 12px 16px; }
+.lote-label { font-size: 12px; color: #555; margin-bottom: 4px; font-weight: 600; }
+.lote-ta {
+  width: 100%; height: 160px; border: 2px solid #1565C0; border-radius: 8px;
+  padding: 10px; font-size: 20px; font-family: monospace; letter-spacing: 3px;
+  resize: none; outline: none; color: #1B4332;
+}
+.lote-info {
+  background: #E3F2FD; border-radius: 6px; padding: 8px 10px;
+  font-size: 12px; color: #1565C0; margin: 8px 0; line-height: 1.5;
+}
+.lote-foot {
+  display: -webkit-flex; display: flex; gap: 8px;
+  padding: 0 16px 14px;
+}
+.lote-btn-cancel {
+  -webkit-flex: 1; flex: 1; height: 46px; background: #EEE; color: #555;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.lote-btn-ok {
+  -webkit-flex: 2; flex: 2; height: 46px; background: #1565C0; color: #FFF;
+  border: none; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
+/* ══ TELA CONSULTA BILHETE (barcode) ══ */
+.bil-cons-inp {
+  width: 100%; padding: 14px; font-size: 22px; font-family: monospace;
+  letter-spacing: 3px; text-align: center; text-transform: uppercase;
+  border: 2px solid #1B4332; border-radius: 8px; outline: none;
+  margin: 16px 0 8px; color: #1B4332; background: #FFF;
+}
+.bil-cons-status {
+  background: #F5F5F5; border-radius: 8px; padding: 14px;
+  font-size: 13px; line-height: 1.6; color: #333; margin-top: 8px;
+}
+.bil-cons-won  { background: #E8F5E9; border: 2px solid #2E7D32; }
+.bil-cons-lost { background: #FAFAFA; border: 2px solid #CCC; }
+.bil-cons-pend { background: #E3F2FD; border: 2px solid #1565C0; }
+.barcode-icon {
+  font-size: 60px; text-align: center; padding: 20px 0 4px;
+  color: #1B4332; letter-spacing: -2px;
+}
+.barcode-hint {
+  text-align: center; font-size: 12px; color: #888; margin-bottom: 8px;
+}
 </style>
+<script>
+/* ── Service Worker: cache-first para carregamento rápido offline ── */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(reg) { console.log('[SW] registrado, escopo:', reg.scope); })
+      .catch(function(err) { console.warn('[SW] falha no registro:', err); });
+  });
+}
+</script>
 </head>
 <body>
 
@@ -440,6 +527,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#D81B60" onclick="aviso('Regulamento')"><span class="mn-ico">📜</span>Regulamento</button>
       <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
+      <button class="btn-mn" style="background:#1565C0" onclick="abrirConsultaBilhete()"><span class="mn-ico">🔍</span>Consultar</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
     <div class="ver">versão 1.0 · MonteDeOuroPOS</div>
@@ -503,6 +591,8 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="jbi-del" onclick="nDel()">⌫</button>
   </div>
+  <!-- Seletor de prêmios -->
+  <div class="premio-sel-row" id="premio-sel-row"></div>
   <!-- Dígitos em digitação -->
   <div id="n-hint" style="display:none;text-align:center;font-size:12px;font-weight:600;padding:2px;background:#FFF9C4;color:#F57F17"></div>
   <div class="n-instr" id="n-ex" style="background:#f5f5f5;color:#888">Digite os dígitos — confirma automaticamente</div>
@@ -515,8 +605,30 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="k empty"></button><button class="k" onclick="nAdd('0')">0</button><button class="k empty"></button>
     </div>
     <div class="ks">
-      <button class="k-del" style="opacity:.4;pointer-events:none">⌫</button>
+      <button class="k-del" onclick="nDel()">⌫</button>
+      <button class="k-prox" id="btn-prox-n" onclick="nProx()">/</button>
       <button class="k-ok dim" id="btn-ok-n" onclick="nOk()">✓</button>
+    </div>
+  </div>
+  <!-- Botão entrada em lote -->
+  <button class="btn-lote" onclick="abrirLote()">📋 Lote (vários números de uma vez)</button>
+</div>
+
+<!-- ═══════════ OVERLAY LOTE ═══════════ -->
+<div class="lote-overlay" id="lote-overlay">
+  <div class="lote-box">
+    <div class="lote-hdr">
+      <span>📋 Entrada em Lote</span>
+      <button onclick="fecharLote()" style="background:none;border:none;color:#FFF;font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <div class="lote-body">
+      <div class="lote-label" id="lote-label">Digite os números (um por linha ou separados por espaço):</div>
+      <textarea class="lote-ta" id="lote-ta" placeholder="Ex:&#10;1234&#10;5678&#10;9012"></textarea>
+      <div class="lote-info" id="lote-info">💡 Digite R$ 1,00 no valor e o sistema divide automaticamente pelo total de números.</div>
+    </div>
+    <div class="lote-foot">
+      <button class="lote-btn-cancel" onclick="fecharLote()">Cancelar</button>
+      <button class="lote-btn-ok" onclick="confirmarLote()">✓ Adicionar Números</button>
     </div>
   </div>
 </div>
@@ -538,13 +650,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <div class="jvb-sep"></div>
     <div class="jvb-box" style="-webkit-flex:1;flex:1">
-      <span class="jvb-lbl">Valor</span>
-      <span class="jvb-num" id="jvb-valor">0</span>
+      <span class="jvb-lbl" id="jvb-lbl-valor">Unit.</span>
+      <span class="jvb-num" id="jvb-valor">–</span>
     </div>
     <div class="jvb-ou">Ou</div>
     <div class="jvb-box jvb-total" style="-webkit-flex:1;flex:1">
       <span class="jvb-lbl">Total</span>
-      <span class="jvb-num" id="jvb-total">0,00</span>
+      <span class="jvb-num" id="jvb-total">0</span>
     </div>
     <button class="jvb-ok" onclick="vOk()">✓</button>
   </div>
@@ -554,10 +666,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   <!-- Prêmio potencial -->
   <div class="jbet-prize" id="jvb-prize" style="display:none"></div>
 
-  <!-- Modo dividir/multiplicar compacto -->
-  <div class="modo-row" style="height:52px">
-    <button class="btn-modo m-on"  id="m-div" onclick="setModo('d')">÷ Dividir<br><span id="v-dt" style="font-size:10px">–</span></button>
-    <button class="btn-modo m-off" id="m-mul" onclick="setModo('m')">× Multiplicar<br><span id="v-mt" style="font-size:10px">–</span></button>
+  <!-- Modo dividir/multiplicar — compacto, acessível via toque longo na fórmula -->
+  <div class="modo-row" style="height:40px">
+    <button class="btn-modo m-on"  id="m-div" onclick="setModo('d')" style="font-size:12px">÷ Dividir<br><span id="v-dt" style="font-size:10px">–</span></button>
+    <button class="btn-modo m-off" id="m-mul" onclick="setModo('m')" style="font-size:12px">× Multiplicar<br><span id="v-mt" style="font-size:10px">–</span></button>
   </div>
 
   <div class="teclado-row">
@@ -590,6 +702,28 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <button class="f-nb" onclick="go('s-ext')">Bilhete</button>
     <button class="f-ca" onclick="cancelar()">Cancelar</button>
     <button class="f-fi" id="btn-fin" onclick="finBilhete()">Finalizar</button>
+  </div>
+</div>
+
+<!-- ═══════════ CONSULTAR BILHETE ═══════════ -->
+<div id="s-consulta" class="sc">
+  <div class="hdr-green">
+    <button class="back" onclick="go('s-main')">‹</button>
+    <span>Consultar Bilhete</span>
+    <span></span>
+  </div>
+  <div class="scroll-y" style="padding:12px">
+    <div class="barcode-icon">▌▊▌▌▊▌▊▌</div>
+    <div class="barcode-hint">Aponte o leitor ou digite o código do bilhete</div>
+    <input type="text" class="bil-cons-inp" id="cons-codigo"
+      placeholder="Ex: BIL-00001"
+      oninput="this.value=this.value.toUpperCase()"
+      onkeydown="if(event.key==='Enter')consultarBilhete()">
+    <button onclick="consultarBilhete()"
+      style="width:100%;height:48px;background:#1B4332;color:#FFF;border:none;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px;">
+      🔍 Consultar
+    </button>
+    <div id="cons-status" class="bil-cons-status" style="display:none"></div>
   </div>
 </div>
 
@@ -736,7 +870,7 @@ function api(path, opts) {
         user_phone:   userPhone,
         draw_id:      b.draw_id || null,
         bet_type:     b.bet_type,
-        numbers:      JSON.stringify(b.numbers || [b.numbers]),
+        numbers:      typeof b.numbers === 'string' ? b.numbers : String(b.numbers || ''),
         amount:       b.amount,
         total_amount: b.amount,
         prize_amount: 0,
@@ -746,33 +880,32 @@ function api(path, opts) {
     });
     return sbPost('apostas', rows).then(function(apostasRes) {
       var total = (payload.bets || []).reduce(function(s, b) { return s + b.amount; }, 0);
-      // Aplicar descarrego para cada aposta inserida
+      // ── Descarrego assíncrono: confirma bilhete IMEDIATAMENTE, descarrego roda em background ──
       var inserted = Array.isArray(apostasRes) ? apostasRes : [];
-      var dcPromises = rows.map(function(row, idx) {
-        var ap = inserted[idx];
-        if (!ap || !ap.id) return Promise.resolve();
-        var bt = (row.bet_type || '').toLowerCase();
-        // Modalidade = bet_type sem sufixo numérico de prêmio
-        var modalidade = bt.replace(/_\d+(?:_\d+)?$/, '') || bt;
-        // Prêmios: extrair sufixo _N ou _N_M
-        var pm = bt.match(/_(\d+)(?:_(\d+))?$/);
-        var premios = [];
-        if (pm) {
-          var ps = parseInt(pm[1]), pe = pm[2] ? parseInt(pm[2]) : ps;
-          for (var i = ps; i <= pe; i++) premios.push(i);
-        } else { premios = [1]; }
-        return sbRpc('aplicar_descarrego', {
-          p_sorteio_id: Number(row.draw_id),
-          p_aposta_id:  Number(ap.id),
-          p_modalidade: modalidade,
-          p_numero:     String(row.numbers || ''),
-          p_premios:    premios,
-          p_valor_total: Number(row.amount)
-        }).catch(function(e) { console.warn('[descarrego]', e && e.message); });
-      });
-      return Promise.all(dcPromises).then(function() {
-        return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
-      });
+      setTimeout(function() {
+        rows.forEach(function(row, idx) {
+          var ap = inserted[idx];
+          if (!ap || !ap.id) return;
+          var bt = (row.bet_type || '').toLowerCase();
+          var modalidade = bt.replace(/_\d+(?:_\d+)?$/, '') || bt;
+          var pm = bt.match(/_(\d+)(?:_(\d+))?$/);
+          var premios = [];
+          if (pm) {
+            var ps = parseInt(pm[1]), pe = pm[2] ? parseInt(pm[2]) : ps;
+            for (var i = ps; i <= pe; i++) premios.push(i);
+          } else { premios = [1]; }
+          sbRpc('aplicar_descarrego', {
+            p_sorteio_id:  Number(row.draw_id),
+            p_aposta_id:   Number(ap.id),
+            p_modalidade:  modalidade,
+            p_numero:      String(row.numbers || ''),
+            p_premios:     premios,
+            p_valor_total: Number(row.amount)
+          }).catch(function(e) { console.warn('[descarrego bg]', e && e.message); });
+        });
+      }, 0); // fire-and-forget: não bloqueia resposta ao terminal
+      // Retorna confirmação imediata
+      return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
     });
   }
   // Cotações
@@ -822,7 +955,7 @@ function toArray(data) {
 var st = {
   user: null, draw: null, mod: null,
   grupos: [], nums: '', nList: [], val: '', modo: 'd', entrada: null,
-  apostas: []
+  apostas: [], premioSel: 1, premioInicio: 1
 };
 
 // ─── Navegação ────────────────────────────────────────────────────────────────
@@ -867,6 +1000,7 @@ function doLogin() {
       localStorage.setItem('user', JSON.stringify(data.user));
       st.user = data.user;
       updateUI();
+      loadModalidades();
       document.getElementById('inp-pass').value = '';
       go('s-main');
     })
@@ -1124,6 +1258,57 @@ function setupNum() {
   if (countEl) countEl.textContent = '0';
   updN();
   updNList();
+  setupPremio();
+}
+
+// ─── Seletor de Prêmios ───────────────────────────────────────────────────────
+function setupPremio() {
+  // Deriva prêmio padrão do charge_multiplier da modalidade
+  var cm  = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
+  var fac = (st.mod && st.mod.factor && st.mod.factor > 1) ? Number(st.mod.factor) : factorFromBetType(st.mod ? st.mod.bet_type : '');
+  var maxP = (st.mod && st.mod.max_premios) ? Number(st.mod.max_premios) : 5;
+  var P   = fac > 1 ? Math.max(1, Math.round(cm / fac)) : cm;
+  st.premioSel   = Math.min(maxP, Math.max(1, P || 1));
+  st.premioInicio = 1;
+  updPremio();
+}
+function setPremio(inicio, fim) {
+  st.premioInicio = Math.max(1, inicio || 1);
+  st.premioSel    = Math.max(st.premioInicio, fim || inicio || 1);
+  updPremio();
+  if (document.getElementById('s-val') && document.getElementById('s-val').classList.contains('on')) updV();
+}
+function updPremio() {
+  var maxP = (st.mod && st.mod.max_premios) ? Number(st.mod.max_premios) : 5;
+  var ini  = st.premioInicio || 1;
+  var fim  = st.premioSel    || 1;
+  var row  = document.getElementById('premio-sel-row');
+  if (row) {
+    // Build preset range buttons based on maxP
+    var presets = [];
+    if (maxP <= 5) {
+      // Only 1-P buttons (old behavior)
+      for (var p = 1; p <= maxP; p++) presets.push([1, p]);
+    } else {
+      // Extended: 1º, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8, 1-9, 1-10, 6-10, 1-10
+      for (var p = 1; p <= maxP; p++) presets.push([1, p]);
+      // Add split range (second half): 6-10 when maxP=10
+      var mid = Math.floor(maxP / 2) + 1;
+      presets.push([mid, maxP]);
+    }
+    var html = '';
+    for (var i = 0; i < presets.length; i++) {
+      var pi = presets[i][0], pf = presets[i][1];
+      var isOn = (pi === ini && pf === fim);
+      var lbl  = (pi === 1 && pf === 1) ? '1º' : (pi === 1 ? '1-' + pf : pi + '-' + pf);
+      html += '<button class="btn-premio' + (isOn ? ' on' : '') + '" onclick="setPremio(' + pi + ',' + pf + ')">' + lbl + '</button>';
+    }
+    row.innerHTML = html;
+  }
+  // Update display labels
+  var lbl = (ini === 1 && fim === 1) ? '1º' : (ini === 1 ? '1-' + fim : ini + '-' + fim);
+  var el1 = document.getElementById('jbi-premio'); if (el1) el1.textContent = lbl;
+  var el2 = document.getElementById('jvb-premio'); if (el2) el2.textContent = lbl + 'P';
 }
 
 function nAdd(c) {
@@ -1150,6 +1335,22 @@ function nDel() {
   }
 }
 
+function nProx() {
+  // "/" funciona como separador: confirma o número atual se completo
+  var q = st.mod ? st.mod.q : 2;
+  if (st.nums.length === q) {
+    nConfirm();
+  } else if (st.nums.length > 0) {
+    // número incompleto — pisca aviso
+    var disp = document.getElementById('n-disp');
+    if (disp) {
+      disp.style.color = '#E53935';
+      setTimeout(function() { disp.style.color = '#1B4332'; }, 400);
+    }
+  }
+  // se nList não vazio e nums vazio, não faz nada (ok já disponível)
+}
+
 function nConfirm() {
   var q = st.mod ? st.mod.q : 2;
   if (st.nums.length < q) return;
@@ -1170,22 +1371,30 @@ function updNList() {
   var wrap = document.getElementById('n-lista-wrap');
   document.getElementById('n-cnt').textContent = st.nList.length;
 
-  // ── Exibe como texto grande (estilo JBet) ──
+  // ── Exibe como texto grande com separador "/" (estilo PDV) ──
   if (!st.nList.length) {
     wrap.style.color = '#AAA'; wrap.style.fontSize = '15px'; wrap.style.letterSpacing = '2px';
     wrap.textContent = 'Nenhum número adicionado';
   } else {
-    wrap.style.color = '#1565C0'; wrap.style.fontSize = '22px'; wrap.style.letterSpacing = '4px';
-    wrap.textContent = st.nList.join('  ');
+    wrap.style.color = '#FFF'; wrap.style.fontSize = '24px'; wrap.style.letterSpacing = '3px';
+    wrap.textContent = st.nList.join(' / ');
+  }
+
+  // ── Instrução dinâmica ──
+  var exEl = document.getElementById('n-ex');
+  if (exEl) {
+    if (st.nList.length === 0) {
+      exEl.textContent = 'Digite os dígitos — confirma automaticamente';
+      exEl.style.background = '#f5f5f5'; exEl.style.color = '#888';
+    } else {
+      exEl.textContent = '✓ ' + st.nList.length + ' número(s) — continue digitando ou pressione ✓';
+      exEl.style.background = '#E8F5E9'; exEl.style.color = '#1B5E20';
+    }
   }
 
   // ── Barra JBet: Prêmio / contagem ──
-  var premioEl = document.getElementById('jbi-premio');
-  var countEl  = document.getElementById('jbi-count');
-  if (premioEl) {
-    var mult = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
-    premioEl.textContent = mult ? mult + 'x' : '–';
-  }
+  updPremio();
+  var countEl = document.getElementById('jbi-count');
   if (countEl) countEl.textContent = st.nList.length;
 
   var min   = (st.mod && st.mod.min) || 1;
@@ -1221,15 +1430,16 @@ function nOk() {
 // ─── Teclado Valor ───────────────────────────────────────────────────────────
 function setupVal() {
   st.val = ''; st.modo = 'd';
-  document.getElementById('v-title').textContent = modLabel(st.mod || 'Valor');
+  // Título com contagem de números quando > 1
+  var count = st.entrada ? st.entrada.split(',').length : 1;
+  var tituloMod = modLabel(st.mod || 'Valor');
+  document.getElementById('v-title').textContent = count > 1
+    ? tituloMod + ' — ' + count + ' números'
+    : tituloMod;
   var mx = (st.draw && st.draw.max_value_per_number) || 500;
-  document.getElementById('v-mm').textContent = 'Máx/nº: R$ ' + Number(mx).toFixed(2);
+  document.getElementById('v-mm').textContent = 'Digite o TOTAL da aposta (máx R$ ' + Number(mx).toFixed(2) + '/nº)';
   // Prêmio inicial na barra JBet
-  var jvbPremio = document.getElementById('jvb-premio');
-  if (jvbPremio) {
-    var mult = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
-    jvbPremio.textContent = mult ? mult + 'x' : '–';
-  }
+  updPremio();
   var jvbFormula = document.getElementById('jvb-formula');
   if (jvbFormula) jvbFormula.textContent = '–';
   updV(); updModo();
@@ -1239,61 +1449,105 @@ function vAdd(c) { st.val += c; updV(); }
 function vCom()  { if (st.val.indexOf(',') < 0) { st.val = (st.val || '0') + ','; updV(); } }
 function vClr()  { st.val = ''; updV(); }
 function vDel()  { if (st.val.length) { st.val = st.val.slice(0,-1); updV(); } }
+
+// ─── Permutações invertida ────────────────────────────────────────────────────
+function factorial(n) {
+  if (n <= 1) return 1;
+  var r = 1; for (var i = 2; i <= n; i++) r *= i; return r;
+}
+function calcPermutacoes(numStr) {
+  // Permutações únicas = n! / (f0! * f1! * ... f9!)
+  var freq = {}; for (var i = 0; i < numStr.length; i++) { var d = numStr[i]; freq[d] = (freq[d] || 0) + 1; }
+  var denom = 1; for (var k in freq) denom *= factorial(freq[k]);
+  return factorial(numStr.length) / denom;
+}
+function calcFatorInvertida(entrada, mod, baseF) {
+  if (!mod) return baseF;
+  var bt  = (mod.bet_type || mod.codigo || '').toLowerCase();
+  var isInv = bt.indexOf('invertid') >= 0;
+  if (!isInv) return baseF;
+  var nums = entrada ? entrada.split(',') : [];
+  if (nums.length === 0) return baseF;
+  // Para cada número, calcula total de permutações e soma
+  var totalPerms = 0;
+  for (var i = 0; i < nums.length; i++) {
+    var n = nums[i].trim();
+    if (bt === 'centena_invertida' && n.length === 4) {
+      // 4 dígitos → duas centenas: n[0..2] e n[1..3]
+      totalPerms += calcPermutacoes(n.slice(0,3)) + calcPermutacoes(n.slice(1,4));
+    } else {
+      totalPerms += calcPermutacoes(n);
+    }
+  }
+  // Retorna fator médio por número
+  return nums.length > 0 ? totalPerms / nums.length : baseF;
+}
+
 function updV() {
-  var v      = parseFloat((st.val || '0').replace(',','.')) || 0;
-  var cm     = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
-  var factor = (st.mod && st.mod.factor && st.mod.factor > 1)
+  var v        = parseFloat((st.val || '0').replace(',','.')) || 0;
+  var baseF    = (st.mod && st.mod.factor && st.mod.factor > 1)
     ? Number(st.mod.factor)
     : factorFromBetType(st.mod ? st.mod.bet_type : '');
-  var min    = (st.mod && st.mod.min) ? st.mod.min : 1;
-  var mult   = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
-  var count  = (min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
+  var factor   = calcFatorInvertida(st.entrada, st.mod, baseF);  // real perm for invertida
+  var min      = (st.mod && st.mod.min) ? st.mod.min : 1;
+  var mult     = (st.mod && st.mod.multiplier) ? Number(st.mod.multiplier) : null;
+  var count    = (min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
 
-  // ── Fórmula: TOTAL = N × P × F × VALOR ───────────────────────────────────
-  // Dividir  : usuário entra com TOTAL → unit = TOTAL ÷ (N × P × F)
-  //            amount enviado à API = unit (API aplica P)
-  // Multiplicar: usuário entra por palpite → TOTAL = v × N × P
-  var unitDiv = (count > 0 && cm > 0 && factor > 0) ? v / count / cm / factor : 0;
-  var totalDiv = v;                   // total dividir = o que o usuário digitou
-  var totalMul = v * count * cm;      // total multiplicar
+  // ── Faixa de prêmio ───────────────────────────────────────────────────────
+  var ini      = st.premioInicio || 1;
+  var fim      = st.premioSel    || 1;
+  var n_prizes = Math.max(1, fim - ini + 1);   // e.g. 6-10P → 5 prizes
+  var F        = factor > 1 ? factor : 1;
+  var cm       = n_prizes * F;
 
-  var jvbPremio  = document.getElementById('jvb-premio');
+  var unitDiv  = (count > 0 && cm > 0 && v > 0) ? v / count / cm : 0;
+  var totalDiv = v;
+  var totalMul = v * count * cm;
+
   var jvbValor   = document.getElementById('jvb-valor');
   var jvbTotal   = document.getElementById('jvb-total');
   var jvbFormula = document.getElementById('jvb-formula');
   var jvbPrize   = document.getElementById('jvb-prize');
 
-  if (jvbPremio) jvbPremio.textContent = mult ? mult + 'x' : '–';
-  if (jvbValor)  jvbValor.textContent  = (st.val || '0');
+  updPremio();
 
-  var totalReal = st.modo === 'd' ? totalDiv : totalMul;
-  var totalFmt  = totalReal.toFixed(2).replace('.',',');
-  if (jvbTotal) jvbTotal.textContent = totalFmt;
+  // ── Displays Unit / Total ────────────────────────────────────────────────
+  var unitJBet    = (count > 0 && n_prizes > 0 && F > 0 && v > 0) ? v / count / n_prizes / F : 0;
+  var totalMulFmt = totalMul.toFixed(2).replace('.',',');
+  var lblValor    = document.getElementById('jvb-lbl-valor');
 
-  // ── Fórmula legível ───────────────────────────────────────────────────────
+  if (st.modo === 'd') {
+    if (lblValor)  lblValor.textContent = 'Unit.';
+    if (jvbValor)  jvbValor.textContent = unitJBet > 0 ? unitJBet.toFixed(2).replace('.',',') : '–';
+    if (jvbTotal)  jvbTotal.textContent = (st.val || '0');
+  } else {
+    if (lblValor)  lblValor.textContent = 'Valor';
+    if (jvbValor)  jvbValor.textContent = (st.val || '0');
+    if (jvbTotal)  jvbTotal.textContent = totalMulFmt;
+  }
+
+  // ── Fórmula JBet ────────────────────────────────────────────────────────
   if (jvbFormula) {
     var vFmt    = v.toFixed(2).replace('.',',');
-    var unitFmt = unitDiv.toFixed(2).replace('.',',');
+    var unitFmt = unitJBet.toFixed(2).replace('.',',');
+    var pLbl    = (ini === 1 && fim === 1) ? '1P' : (ini === 1 ? '1 a ' + fim + 'P' : ini + ' a ' + fim + 'P');
     var f = '';
     if (st.modo === 'd') {
-      f = 'R$ ' + vFmt;
-      if (count > 1)  f += ' ÷ ' + count + 'nº';
-      if (cm > 1)     f += ' ÷ ' + cm + 'P';
-      if (factor > 1) f += ' ÷ ' + factor + 'F';
-      f += ' = R$ ' + unitFmt + '/un';
+      if (count > 1) f += count + 'nº × ';
+      if (F > 1)     f += F.toFixed(F % 1 === 0 ? 0 : 2) + 'f × ';
+      f += pLbl + ' × R$ ' + unitFmt + ' = R$ ' + vFmt;
     } else {
       f = count > 1 ? count + 'nº × R$ ' + vFmt : 'R$ ' + vFmt;
-      if (cm > 1) f += ' × ' + cm + 'P';
-      f += ' = R$ ' + totalFmt;
+      if (n_prizes > 1 || F > 1) f += ' × ' + pLbl;
+      if (F > 1) f += ' × ' + F.toFixed(F % 1 === 0 ? 0 : 2) + 'f';
+      f += ' = R$ ' + totalMulFmt;
     }
     jvbFormula.textContent = f;
   }
 
-  // ── Prêmio potencial ──────────────────────────────────────────────────────
+  // ── Prêmio potencial ────────────────────────────────────────────────────
   if (jvbPrize) {
     if (mult && v > 0) {
-      // Para dividir: prêmio por nº = unitDiv × mult
-      // Para multiplicar: prêmio por nº = v × mult
       var amtPerNum = st.modo === 'd' ? unitDiv : v;
       var prize = amtPerNum * mult;
       var prizeFmt = prize.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1304,15 +1558,13 @@ function updV() {
     }
   }
 
-  // v-disp oculto (compat)
   var vd = document.getElementById('v-disp');
   if (vd) vd.textContent = 'R$ ' + (st.val || '0');
 
-  // Labels nos botões Dividir/Multiplicar
   var dtTxt = 'Total: R$ ' + totalDiv.toFixed(2).replace('.',',');
-  if (count > 1 || cm > 1) dtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'P' : '') + ')';
+  if (count > 1 || cm > 1) dtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'f' : '') + ')';
   var mtTxt = 'Total: R$ ' + totalMul.toFixed(2).replace('.',',');
-  if (count > 1 || cm > 1) mtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'P' : '') + ')';
+  if (count > 1 || cm > 1) mtTxt += ' (' + (count > 1 ? count + 'nº' : '') + (cm > 1 ? (count > 1 ? ' × ' : '') + cm + 'f' : '') + ')';
   document.getElementById('v-dt').textContent = dtTxt;
   document.getElementById('v-mt').textContent = mtTxt;
 }
@@ -1337,18 +1589,32 @@ function vOk() {
       '\nCom ' + count + ' número(s) no modo ' + (st.modo === 'd' ? 'Dividir' : 'Multiplicar') +
       ', o valor por número seria R$ ' + amtCheck.toFixed(2)); return;
   }
-  st.apostas.push({ draw: st.draw, mod: st.mod, entrada: st.entrada, valor: v, modo: st.modo });
-  // Atualiza linha de resumo no dialog
+  st.apostas.push({ draw: st.draw, mod: st.mod, entrada: st.entrada, valor: v, modo: st.modo, premioSel: st.premioSel || 1, premioInicio: st.premioInicio || 1 });
+  // Atualiza linha de resumo no dialog (formato JBet)
   var lbl   = modLabel(st.mod);
-  var cm    = (st.mod && st.mod.charge_multiplier) ? Number(st.mod.charge_multiplier) : 1;
-  var cnt   = (st.mod && st.mod.min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
-  var real  = st.modo === 'd' ? v : (v * cnt * cm);
-  var fEff2 = (st.mod && st.mod.factor && st.mod.factor > 1)
+  var baseF2 = (st.mod && st.mod.factor && st.mod.factor > 1)
     ? Number(st.mod.factor) : factorFromBetType(st.mod ? st.mod.bet_type : '');
-  var P2    = fEff2 > 1 ? Math.round(cm / fEff2) : cm;
-  var cmLbl = P2 > 1 ? '1 a ' + P2 + 'P' : '1P';
+  var F2    = Math.max(1, calcFatorInvertida(st.entrada, st.mod, baseF2));
+  var cnt   = (st.mod && st.mod.min > 1) ? 1 : ((st.entrada ? st.entrada.split(',').length : 1) || 1);
+  var ini2  = st.premioInicio || 1;
+  var fim2  = st.premioSel    || 1;
+  var nP2   = Math.max(1, fim2 - ini2 + 1);
+  var real  = st.modo === 'd' ? v : (v * cnt * nP2 * F2);
+  var cmLbl = (ini2 === 1 && fim2 === 1) ? '1P' : (ini2 === 1 ? '1 a ' + fim2 + 'P' : ini2 + ' a ' + fim2 + 'P');
+  var unitDlg = (cnt > 0 && nP2 > 0 && F2 > 0 && st.modo === 'd') ? v / cnt / nP2 / F2 : v;
   var dlgLinha = document.getElementById('dlg-resumo-linha');
-  if (dlgLinha) dlgLinha.textContent = lbl + ' → ' + cmLbl + ' × R$ ' + v.toFixed(2).replace('.',',') + ' = R$ ' + real.toFixed(2).replace('.',',');
+  if (dlgLinha) {
+    var formulaDlg = '';
+    if (st.modo === 'd') {
+      if (cnt > 1) formulaDlg += cnt + 'nº × ';
+      if (F2 > 1)  formulaDlg += F2.toFixed(F2 % 1 === 0 ? 0 : 2) + 'f × ';
+      formulaDlg += cmLbl + ' × R$ ' + unitDlg.toFixed(2).replace('.',',') + '/un = R$ ' + real.toFixed(2).replace('.',',');
+    } else {
+      formulaDlg = cnt > 1 ? cnt + 'nº × ' : '';
+      formulaDlg += cmLbl + ' × R$ ' + v.toFixed(2).replace('.',',') + ' = R$ ' + real.toFixed(2).replace('.',',');
+    }
+    dlgLinha.textContent = lbl + ' → ' + formulaDlg;
+  }
   // Total acumulado
   var totAc = 0;
   st.apostas.forEach(function(a) {
@@ -1371,10 +1637,15 @@ function novoJogo() {
 // ─── Resumo ──────────────────────────────────────────────────────────────────
 function totalAposta(a) {
   // Dividir: a.valor já É o total que o usuário quer pagar
-  // Multiplicar: a.valor é por palpite → total = v × count × cm
-  var min   = (a.mod && a.mod.min) || 1;
-  var count = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
-  var cm    = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
+  // Multiplicar: a.valor é por palpite → total = v × count × n_prizes × F
+  var min      = (a.mod && a.mod.min) || 1;
+  var count    = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
+  var baseF    = (a.mod && a.mod.factor && a.mod.factor > 1) ? Number(a.mod.factor) : factorFromBetType(a.mod ? a.mod.bet_type : '');
+  var fac      = Math.max(1, calcFatorInvertida(a.entrada, a.mod, baseF));
+  var ini      = a.premioInicio || 1;
+  var fim      = a.premioSel    || 1;
+  var n_prizes = Math.max(1, fim - ini + 1);
+  var cm       = n_prizes * fac;
   return a.modo === 'm' ? (a.valor * count * cm) : a.valor;
 }
 
@@ -1429,28 +1700,30 @@ function buildRsm() {
 
   // ── Lista compacta de jogos ────────────────────────────────────────────
   st.apostas.forEach(function(a, i) {
-    var cm   = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-    var min  = (a.mod && a.mod.min) || 1;
-    var cnt  = (min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
-    // dividir: total = a.valor; multiplicar: total = v × N × cm
-    var real  = a.modo === 'd' ? a.valor : (a.valor * cnt * cm);
-    // P = contagem real de prêmios (cm já pode embutir F)
-    var fEff  = (a.mod && a.mod.factor && a.mod.factor > 1)
-      ? Number(a.mod.factor) : factorFromBetType(a.mod ? a.mod.bet_type : '');
-    var P     = fEff > 1 ? Math.round(cm / fEff) : cm;
-    var cmLbl = P > 1 ? '1 a ' + P + 'P' : '1P';
+    var min    = (a.mod && a.mod.min) || 1;
+    var cnt    = (min > 1) ? 1 : ((a.entrada ? a.entrada.split(',').length : 1) || 1);
+    var ini    = a.premioInicio || 1;
+    var fim    = a.premioSel    || 1;
+    var nP     = Math.max(1, fim - ini + 1);
+    var baseF  = (a.mod && a.mod.factor && a.mod.factor > 1) ? Number(a.mod.factor) : factorFromBetType(a.mod ? a.mod.bet_type : '');
+    var fEff   = Math.max(1, calcFatorInvertida(a.entrada, a.mod, baseF));
+    var cm     = nP * fEff;
+    // dividir: total = a.valor; multiplicar: total = v × N × nP × F
+    var real   = a.modo === 'd' ? a.valor : (a.valor * cnt * cm);
+    var cmLbl  = (ini === 1 && fim === 1) ? '1P' : (ini === 1 ? '1 a ' + fim + 'P' : ini + ' a ' + fim + 'P');
+    var P      = fim; // for ModalidadesEngine preview compat
     var vFmt  = a.valor.toFixed(2).replace('.',',');
     var rFmt  = real.toFixed(2).replace('.',',');
     var forma = cmLbl + ' × R$ ' + vFmt + ' = R$ ' + rFmt;
 
-    // BetCalculationEngine — potencial de ganho por prêmio
+    // ModalidadesEngine — potencial de ganho por prêmio
     var _bceGanhoStr = '';
-    if (typeof BetCalculationEngine !== 'undefined') {
-      var _bceM  = _bceMod(a.mod ? a.mod.bet_type : '');
-      var _bcePL = []; for (var _pi = 1; _pi <= Math.max(1, P); _pi++) _bcePL.push(_pi);
-      var _pv    = BetCalculationEngine.calcularPreview(_bceM, real, _bcePL, 'dividido');
-      if (_pv && _pv.potencialGanho > 0) {
-        _bceGanhoStr = '💰 Se acertar: R$ ' + _pv.potencialGanho.toFixed(2).replace('.', ',');
+    var _meBase = (a.mod ? a.mod.bet_type || '' : '').toLowerCase().replace(/_\d+(?:_\d+)?$/, '');
+    var _meMod  = (typeof ModalidadesEngine !== 'undefined') ? ModalidadesEngine.obter(_meBase) : null;
+    if (_meMod) {
+      var _mePv = ModalidadesEngine.preview(_meMod, real, cnt, P);
+      if (_mePv && _mePv.potencialGanho > 0) {
+        _bceGanhoStr = '💰 Se acertar: R$ ' + _mePv.potencialGanho.toFixed(2).replace('.', ',');
       }
     }
 
@@ -1469,6 +1742,167 @@ function buildRsm() {
 }
 
 function remAp(i) { st.apostas.splice(i, 1); buildRsm(); }
+
+// ─── ENTRADA EM LOTE ─────────────────────────────────────────────────────────
+function abrirLote() {
+  var q = st.mod ? st.mod.q : 2;
+  var nome = st.mod ? (st.mod.nome || st.mod.name || 'número') : 'número';
+  document.getElementById('lote-label').textContent =
+    'Digite ' + nome + ' (cada um com ' + q + ' dígito(s), um por linha ou espaço):';
+  document.getElementById('lote-ta').value = '';
+  document.getElementById('lote-info').textContent =
+    '💡 Fórmula: Valor Total ÷ (Qtd Números × Qtd Prêmios) = valor por combinação.';
+  document.getElementById('lote-overlay').classList.add('on');
+  setTimeout(function() { document.getElementById('lote-ta').focus(); }, 100);
+}
+function fecharLote() {
+  document.getElementById('lote-overlay').classList.remove('on');
+}
+function confirmarLote() {
+  var q    = st.mod ? st.mod.q : 2;
+  var raw  = document.getElementById('lote-ta').value;
+  // separa por espaço, vírgula, ponto-e-vírgula, newline
+  var tokens = raw.split(/[\s,;]+/).map(function(t) { return t.trim(); }).filter(function(t) { return t.length > 0; });
+  var validos = [];
+  var erros   = [];
+  tokens.forEach(function(t) {
+    // mantém apenas dígitos
+    var d = t.replace(/\D/g, '');
+    if (d.length === q) {
+      validos.push(d);
+    } else if (d.length > q) {
+      // número maior: pega últimos q dígitos (ex: milhar 4d a partir de dezena 2d)
+      validos.push(d.slice(-q));
+    } else if (d.length > 0) {
+      erros.push(t + ' (inválido)');
+    }
+  });
+  if (!validos.length) {
+    alert('Nenhum número válido encontrado.\nCada número deve ter ' + q + ' dígito(s).');
+    return;
+  }
+  // adiciona ao nList (sem duplicatas)
+  validos.forEach(function(v) {
+    if (st.nList.indexOf(v) < 0) st.nList.push(v);
+  });
+  updNList();
+  fecharLote();
+  if (erros.length) {
+    setTimeout(function() {
+      alert('Adicionados: ' + validos.length + ' número(s)\nIgnorados (' + erros.length + '): ' + erros.join(', '));
+    }, 200);
+  }
+}
+
+// ─── CONSULTAR BILHETE ───────────────────────────────────────────────────────
+function abrirConsultaBilhete() {
+  go('s-consulta');
+  document.getElementById('cons-codigo').value = '';
+  document.getElementById('cons-status').style.display = 'none';
+  setTimeout(function() { document.getElementById('cons-codigo').focus(); }, 200);
+}
+function consultarBilhete() {
+  var code = document.getElementById('cons-codigo').value.trim().toUpperCase();
+  var el   = document.getElementById('cons-status');
+  if (!code) { alert('Digite o código do bilhete.'); return; }
+  el.className = 'bil-cons-status';
+  el.style.display = '';
+  el.innerHTML = '🔄 Consultando...';
+  var SB_URL = 'https://kopdmeuihtkmpisaedxo.supabase.co';
+  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE';
+  fetch(SB_URL + '/rest/v1/apostas?ticket_code=eq.' + encodeURIComponent(code) +
+    '&select=*,sorteios(title,date,hora,result)', {
+    headers: { 'apikey': SB_KEY, 'Accept': 'application/json',
+      'Authorization': 'Bearer ' + (st.token || SB_KEY) }
+  }).then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var a = Array.isArray(rows) ? rows[0] : null;
+      if (!a) {
+        el.className = 'bil-cons-status bil-cons-lost';
+        el.innerHTML = '❌ Bilhete não encontrado: <b>' + code + '</b>';
+        return;
+      }
+      var statusMap = { open:'🔵 Aberto', pending:'🕐 Aguardando resultado',
+        won:'🏆 GANHADOR!', paid:'✅ Pago', lost:'❌ Não ganhou', cancelled:'🚫 Cancelado' };
+      var cls = a.status === 'won' ? 'bil-cons-won' : a.status === 'lost' ? 'bil-cons-lost' : 'bil-cons-pend';
+      el.className = 'bil-cons-status ' + cls;
+      var nums = a.numbers;
+      try { if (typeof nums === 'string') nums = JSON.parse(nums); } catch(e) {}
+      var numsStr = Array.isArray(nums) ? nums.join(' · ') : (nums || '–');
+      var sorteio = a.sorteios ? (a.sorteios.title || '–') : '–';
+      el.innerHTML =
+        '<div style="font-size:16px;font-weight:700;margin-bottom:8px">' + (statusMap[a.status] || a.status) + '</div>' +
+        '<b>Código:</b> ' + (a.ticket_code || code) + '<br>' +
+        '<b>Modalidade:</b> ' + (a.bet_type || '–') + '<br>' +
+        '<b>Números:</b> ' + numsStr + '<br>' +
+        '<b>Valor:</b> R$ ' + Number(a.total_amount || 0).toFixed(2).replace('.',',') + '<br>' +
+        (a.prize_amount > 0 ? '<b>Prêmio:</b> R$ ' + Number(a.prize_amount).toFixed(2).replace('.',',') + '<br>' : '') +
+        '<b>Sorteio:</b> ' + sorteio;
+    })
+    .catch(function(e) {
+      el.className = 'bil-cons-status bil-cons-lost';
+      el.innerHTML = '⚠️ Erro ao consultar: ' + e.message;
+    });
+}
+
+// ─── DETECTOR DE LEITORA DE CÓDIGO DE BARRAS (HID Keyboard Wedge) ────────────
+(function() {
+  var _buf  = '';
+  var _tim  = null;
+  var _last = 0;
+  document.addEventListener('keydown', function(e) {
+    var now  = Date.now();
+    var diff = now - _last;
+    _last = now;
+
+    // Ignora se o foco está em um input/textarea (digitação manual)
+    var tag = document.activeElement ? document.activeElement.tagName : '';
+    if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+
+    if (e.key === 'Enter') {
+      if (_buf.length >= 4) {
+        var code = _buf.trim().toUpperCase();
+        _buf = '';
+        clearTimeout(_tim);
+        // Redireciona o barcode para a tela correta
+        var cur = document.querySelector('.sc.on');
+        var curId = cur ? cur.id : '';
+        if (curId === 's-num') {
+          // Na tela de números: tenta adicionar como palpite
+          var q = st.mod ? st.mod.q : 2;
+          var d = code.replace(/\D/g, '');
+          if (d.length >= q) {
+            var num = d.slice(-q);
+            if (st.nList.indexOf(num) < 0) {
+              st.nList.push(num);
+              updNList();
+            }
+          }
+        } else {
+          // Em qualquer outra tela: vai para consulta do bilhete
+          go('s-consulta');
+          document.getElementById('cons-codigo').value = code;
+          document.getElementById('cons-status').style.display = 'none';
+          setTimeout(consultarBilhete, 100);
+        }
+      }
+      _buf = '';
+      return;
+    }
+
+    // Leitoras digitam muito rápido (< 80ms entre teclas) ou é o início
+    if (diff < 80 || _buf === '') {
+      if (e.key.length === 1) _buf += e.key;
+    } else {
+      // Pausa longa = início de nova digitação manual
+      _buf = e.key.length === 1 ? e.key : '';
+    }
+
+    clearTimeout(_tim);
+    _tim = setTimeout(function() { _buf = ''; }, 600);
+  });
+})();
+
 function cancelar() {
   if (!st.apostas.length) { go('s-main'); return; }
   if (confirm('Cancelar e limpar apostas?')) { st.apostas = []; go('s-main'); }
@@ -1477,6 +1911,7 @@ function cancelar() {
 // ─── Enviar bilhete ──────────────────────────────────────────────────────────
 function finBilhete() {
   if (!st.apostas.length) return;
+  if (st._enviando) return; // guard: evita duplo-envio por clique duplo
 
   // Validação prévia de saldo
   var custoRealTotal = totalCustoReal(st.apostas);
@@ -1507,8 +1942,12 @@ function finBilhete() {
   st.apostas.forEach(function(a) {
     var min = (a.mod && a.mod.min) || 1;
 
-    // bet_type: a API aceita minúsculo (docs usam "milhar_1_5"), enviamos lowercase
-    var btype = (a.mod.bet_type || '').toLowerCase();
+    // bet_type: strip qualquer sufixo de prêmio existente, adiciona a faixa selecionada
+    var _bbase = (a.mod.bet_type || '').toLowerCase().replace(/_\d+(?:_\d+)?$/, '');
+    var _pini  = a.premioInicio || 1;
+    var _psel  = a.premioSel    || 1;
+    var btype  = (_pini === 1 && _psel === 1) ? _bbase
+               : (_pini === 1 ? _bbase + '_1_' + _psel : _bbase + '_' + _pini + '_' + _psel);
 
     if (min > 1) {
       // DUQUE/TERNO: entrada inteira é UM bet (ex: "50,73" para duque de dezena)
@@ -1564,6 +2003,7 @@ function finBilhete() {
 
   var btn = document.getElementById('btn-fin');
   btn.disabled = true; btn.textContent = 'Enviando...';
+  st._enviando = true;
 
   var apostasEnviadas = st.apostas.slice();
 
@@ -1572,6 +2012,7 @@ function finBilhete() {
   api('/bets/batch', { method: 'POST', body: payload, noAutoLogout: true })
     .then(function(res) {
       btn.disabled = false; btn.textContent = 'Finalizar';
+      st._enviando = false;
       try {
 
       var tid   = res.ticketId   || res.ticket_id   || '–';
@@ -1613,6 +2054,7 @@ function finBilhete() {
     })
     .catch(function(e) {
       btn.disabled = false; btn.textContent = 'Finalizar';
+      st._enviando = false;
       // Painel in-page — sempre visível mesmo se alert() estiver bloqueado
       var msg = 'ERRO: ' + e.message + '\n\nPayload enviado:\n' + payload + '\n\n⚠ NÃO reenvie sem verificar o histórico!';
       var errEl2 = document.getElementById('rsm-err');
@@ -1896,18 +2338,20 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
     var mergedMap = {};
     var mergedOrder = [];
     g.items.forEach(function(a) {
-      var bt  = (a.mod && a.mod.bet_type) ? a.mod.bet_type.toLowerCase() : prizeLabel(a);
-      var cm  = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
-      var min = (a.mod && a.mod.min) || 1;
-      var cnt = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
-      var f   = (a.mod && a.mod.factor) ? Number(a.mod.factor) : 1;
-      var v   = Number(a.valor);
-      // total real:
-      //   dividir     → v (é o total que o usuário quer pagar)
-      //   multiplicar → v × cnt × cm
-      var tot = a.modo === 'd' ? v : (v * cnt * cm);
+      var bt      = (a.mod && a.mod.bet_type) ? a.mod.bet_type.toLowerCase() : prizeLabel(a);
+      var cm      = (a.mod && a.mod.charge_multiplier) ? Number(a.mod.charge_multiplier) : 1;
+      var min     = (a.mod && a.mod.min) || 1;
+      var cnt     = (min > 1) ? 1 : (a.entrada ? a.entrada.split(',').length : 1);
+      var baseF   = (a.mod && a.mod.factor) ? Number(a.mod.factor) : 1;
+      var f       = Math.max(1, calcFatorInvertida(a.entrada, a.mod, baseF));
+      var ini_a   = a.premioInicio || 1;
+      var fim_a   = a.premioSel    || 1;
+      var nP_a    = Math.max(1, fim_a - ini_a + 1);
+      var v       = Number(a.valor);
+      var tot     = a.modo === 'd' ? v : (v * cnt * nP_a * f);
       if (!mergedMap[bt]) {
-        mergedMap[bt] = { plabel: prizeLabel(a), valor: 0, totBet: 0, _cm: cm, _count: cnt, _factor: f, _modo: a.modo };
+        mergedMap[bt] = { plabel: prizeLabel(a), valor: 0, totBet: 0, _cm: cm, _count: cnt, _factor: f, _modo: a.modo,
+                          _pini: ini_a, _psel: fim_a, _entrada: a.entrada, _mod: a.mod };
         mergedOrder.push(bt);
       }
       mergedMap[bt].valor  += v;
@@ -1915,33 +2359,20 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
     });
 
     mergedOrder.forEach(function(bt) {
-      var m   = mergedMap[bt];
-      var cm2   = mergedMap[bt]._cm || 1;
-      var cnt   = mergedMap[bt]._count || 1;
-      var fac   = mergedMap[bt]._factor || 1;
-      var modo2 = mergedMap[bt]._modo || 'd';
-      // Extrai contagem real de prêmios P (evita "1 a 20P" quando cm=P×F)
-      var P = (function() {
-        var pl = m.plabel || '';
-        // "1 a 10 prêmios" ou "ao 10" → captura X
-        var ma = pl.match(/(?:a|ao)\s*(\d+)/i);
-        if (ma) return parseInt(ma[1]);
-        // "1/10P" → captura 10
-        var mb = pl.match(/\/(\d+)\s*[Pp]/);
-        if (mb) return parseInt(mb[1]);
-        // Fallback: divide cm pelo fator (API ou inferido do bet_type)
-        var fEff = fac > 1 ? fac : factorFromBetType(bt);
-        return fEff > 1 ? Math.round(cm2 / fEff) : cm2;
-      })();
-      var cmLbl = P > 1 ? '1 a ' + P + 'P' : '1P';
-      // Multiplicar: unit = valor/palpite (a.valor), total = valor × N × cm
-      // Dividir:     unit = total ÷ (N × P × F), total = valor digitado
+      var m     = mergedMap[bt];
+      var cnt   = m._count || 1;
+      var fac   = m._factor || 1;
+      var modo2 = m._modo || 'd';
+      var ini   = m._pini || 1;
+      var fim   = m._psel || 1;
+      var nP    = Math.max(1, fim - ini + 1);
+      var cmLbl = (ini === 1 && fim === 1) ? '1P' : (ini === 1 ? '1 a ' + fim + 'P' : ini + ' a ' + fim + 'P');
       var unit, totalDisp;
       if (modo2 === 'm') {
-        unit      = cnt > 0 ? m.valor / cnt : m.valor; // m.valor = soma de a.valor (por palpite) → por nº
+        unit      = cnt > 0 ? m.valor / cnt : m.valor;
         totalDisp = m.totBet;
       } else {
-        unit      = (cnt > 0 && cm2 > 0 && fac > 0) ? m.valor / cnt / cm2 / fac : m.valor;
+        unit      = (cnt > 0 && nP > 0 && fac > 0) ? m.valor / cnt / nP / fac : m.valor;
         totalDisp = m.valor;
       }
       t += cmLbl + ' x ' + brNum(unit) + ' = ' + brNum(totalDisp) + '\n';
@@ -1998,26 +2429,492 @@ function colunas(esq, dir, w) {
   return s + dir;
 }
 
-// ─── BetCalculationEngine — helpers de integração ────────────────────────────
-/** Mapeia bet_type da API → modalidade do BetCalculationEngine */
-function _bceMod(betType) {
-  var bt   = (betType || '').toLowerCase();
-  var base = bt.replace(/_\d+_\d+$/, ''); // remove sufixo _1_5, _1_3 etc.
-  var MAP  = {
-    'milhar':'milhar','centena':'centena','dezena':'dezena','grupo':'grupo',
-    'duque_grupo':'duque_grupo','terno_grupo':'terno_grupo',
-    'duque_dezena':'duque_dezena','terno_dezena':'terno_dezena',
-    'duque':'duque_dezena','trinca':'terno_dezena',
-    'passe':'passe','cercado':'cercado',
-    'milhar_combinada':'milhar_combinada',
-    'centena_combinada':'centena_combinada',
-    'dezena_combinada':'dezena_combinada'
-  };
-  return MAP[base] || MAP[bt] || base;
-}
+// ─── ModalidadesEngine v1.0 (inline) ─────────────────────────────────────────
+/**
+ * ModalidadesEngine v1.0
+ * Motor genérico de Modalidades do Jogo do Bicho.
+ *
+ * - Toda lógica de cálculo, conferência e validação baseia-se nos dados
+ *   cadastrados em cada modalidade — nenhuma regra é hardcoded por nome.
+ * - Compatível com CommonJS (Node/API), Browser puro e React Native (Android).
+ * - Carrega modalidades do Supabase, de um array estático ou de ambos.
+ *
+ * Uso rápido:
+ *   ModalidadesEngine.registrarTodas(arrayDeModalidades);
+ *   var mod = ModalidadesEngine.obter('milhar');
+ *   var ok  = ModalidadesEngine.validar(mod, ['1234'], 2.00);
+ *   var custo = ModalidadesEngine.custo(mod, 2.00, 1, 3, 'dividido'); // 3 prêmios
+ *   var ganho = ModalidadesEngine.ganho(mod, 2.00, 1, 1);             // acertou 1
+ *   var conf  = ModalidadesEngine.conferir(mod, ['1234'], resultado, [1,2,3]);
+ */
 
-// ─── BetCalculationEngine v1.0 (inline) ──────────────────────────────────────
-var BetCalculationEngine=(function(){'use strict';var ANIMAIS=[{grupo:1,nome:'AVESTRUZ',dezenas:['01','02','03','04']},{grupo:2,nome:'ÁGUIA',dezenas:['05','06','07','08']},{grupo:3,nome:'BURRO',dezenas:['09','10','11','12']},{grupo:4,nome:'BORBOLETA',dezenas:['13','14','15','16']},{grupo:5,nome:'CACHORRO',dezenas:['17','18','19','20']},{grupo:6,nome:'CABRA',dezenas:['21','22','23','24']},{grupo:7,nome:'CARNEIRO',dezenas:['25','26','27','28']},{grupo:8,nome:'CAMELO',dezenas:['29','30','31','32']},{grupo:9,nome:'COBRA',dezenas:['33','34','35','36']},{grupo:10,nome:'COELHO',dezenas:['37','38','39','40']},{grupo:11,nome:'CAVALO',dezenas:['41','42','43','44']},{grupo:12,nome:'ELEFANTE',dezenas:['45','46','47','48']},{grupo:13,nome:'GALO',dezenas:['49','50','51','52']},{grupo:14,nome:'GATO',dezenas:['53','54','55','56']},{grupo:15,nome:'JACARÉ',dezenas:['57','58','59','60']},{grupo:16,nome:'LEÃO',dezenas:['61','62','63','64']},{grupo:17,nome:'MACACO',dezenas:['65','66','67','68']},{grupo:18,nome:'PORCO',dezenas:['69','70','71','72']},{grupo:19,nome:'PAVÃO',dezenas:['73','74','75','76']},{grupo:20,nome:'PERU',dezenas:['77','78','79','80']},{grupo:21,nome:'TOURO',dezenas:['81','82','83','84']},{grupo:22,nome:'TIGRE',dezenas:['85','86','87','88']},{grupo:23,nome:'URSO',dezenas:['89','90','91','92']},{grupo:24,nome:'VEADO',dezenas:['93','94','95','96']},{grupo:25,nome:'VACA',dezenas:['97','98','99','00']}];var _D={milhar:{cotacao:4000,min:.1,max:250,limite:500000,maxPremios:5},centena:{cotacao:600,min:.1,max:250,limite:500000,maxPremios:5},dezena:{cotacao:60,min:.1,max:250,limite:500000,maxPremios:5},grupo:{cotacao:14,min:.1,max:250,limite:500000,maxPremios:5},duque_grupo:{cotacao:150,min:.1,max:100,limite:500000,maxPremios:5},terno_grupo:{cotacao:1300,min:.1,max:50,limite:500000,maxPremios:5},duque_dezena:{cotacao:300,min:.1,max:100,limite:500000,maxPremios:5},terno_dezena:{cotacao:3000,min:.1,max:50,limite:500000,maxPremios:5},passe:{cotacao:120,min:.1,max:100,limite:500000,maxPremios:1},cercado:{cotacao:4000,min:.1,max:100,limite:500000,maxPremios:5},centena_combinada:{cotacao:600,min:.1,max:100,limite:500000,maxPremios:5},dezena_combinada:{cotacao:60,min:.1,max:250,limite:500000,maxPremios:5},milhar_combinada:{cotacao:4000,min:.1,max:50,limite:500000,maxPremios:5}};var _cfg=JSON.parse(JSON.stringify(_D));function _pad(n,l){return String(n).padStart?String(n).padStart(l,'0'):('0000'+n).slice(-l);}function _sfx(s,n){return _pad(s,4).slice(4-n);}function dezenaPraGrupo(dz){var n=parseInt(dz,10);if(isNaN(n))return null;return n===0?25:Math.ceil(n/4);}function grupoPraAnimal(g){return ANIMAIS[g-1]||null;}function _perms(arr){if(arr.length<=1)return[arr.slice()];var r=[];for(var i=0;i<arr.length;i++){var rest=arr.slice(0,i).concat(arr.slice(i+1));var subs=_perms(rest);for(var j=0;j<subs.length;j++)r.push([arr[i]].concat(subs[j]));}return r;}function _combos(arr,r){var res=[];function _c(s,cur){if(cur.length===r){res.push(cur.slice());return;}for(var i=s;i<arr.length;i++){cur.push(arr[i]);_c(i+1,cur);cur.pop();}}_c(0,[]);return res;}function _uniq(arr){var s={},o=[];for(var i=0;i<arr.length;i++)if(!s[arr[i]]){s[arr[i]]=true;o.push(arr[i]);}return o;}function _genCombs(mod,nums){nums=nums||[];switch(mod){case'milhar_combinada':{if(!nums[0])return[];var d=_pad(nums[0],4).split('');return _uniq(_perms(d).map(function(p){return p.join('');})).sort();}case'centena_combinada':{if(!nums[0])return[];var d=_pad(nums[0],3).split('');return _uniq(_perms(d).map(function(p){return p.join('');})).sort();}case'dezena_combinada':{if(!nums[0])return[];var d=_pad(nums[0],2).split('');return _uniq(_perms(d).map(function(p){return p.join('');})).sort();}case'cercado':{var r2=nums.subTipo||2;return _combos(nums,r2).map(function(c){return c.join('-');});}case'duque_grupo':case'duque_dezena':return[nums.slice().sort().join('-')];case'terno_grupo':case'terno_dezena':return[nums.slice().sort().join('-')];case'passe':return[nums.join('→')];default:return nums.map(function(n){return String(n);});}}function _arred(v){return Math.round(v*100)/100;}function calcular(ap){var mod=ap.modalidade||'',nums=ap.numeros||[],valor=Number(ap.valorAposta)||0,prems=ap.premios||[1],modo=ap.modoDistrib||'dividido',cfg=_cfg[mod]||{cotacao:0,min:0,max:999999,limite:999999,maxPremios:5},cot=(ap.cotacaoCustom!=null)?Number(ap.cotacaoCustom):cfg.cotacao,nP=prems.length,erros=[],vPP,totC;if(!mod)erros.push('Modalidade não informada.');if(valor<=0)erros.push('Valor deve ser maior que zero.');if(valor<cfg.min)erros.push('Mín: R$'+cfg.min.toFixed(2));if(valor>cfg.max)erros.push('Máx: R$'+cfg.max.toFixed(2));if(nP>cfg.maxPremios)erros.push('Máx '+cfg.maxPremios+' prêmios.');if(!nums.length)erros.push('Nenhum número.');if(modo==='dividido'){vPP=valor/nP;totC=valor;}else{vPP=valor;totC=valor*nP;}var combs=_genCombs(mod,nums),nC=combs.length||1,isC=(mod==='milhar_combinada'||mod==='centena_combinada'||mod==='dezena_combinada')||(mod==='cercado');if(isC)totC=totC*nC;var pg=vPP*cot;if(pg>cfg.limite)erros.push('Ganho excede limite.');return{modalidade:mod,numeros:nums,valorInformado:valor,modoDistrib:modo,premios:prems,cotacao:cot,combinacoes:combs,nCombinacoes:nC,valorPorPremio:_arred(vPP),totalCobrado:_arred(totC),potencialGanho:_arred(pg),distribuicao:prems.map(function(p){return{premio:p,valor:_arred(vPP),ganhoSeAcertar:_arred(vPP*cot)};}),erros:erros,valida:erros.length===0};}function calcularPreview(mod,valor,prems,modo,cotCustom){var v=Number(valor)||0,ps=prems||[1],m=modo||'dividido',cfg=_cfg[mod]||{cotacao:0},cot=(cotCustom!=null)?Number(cotCustom):cfg.cotacao,nP=ps.length,vPP,totC;if(m==='dividido'){vPP=v/nP;totC=v;}else{vPP=v;totC=v*nP;}return{valorPorPremio:_arred(vPP),totalCobrado:_arred(totC),potencialGanho:_arred(vPP*cot),cotacao:cot,distribuicao:ps.map(function(p){return{premio:p,valor:_arred(vPP),ganho:_arred(vPP*cot)};});};}function conferir(ap,res,calc){if(!calc)calc=calcular(ap);var mod=ap.modalidade,prems=ap.premios||[1],combs=calc.combinacoes,idx={};(res.premios||[]).forEach(function(r){idx[r.posicao]=_pad(r.milhar,4);});var acertos=[],det=[];prems.forEach(function(pos){if(!idx[pos])return;var m4=idx[pos],gou=false,dtl='';switch(mod){case'milhar':{var n=_pad(ap.numeros[0],4);gou=(n===m4);dtl=n+' vs '+m4;break;}case'centena':{var n=_pad(ap.numeros[0],3),c=_sfx(m4,3);gou=(n===c);dtl=n+' vs '+c;break;}case'dezena':{var n=_pad(ap.numeros[0],2),d=_sfx(m4,2);gou=(n===d);dtl=n+' vs '+d;break;}case'grupo':{var g=parseInt(ap.numeros[0],10),d2=_sfx(m4,2),gR=dezenaPraGrupo(d2);gou=(g===gR);dtl='G'+g+' vs G'+gR;break;}case'milhar_combinada':{var n=_sfx(m4,4);gou=(combs.indexOf(n)!==-1);dtl=n+' em ['+combs.join(',')+']';break;}case'centena_combinada':{var n=_sfx(m4,3);gou=(combs.indexOf(n)!==-1);dtl=n;break;}case'dezena_combinada':{var n=_sfx(m4,2);gou=(combs.indexOf(n)!==-1);dtl=n;break;}}det.push('P'+pos+': '+(gou?'✓ ACERTOU':'✗'));if(gou){var dist=calc.distribuicao.filter(function(d){return d.premio===pos;})[0];acertos.push({posicao:pos,milhar:m4,valorGanho:_arred(dist?dist.valor*calc.cotacao:0),detalhe:dtl});}});if(mod==='duque_grupo'||mod==='terno_grupo'||mod==='duque_dezena'||mod==='terno_dezena'){acertos=[];det=[];var isG=(mod==='duque_grupo'||mod==='terno_grupo'),nNec=(mod==='duque_grupo'||mod==='duque_dezena')?2:3;var vRes=prems.map(function(p){if(!idx[p])return null;return isG?String(dezenaPraGrupo(_sfx(idx[p],2))):_sfx(idx[p],2);}).filter(function(v){return v!==null;});var apost=ap.numeros.slice().sort(),enc=apost.filter(function(n){return vRes.indexOf(String(n))!==-1;}),gou2=(enc.length===nNec);det.push((isG?'Grupos':'Dezenas')+' '+apost.join(',')+' vs '+vRes.join(',')+(gou2?' → ✓ ACERTOU':' → ✗'));if(gou2)acertos.push({posicao:prems,milhar:prems.map(function(p){return idx[p]||'';}).join('/'),valorGanho:_arred(calc.valorPorPremio*calc.cotacao),detalhe:det[0]});}if(mod==='passe'){acertos=[];det=[];var m1=idx[1],m2=idx[2];if(m1&&m2){var d1a=_pad(ap.numeros[0],2),d2a=_pad(ap.numeros[1],2),d1r=_sfx(m1,2),d2r=_sfx(m2,2),go3=(d1a===d1r&&d2a===d2r);det.push(d1a+'→'+d2a+' vs '+d1r+'→'+d2r+(go3?' → ✓ ACERTOU':' → ✗'));if(go3)acertos.push({posicao:[1,2],milhar:m1+'/'+m2,valorGanho:_arred(calc.valorPorPremio*calc.cotacao),detalhe:det[0]});}}if(mod==='cercado'){acertos=[];det=[];var dzRes=prems.map(function(p){return idx[p]?_sfx(idx[p],2):null;}).filter(function(v){return v!==null;}),achou=combs.some(function(cb){return cb.split('-').every(function(p){return dzRes.indexOf(p)!==-1;});});det.push('Cercado '+(achou?'✓ ACERTOU':'✗'));if(achou)acertos.push({posicao:prems,milhar:dzRes.join('/'),valorGanho:_arred(calc.valorPorPremio*calc.cotacao),detalhe:det[0]});}var totG=acertos.reduce(function(s,a){return s+a.valorGanho;},0);return{ganhou:acertos.length>0,acertos:acertos,totalGanho:_arred(totG),totalCobrado:calc.totalCobrado,lucroLiquido:_arred(totG-calc.totalCobrado),detalhamento:det};}function extrairPremio(m4){var s=_pad(m4,4),cen=s.slice(1),dez=s.slice(2),g=dezenaPraGrupo(dez);return{milhar:s,centena:cen,dezena:dez,grupo:g,animal:ANIMAIS[g-1]||null};}function processarResultado(arr){return{premios:arr.map(function(m,i){var e=extrairPremio(m);return{posicao:i+1,milhar:e.milhar,centena:e.centena,dezena:e.dezena,grupo:e.grupo,animal:e.animal};});};}function configurar(mod,cfg){if(_cfg[mod]){var ks=Object.keys(cfg);for(var i=0;i<ks.length;i++)_cfg[mod][ks[i]]=cfg[ks[i]];}}function configurarTodas(cs){var ms=Object.keys(cs);for(var i=0;i<ms.length;i++)configurar(ms[i],cs[ms[i]]);}function getCotacoes(){return JSON.parse(JSON.stringify(_cfg));}function resetarCotacoes(){_cfg=JSON.parse(JSON.stringify(_D));}return{calcular:calcular,calcularPreview:calcularPreview,conferir:conferir,extrairPremio:extrairPremio,processarResultado:processarResultado,configurar:configurar,configurarTodas:configurarTodas,getCotacoes:getCotacoes,resetarCotacoes:resetarCotacoes,dezenaPraGrupo:dezenaPraGrupo,grupoPraAnimal:grupoPraAnimal,ANIMAIS:ANIMAIS,MODALIDADES:Object.keys(_D)};}());
+;(function(global, factory) {
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = factory();          // CommonJS / Node.js / API
+  } else {
+    global.ModalidadesEngine = factory(); // Browser / WebView / APK
+  }
+}(typeof globalThis !== 'undefined' ? globalThis : this, function() {
+
+  'use strict';
+
+  // ─── Registro interno ────────────────────────────────────────────────────────
+  var _db = {};          // { codigo: modalidade }
+  var _cfg = {};         // config global (limites padrão, etc.)
+
+  // ─── API Pública ─────────────────────────────────────────────────────────────
+
+  /**
+   * Carrega configuração global (opcional).
+   * Ex: { limite_pagamento_global: 50000, moeda: 'BRL' }
+   */
+  function configurar(cfg) {
+    _cfg = cfg || {};
+  }
+
+  /**
+   * Registra uma modalidade individual.
+   * @param {Object} m - objeto modalidade (campos do schema)
+   */
+  function registrar(m) {
+    if (!m || !m.codigo) throw new Error('Modalidade inválida: campo "codigo" obrigatório.');
+    _db[m.codigo] = _normalizar(m);
+  }
+
+  /**
+   * Registra um array de modalidades de uma vez.
+   * Ideal para carregar o resultado de: SELECT * FROM v_modalidades_ativas
+   */
+  function registrarTodas(lista) {
+    (lista || []).forEach(registrar);
+  }
+
+  /**
+   * Retorna a modalidade pelo código.
+   * @returns {Object|null}
+   */
+  function obter(codigo) {
+    return _db[(codigo || '').toLowerCase()] || null;
+  }
+
+  /**
+   * Lista modalidades com filtros opcionais.
+   * @param {Object} filtros - { ativo, categoria, tipo_base }
+   */
+  function listar(filtros) {
+    var f = filtros || {};
+    return Object.values(_db).filter(function(m) {
+      if (f.ativo !== undefined   && m.ativo    !== f.ativo)    return false;
+      if (f.categoria             && m.categoria !== f.categoria) return false;
+      if (f.tipo_base             && m.tipo_base !== f.tipo_base) return false;
+      return true;
+    }).sort(function(a, b) { return a.ordem_exibicao - b.ordem_exibicao || a.id - b.id; });
+  }
+
+  // ─── Validação ───────────────────────────────────────────────────────────────
+
+  /**
+   * Valida uma aposta antes de submeter.
+   * @param {Object}   mod       - modalidade
+   * @param {string[]} numeros   - palpites (strings)
+   * @param {number}   valor     - valor em reais (total ou por palpite)
+   * @param {number[]} premios   - array de prêmios selecionados, ex: [1,2,3]
+   * @returns {{ valido: boolean, erros: string[] }}
+   */
+  function validar(mod, numeros, valor, premios) {
+    var erros = [];
+    if (!mod) { return { valido: false, erros: ['Modalidade não encontrada.'] }; }
+    if (!mod.ativo) { erros.push('Modalidade "' + mod.nome + '" está inativa.'); }
+
+    var n = (numeros || []).length;
+    if (n < mod.min_numeros) {
+      erros.push('Mínimo de ' + mod.min_numeros + ' palpite(s). Informado: ' + n + '.');
+    }
+    if (mod.max_numeros && n > mod.max_numeros) {
+      erros.push('Máximo de ' + mod.max_numeros + ' palpite(s). Informado: ' + n + '.');
+    }
+    if (!valor || isNaN(valor) || valor <= 0) {
+      erros.push('Valor da aposta inválido.');
+    } else {
+      if (valor < mod.valor_minimo) {
+        erros.push('Valor mínimo: R$ ' + _brNum(mod.valor_minimo) + '.');
+      }
+      if (mod.valor_maximo && valor > mod.valor_maximo) {
+        erros.push('Valor máximo: R$ ' + _brNum(mod.valor_maximo) + '.');
+      }
+    }
+
+    // Valida prêmios selecionados
+    if (premios && premios.length) {
+      var permitidos = mod.premios_possiveis;
+      premios.forEach(function(p) {
+        if (permitidos.indexOf(p) < 0) {
+          erros.push('Prêmio ' + p + 'º não permitido nesta modalidade.');
+        }
+      });
+    }
+
+    // Valida dígitos de cada palpite
+    if (mod.digitos > 0) {
+      (numeros || []).forEach(function(num, i) {
+        var s = String(num || '').replace(/\D/g, '');
+        if (s.length !== mod.digitos) {
+          erros.push('Palpite ' + (i+1) + ' deve ter exatamente ' + mod.digitos + ' dígito(s).');
+        }
+      });
+    }
+
+    return { valido: erros.length === 0, erros: erros };
+  }
+
+  // ─── Cálculo de Custo ────────────────────────────────────────────────────────
+
+  /**
+   * Calcula o custo total de uma aposta.
+   *
+   * Modos:
+   *   'dividido'   — usuário informa o total a pagar; sistema divide pelos palpites/prêmios
+   *   'por_premio' — usuário informa valor por prêmio; sistema multiplica por nPremios
+   *   'por_palpite'— usuário informa valor por palpite; sistema multiplica por nPalpites
+   *
+   * @param {Object} mod
+   * @param {number} valor       - valor digitado pelo usuário
+   * @param {number} nPalpites   - quantidade de números/palpites
+   * @param {number} nPremios    - quantidade de prêmios selecionados
+   * @param {string} modo        - 'dividido'|'por_premio'|'por_palpite'
+   * @returns {{ total: number, porPalpite: number, porPremio: number }}
+   */
+  function custo(mod, valor, nPalpites, nPremios, modo) {
+    if (!mod || !valor) return { total: 0, porPalpite: 0, porPremio: 0 };
+    var P  = Math.max(1, nPremios  || 1);
+    var N  = Math.max(1, nPalpites || 1);
+    var F  = mod.fator_combinacao || 1;  // ex: 2 para combinada, 3 para cercado
+    var cm = P * F;                      // charge multiplier efetivo
+
+    var total, porPalpite, porPremio;
+
+    switch (modo || mod.metodo_divisao) {
+      case 'dividido':
+        // Usuário informa TOTAL → distribui pelos palpites e prêmios
+        total      = valor;
+        porPalpite = (N > 0 && cm > 0) ? valor / N / cm : valor;
+        porPremio  = (N > 0 && P > 0)  ? valor / N / P  : valor;
+        break;
+
+      case 'por_premio':
+        // Usuário informa valor que quer pagar POR PRÊMIO
+        total      = valor * P * (N > 1 ? N : 1) * F;
+        porPalpite = valor * P * F;
+        porPremio  = valor;
+        break;
+
+      case 'por_palpite':
+      default:
+        // Usuário informa valor POR PALPITE → multiplica por N e prêmios
+        total      = valor * N * cm;
+        porPalpite = valor;
+        porPremio  = (P > 0) ? valor * F : valor;
+        break;
+    }
+
+    return { total: _round(total), porPalpite: _round(porPalpite), porPremio: _round(porPremio) };
+  }
+
+  /**
+   * Calcula o ganho potencial máximo de uma aposta.
+   * @param {Object} mod
+   * @param {number} valorPorPalpite - valor unitário por aposta/palpite
+   * @param {number} nAcertos        - quantidade de palpites que acertaram
+   * @param {number} nPremios        - prêmios cobertos (para divisão de cotação)
+   * @returns {number} ganho total em reais
+   */
+  function ganho(mod, valorPorPalpite, nAcertos, nPremios) {
+    if (!mod || !valorPorPalpite || !nAcertos) return 0;
+    var P  = Math.max(1, nPremios || 1);
+    var F  = mod.fator_combinacao || 1;
+    // Cotação base dividida pelos prêmios
+    var cotacaoEfetiva = (mod.metodo_divisao === 'dividido')
+      ? mod.cotacao / P / F
+      : mod.cotacao;
+    var ganhoTotal = valorPorPalpite * cotacaoEfetiva * nAcertos;
+
+    // Aplicar limite de pagamento
+    var limite = mod.limite_pagamento || _cfg.limite_pagamento_global || Infinity;
+    return _round(Math.min(ganhoTotal, limite));
+  }
+
+  /**
+   * Preview de ganho potencial (para mostrar ao apostador antes de confirmar).
+   * @param {Object} mod
+   * @param {number} totalAposta - custo total da aposta
+   * @param {number} nPalpites
+   * @param {number} nPremios
+   * @returns {{ potencialGanho: number, cotacaoEfetiva: number, descricao: string }}
+   */
+  function preview(mod, totalAposta, nPalpites, nPremios) {
+    if (!mod || !totalAposta) return null;
+    var P   = Math.max(1, nPremios  || 1);
+    var N   = Math.max(1, nPalpites || 1);
+    var F   = mod.fator_combinacao || 1;
+    var cm  = P * F;
+    var valorUnitario = (mod.metodo_divisao === 'dividido' && N > 0 && cm > 0)
+      ? totalAposta / N / cm
+      : totalAposta / N;
+    var cotEfetiva = mod.cotacao / F;  // cotação não divide por P (cada prêmio paga igual)
+    var ganhoUnitario = valorUnitario * cotEfetiva;
+    var limite = mod.limite_pagamento || _cfg.limite_pagamento_global || Infinity;
+    ganhoUnitario = Math.min(ganhoUnitario, limite);
+
+    var descricao = '1º' + (P > 1 ? ' ao ' + P + 'º prêmio' : ' prêmio');
+
+    return {
+      potencialGanho: _round(ganhoUnitario),
+      cotacaoEfetiva: _round(cotEfetiva),
+      descricao:      descricao
+    };
+  }
+
+  // ─── Conferência ─────────────────────────────────────────────────────────────
+
+  /**
+   * Confere uma aposta contra o resultado de um sorteio.
+   *
+   * @param {Object}   mod      - modalidade
+   * @param {string[]} numeros  - palpites apostados, ex: ['1234', '5678']
+   * @param {Object}   resultado - objeto de resultado do sorteio:
+   *                              {
+   *                                premios: [
+   *                                  { posicao: 1, milhar: '1234', centena: '234', dezena: '34', grupo: 5, animal: 'Leão' },
+   *                                  ...
+   *                                ]
+   *                              }
+   * @param {number[]} premiosSelecionados - ex: [1,2,3] (prêmios apostados)
+   * @returns {{
+   *   ganhou: boolean,
+   *   acertos: Array<{ numero: string, posicao: number, chave: string }>,
+   *   ganhoTotal: number,
+   *   detalhes: string
+   * }}
+   */
+  function conferir(mod, numeros, resultado, premiosSelecionados) {
+    if (!mod || !numeros || !resultado) {
+      return { ganhou: false, acertos: [], ganhoTotal: 0, detalhes: 'Dados insuficientes.' };
+    }
+
+    var premios = premiosSelecionados || mod.premios_padrao || [1];
+    var acertos = [];
+
+    // Filtra apenas os prêmios selecionados
+    var premiosDoSorteio = (resultado.premios || []).filter(function(p) {
+      return premios.indexOf(p.posicao) >= 0;
+    });
+
+    numeros.forEach(function(numero) {
+      var numStr = String(numero || '').replace(/\D/g, '');
+
+      premiosDoSorteio.forEach(function(premio) {
+        // Gera variações do número a checar de acordo com a modalidade
+        var variantes = _gerarVariantes(mod, numStr, premio);
+
+        variantes.forEach(function(variante) {
+          if (_checarAcerto(mod, numStr, variante, premio)) {
+            acertos.push({
+              numero:    numStr,
+              posicao:   premio.posicao,
+              chave:     variante.chave,
+              animal:    premio.animal || ''
+            });
+          }
+        });
+      });
+    });
+
+    // Remove duplicatas (mesmo número + posição)
+    var uniq = [];
+    var seen = {};
+    acertos.forEach(function(a) {
+      var k = a.numero + '_' + a.posicao;
+      if (!seen[k]) { seen[k] = true; uniq.push(a); }
+    });
+
+    var ganhouTotal = 0;
+    uniq.forEach(function(a) {
+      ganhouTotal += mod.cotacao; // simplificado — o chamador deve multiplicar pelo valor unitário
+    });
+
+    return {
+      ganhou:     uniq.length > 0,
+      acertos:    uniq,
+      ganhoTotal: _round(ganhouTotal), // multiplicador — multiplique pelo valorPorPalpite
+      detalhes:   uniq.length > 0
+        ? 'Acertou ' + uniq.length + ' vez(es)!'
+        : 'Não acertou.'
+    };
+  }
+
+  // ─── Utilitários de apresentação ─────────────────────────────────────────────
+
+  /**
+   * Formata o label de prêmios selecionados para exibição.
+   * Ex: [1] → "1º P"  |  [1,2,3] → "1-3 P"
+   */
+  function labelPremios(premios) {
+    var p = (premios || []).slice().sort(function(a,b){return a-b;});
+    if (!p.length) return '–';
+    if (p.length === 1) return p[0] + 'º P';
+    return p[0] + '-' + p[p.length - 1] + ' P';
+  }
+
+  /**
+   * Retorna o bet_type da API com sufixo de prêmio.
+   * Ex: obterBetType('milhar', [1,3]) → 'milhar_1_3'
+   */
+  function obterBetType(codigo, premios) {
+    var base = (codigo || '').toLowerCase().replace(/_\d+(?:_\d+)?$/, '');
+    var p = (premios || []).slice().sort(function(a,b){return a-b;});
+    if (!p.length || (p.length === 1 && p[0] === 1)) return base;
+    return base + '_' + p[0] + '_' + p[p.length - 1];
+  }
+
+  /**
+   * Parse de um bet_type da API para { codigo, premios[] }.
+   * Ex: 'milhar_1_5' → { codigo: 'milhar', premios: [1,2,3,4,5] }
+   */
+  function parseBetType(betType) {
+    var bt   = (betType || '').toLowerCase();
+    var m    = bt.match(/_(\d+)(?:_(\d+))?$/);
+    var base = bt.replace(/_\d+(?:_\d+)?$/, '');
+    if (!m) return { codigo: base, premios: [1] };
+    var ps = parseInt(m[1]);
+    var pe = m[2] ? parseInt(m[2]) : ps;
+    var premios = [];
+    for (var i = ps; i <= pe; i++) premios.push(i);
+    return { codigo: base, premios: premios };
+  }
+
+  // ─── Funções internas ────────────────────────────────────────────────────────
+
+  function _normalizar(m) {
+    return {
+      id:                m.id              || 0,
+      nome:              m.nome            || m.label || '',
+      codigo:            (m.codigo         || m.bet_type || '').toLowerCase(),
+      categoria:         m.categoria       || 'simples',
+      tipo_base:         m.tipo_base       || 'dezena',
+      digitos:           Number(m.digitos  || m.q || 2),
+      min_numeros:       Number(m.min_numeros || m.min || 1),
+      max_numeros:       m.max_numeros     != null ? Number(m.max_numeros) : null,
+      is_grupo:          !!(m.is_grupo     || m.g),
+      ordem_importa:     !!m.ordem_importa,
+      gera_combinacoes:  !!m.gera_combinacoes,
+      permite_inversao:  !!m.permite_inversao,
+      fator_combinacao:  Number(m.fator_combinacao || m.factor || 1),
+      premios_possiveis: m.premios_possiveis || [1,2,3,4,5],
+      premios_padrao:    m.premios_padrao    || [1],
+      max_premios:       Number(m.max_premios || 5),
+      cotacao:           Number(m.cotacao     || m.multiplier || 1),
+      metodo_divisao:    m.metodo_divisao    || 'dividido',
+      charge_multiplier: Number(m.charge_multiplier || 1),
+      valor_minimo:      Number(m.valor_minimo  || 0.50),
+      valor_maximo:      m.valor_maximo    != null ? Number(m.valor_maximo) : null,
+      limite_pagamento:  m.limite_pagamento != null ? Number(m.limite_pagamento) : null,
+      ativo:             m.ativo !== false,
+      ordem_exibicao:    Number(m.ordem_exibicao || 0)
+    };
+  }
+
+  function _gerarVariantes(mod, numStr, premio) {
+    var variantes = [{ chave: numStr, valor: _extrairChave(mod, numStr, premio) }];
+
+    if (mod.gera_combinacoes || mod.permite_inversao) {
+      // Gera permutações do número
+      var perms = _permutacoes(numStr);
+      perms.forEach(function(p) {
+        if (p !== numStr) {
+          variantes.push({ chave: p, valor: _extrairChave(mod, p, premio) });
+        }
+      });
+    }
+
+    return variantes;
+  }
+
+  function _checarAcerto(mod, numStr, variante, premio) {
+    var tipo = mod.tipo_base;
+    var chave = variante.valor;
+
+    if (tipo === 'milhar')  return chave === premio.milhar;
+    if (tipo === 'centena') return chave === premio.centena;
+    if (tipo === 'dezena')  return chave === premio.dezena;
+    if (tipo === 'grupo')   return Number(chave) === Number(premio.grupo);
+    return false;
+  }
+
+  function _extrairChave(mod, numStr, premio) {
+    var tipo = mod.tipo_base;
+    if (tipo === 'milhar')  return numStr.slice(-4);
+    if (tipo === 'centena') return numStr.slice(-3);
+    if (tipo === 'dezena')  return numStr.slice(-2);
+    if (tipo === 'grupo')   return _dezenaPraGrupo(numStr.slice(-2));
+    return numStr;
+  }
+
+  function _dezenaPraGrupo(dezena) {
+    var d = parseInt(dezena, 10);
+    if (isNaN(d)) return null;
+    return Math.ceil(d === 0 ? 25 : d / 4);
+  }
+
+  // Gera todas as permutações únicas de uma string numérica (máx 4 dígitos)
+  function _permutacoes(str) {
+    if (str.length <= 1) return [str];
+    var result = {};
+    for (var i = 0; i < str.length; i++) {
+      var rest = str.slice(0, i) + str.slice(i + 1);
+      var perms = _permutacoes(rest);
+      perms.forEach(function(p) { result[str[i] + p] = true; });
+    }
+    return Object.keys(result);
+  }
+
+  function _round(v) { return Math.round((v || 0) * 100) / 100; }
+  function _brNum(v) { return Number(v || 0).toFixed(2).replace('.', ','); }
+
+  // ─── Export ──────────────────────────────────────────────────────────────────
+  return {
+    // Registro
+    configurar:    configurar,
+    registrar:     registrar,
+    registrarTodas:registrarTodas,
+    // Consulta
+    obter:         obter,
+    listar:        listar,
+    // Operações
+    validar:       validar,
+    custo:         custo,
+    ganho:         ganho,
+    preview:       preview,
+    conferir:      conferir,
+    // Utilidades
+    labelPremios:  labelPremios,
+    obterBetType:  obterBetType,
+    parseBetType:  parseBetType
+  };
+
+}));
+
+// ─── Carregar modalidades do Supabase ────────────────────────────────────────
+function loadModalidades() {
+  sbGet('v_modalidades_ativas', 'order=ordem_exibicao')
+    .then(function(rows) {
+      var lista = Array.isArray(rows) ? rows : (rows && rows.data ? rows.data : []);
+      if (lista.length) {
+        ModalidadesEngine.registrarTodas(lista);
+        console.log('[ME] ' + lista.length + ' modalidades carregadas.');
+      }
+    })
+    .catch(function(e) { console.warn('[ME] Erro ao carregar modalidades:', e); });
+}
 
 // ─── Extras ──────────────────────────────────────────────────────────────────
 function aviso(f) { alert(f + '\nEm desenvolvimento.'); }
