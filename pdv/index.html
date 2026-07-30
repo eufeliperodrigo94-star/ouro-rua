@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.6 · TESTE</div>
+    <div class="login-version">versão 7.7 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.6 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.7 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1295,12 +1295,13 @@ function prepararSangriaAuditoria() {
     if (mods.length !== 40) throw new Error('Esperadas 40 modalidades ativas; recebidas: ' + mods.length);
     mods.sort(function(a, b) { return String(a.bet_type).localeCompare(String(b.bet_type)); });
 
-    // Valores-base distintos deixam MM/MD/DM/DD rastreáveis no banco.
+    // A sangria usa o valor-base real de R$ 1,00 em todos os casos.
+    // MM/MD/DM/DD continuam rastreáveis pela ordem determinística das linhas.
     var modes = [
-      { code:'MM', p:'m', r:'m', value:1.01 },
-      { code:'MD', p:'m', r:'d', value:1.02 },
-      { code:'DM', p:'d', r:'m', value:1.03 },
-      { code:'DD', p:'d', r:'d', value:1.04 }
+      { code:'MM', p:'m', r:'m', value:1.00 },
+      { code:'MD', p:'m', r:'d', value:1.00 },
+      { code:'DM', p:'d', r:'m', value:1.00 },
+      { code:'DD', p:'d', r:'d', value:1.00 }
     ];
     var cases = [], bets = [];
     mods.forEach(function(mod) {
