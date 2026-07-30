@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.14 · TESTE</div>
+    <div class="login-version">versão 7.15 · TESTE</div>
   </div>
 </div>
 
@@ -600,9 +600,10 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
+      <button class="btn-mn" style="background:#3949AB" onclick="abrirExtracoes()"><span class="mn-ico">🗓️</span>Extrações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.14 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.15 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -3216,6 +3217,67 @@ function colunas(esq, dir, w) {
 // ─── Extras ──────────────────────────────────────────────────────────────────
 function aviso(f) { alert(f + '\nEm desenvolvimento.'); }
 
+// ── EXTRAÇÕES ──────────────────────────────────────────────
+function abrirExtracoes() {
+  go('s-extracoes');
+  carregarExtracoes();
+}
+function escaparHtml(valor) {
+  return String(valor == null ? '' : valor)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+function carregarExtracoes() {
+  var el = document.getElementById('list-extracoes');
+  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Consultando o servidor Monte de Ouro...</div>';
+  apiPublic('/draws').then(function(data) {
+    var lista = toArray(data).filter(function(draw) {
+      return String(draw.title || '').toUpperCase().indexOf('AUDITORIA') !== 0;
+    }).sort(function(a, b) {
+      var aAberto = a.status === 'pending' || a.status === 'open';
+      var bAberto = b.status === 'pending' || b.status === 'open';
+      if (aAberto !== bAberto) return aAberto ? -1 : 1;
+      return new Date(b.draw_time || 0).getTime() - new Date(a.draw_time || 0).getTime();
+    });
+    if (!lista.length) {
+      el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Nenhuma extração disponível no servidor.</div>';
+      return;
+    }
+    el.innerHTML = '';
+    lista.forEach(function(draw) {
+      var aberto = draw.status === 'pending' || draw.status === 'open';
+      var encerrado = draw.status === 'finished' || draw.status === 'closed';
+      var statusTexto = aberto ? 'ABERTA' : (encerrado ? 'ENCERRADA' : String(draw.status || 'AGENDADA').toUpperCase());
+      var statusCor = aberto ? '#2E7D32' : (encerrado ? '#546E7A' : '#F57C00');
+      var dt = draw.draw_time ? new Date(draw.draw_time) : null;
+      var horario = dt && !isNaN(dt.getTime())
+        ? dt.toLocaleDateString('pt-BR') + ' · ' + dt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})
+        : 'Horário não informado';
+      var card = document.createElement('div');
+      card.style.cssText = 'background:#fff;border-radius:10px;padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:4px solid ' + statusCor;
+      card.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">' +
+          '<div style="min-width:0;flex:1">' +
+            '<div style="font-weight:700;font-size:15px;color:#1B4332;overflow-wrap:anywhere">' + escaparHtml(draw.title || 'Extração #' + draw.id) + '</div>' +
+            '<div style="font-size:12px;color:#777;margin-top:5px">' + escaparHtml(horario) + '</div>' +
+          '</div>' +
+          '<span style="flex:none;background:' + statusCor + ';color:#fff;border-radius:12px;padding:4px 8px;font-size:10px;font-weight:700">' + escaparHtml(statusTexto) + '</span>' +
+        '</div>';
+      el.appendChild(card);
+    });
+    var origem = document.createElement('div');
+    origem.style.cssText = 'text-align:center;color:#78909C;font-size:11px;padding:8px 0 16px';
+    origem.textContent = 'Dados atualizados pela API oficial do Monte de Ouro';
+    el.appendChild(origem);
+  }).catch(function(e) {
+    el.innerHTML = '<div style="color:#c62828;padding:20px;text-align:center">Não foi possível consultar as extrações.<br><small>' +
+      escaparHtml(e.message) + '</small><br><br><button onclick="carregarExtracoes()" style="padding:9px 18px;background:#3949AB;color:#fff;border:0;border-radius:7px">Tentar novamente</button></div>';
+  });
+}
+
 // ── RESULTADOS ──────────────────────────────────────────────
 function abrirResultados() {
   go('s-resultados');
@@ -3859,6 +3921,18 @@ function imprimirCotacoes() {
 }
 
 </script>
+
+<!-- ═══════════ EXTRAÇÕES ═══════════ -->
+<div id="s-extracoes" class="sc">
+  <div class="hdr-green">
+    <button class="back" onclick="go('s-main')">‹</button>
+    <span>Extrações</span>
+    <button onclick="carregarExtracoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
+  </div>
+  <div class="scroll-y lst-pad" id="list-extracoes">
+    <div style="text-align:center;padding:30px;color:#888">Carregando...</div>
+  </div>
+</div>
 
 <!-- ═══════════ RESULTADOS ═══════════ -->
 <div id="s-resultados" class="sc">
