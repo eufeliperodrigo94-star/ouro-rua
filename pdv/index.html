@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.8 · TESTE</div>
+    <div class="login-version">versão 7.9 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.8 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.9 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -3105,12 +3105,40 @@ function abrirResultados() {
   go('s-resultados');
   carregarResultados();
 }
+function normalizarResultadoSorteio(s) {
+  if (!s) return s;
+  var dt = s.draw_time ? new Date(s.draw_time) : null;
+  if (!s.date && dt && !isNaN(dt.getTime())) {
+    s.date = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());
+  }
+  if (!s.hora && dt && !isNaN(dt.getTime())) {
+    s.hora = pad(dt.getHours()) + ':' + pad(dt.getMinutes()) + ':' + pad(dt.getSeconds());
+  }
+  if (!s.result) {
+    var itens = Array.isArray(s.results) ? s.results : [];
+    if (!itens.length) {
+      for (var i = 1; i <= 10; i++) {
+        var numero = s['result_' + i];
+        if (numero != null && String(numero).trim()) itens.push({ position: i, number: numero });
+      }
+    }
+    s.result = itens.map(function(item, idx) {
+      var numero = String(item.number != null ? item.number : '').replace(/\D/g, '').slice(-4);
+      while (numero.length < 4) numero = '0' + numero;
+      var dezena = Number(numero.slice(-2));
+      var grupo = item.group || (dezena === 0 ? 25 : Math.ceil(dezena / 4));
+      var bicho = item.animal || (BICHOS[grupo - 1] ? BICHOS[grupo - 1][1] : 'Bicho');
+      return pad(item.position || idx + 1) + '  ' + numero + '  ' + pad(grupo) + ' - ' + String(bicho).toUpperCase();
+    }).join('\n');
+  }
+  return s;
+}
 function carregarResultados() {
   var el = document.getElementById('list-resultados');
   el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
   api('/draws/results').then(function(lista) {
-    _resultadosCache = toArray(lista);
-    lista = toArray(lista);
+    lista = toArray(lista).map(normalizarResultadoSorteio);
+    _resultadosCache = lista;
     if (!lista.length) {
       el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Nenhum resultado publicado.</div>';
       return;
