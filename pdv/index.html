@@ -1303,29 +1303,51 @@ function prepararSangriaAuditoria() {
       { code:'DM', p:'d', r:'m', value:1.00 },
       { code:'DD', p:'d', r:'d', value:1.00 }
     ];
+    var auditId = 'POS160-' + Date.now().toString(36).toUpperCase();
     var cases = [], bets = [];
     mods.forEach(function(mod) {
       modes.forEach(function(mode) {
         var rows = auditPayloadRows(draws[0], mod, mode);
-        cases.push({
-          index: cases.length + 1,
-          bet_type: mod.bet_type,
+        var caseIndex = cases.length + 1;
+        var expectedTotal = rows.reduce(function(sum, row) {
+          return sum + Number(row.amount) *
+            Math.max(1, backendCombinationCount(mod, row.numbers)) *
+            Math.max(1, Number(mod.charge_multiplier || 1));
+        }, 0);
+        var auditMetadata = {
+          audit_id: auditId,
+          case_index: caseIndex,
+          extraction_id: draws[0].id,
+          extraction_name: draws[0].title,
+          modality: mod.bet_type,
+          modality_label: mod.label,
+          control_1: mode.p === 'm' ? 'MULTIPLICAR' : 'DIVIDIR',
+          control_2: mode.r === 'm' ? 'MULTIPLICAR' : 'DIVIDIR',
           mode: mode.code,
+          entered_amount: mode.value,
+          charged_amount: expectedTotal,
+          quotation: Number(mod.multiplier || 0)
+        };
+        rows.forEach(function(row) { row.audit_metadata = auditMetadata; });
+        cases.push({
+          index: caseIndex,
+          bet_type: mod.bet_type,
+          modality_label: mod.label,
+          mode: mode.code,
+          control_1: auditMetadata.control_1,
+          control_2: auditMetadata.control_2,
           base_value: mode.value,
           numbers: auditRepeatedEntry(mod),
           row_count: rows.length,
-          expected_total: rows.reduce(function(sum, row) {
-            return sum + Number(row.amount) *
-              Math.max(1, backendCombinationCount(mod, row.numbers)) *
-              Math.max(1, Number(mod.charge_multiplier || 1));
-          }, 0)
+          expected_total: expectedTotal,
+          quotation: auditMetadata.quotation
         });
         bets = bets.concat(rows);
       });
     });
     if (cases.length !== 160) throw new Error('Matriz incompleta: ' + cases.length + ' casos.');
     _audit160 = {
-      audit_id: 'POS160-' + Date.now().toString(36).toUpperCase(),
+      audit_id: auditId,
       draw: draws[0],
       cases: cases,
       bets: bets
