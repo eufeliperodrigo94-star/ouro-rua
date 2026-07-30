@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.13 · TESTE</div>
+    <div class="login-version">versão 7.14 · TESTE</div>
   </div>
 </div>
 
@@ -595,14 +595,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#1E88E5" onclick="abrirResultados()"><span class="mn-ico">📋</span>Resultado</button>
       <button class="btn-mn" style="background:#FB8C00" onclick="abrirRepetir()"><span class="mn-ico">🔁</span>Repetir</button>
       <button class="btn-mn" style="background:#FF6D00" onclick="abrirCaixa()"><span class="mn-ico">💰</span>Caixa</button>
-      <button class="btn-mn" style="background:#8E24AA" onclick="aviso('Impressora')"><span class="mn-ico">🖨️</span>Impressora</button>
-      <button class="btn-mn" style="background:#D81B60" onclick="aviso('Regulamento')"><span class="mn-ico">📜</span>Regulamento</button>
+      <button class="btn-mn" style="background:#8E24AA" onclick="abrirImpressora()"><span class="mn-ico">🖨️</span>Impressora</button>
+      <button class="btn-mn" style="background:#D81B60" onclick="abrirRegulamento()"><span class="mn-ico">📜</span>Regulamento</button>
       <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.13 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.14 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1533,7 +1533,11 @@ function loadDraws() {
   apiPublic('/draws').then(function(data) {
     var lista   = toArray(data);
     // Supabase: status=open; compatível com status=pending também
-    var abertos = lista.filter(function(d) { return d.status === 'open' || d.status === 'pending'; });
+    var abertos = lista.filter(function(d) {
+      var aberto = d.status === 'open' || d.status === 'pending';
+      var auditoria = String(d.title || '').toUpperCase().indexOf('AUDITORIA') === 0;
+      return aberto && !auditoria;
+    });
     el.innerHTML = '';
     if (!abertos.length) {
       el.innerHTML = '<div class="msg-err">Nenhum sorteio aberto no momento.' +
@@ -2939,7 +2943,10 @@ function diagnosticarImpressora() {
 }
 
 function printLog(msg, ok) {
-  var el = document.getElementById('print-log');
+  var menu = document.getElementById('s-impressora');
+  var el = menu && menu.classList.contains('on')
+    ? document.getElementById('printer-menu-log')
+    : document.getElementById('print-log');
   if (!el) return;
   el.style.display    = 'block';
   // Acumula linhas; última linha define a cor do fundo
@@ -3318,12 +3325,15 @@ function abrirRepetir() {
 function carregarRecentes() {
   var el = document.getElementById('list-repetir-recentes');
   if (!st.user) { el.innerHTML = '<div style="color:#aaa;font-size:13px">Faça login para ver recentes.</div>'; return; }
-  sbGet('apostas', 'user_id=eq.' + st.user.id + '&order=created_at.desc&limit=50')
+  api('/bets/mine')
     .then(function(lista) {
       lista = toArray(lista);
       // Deduplica por ticket_code preservando ordem
       var seen = {}, codes = [];
-      lista.forEach(function(b) { var c = b.ticket_code; if (c && !seen[c]) { seen[c] = true; codes.push(c); } });
+      lista.forEach(function(b) {
+        var c = b.ticket_code || b.ticket_id;
+        if (c && !seen[c]) { seen[c] = true; codes.push(c); }
+      });
       codes = codes.slice(0, 6);
       if (!codes.length) { el.innerHTML = '<div style="color:#aaa;font-size:13px">Sem bilhetes recentes.</div>'; return; }
       el.innerHTML = '';
@@ -3362,7 +3372,12 @@ function buscarBilhete() {
 function confirmarRepetir() {
   if (!_repBets || !_repBets.length) return;
   var bets = _repBets.map(function(b) {
-    return { draw_id: b.draw_id, bet_type: b.bet_type, numbers: typeof b.numbers === 'string' ? b.numbers : JSON.stringify(b.numbers), amount: Number(b.amount) };
+    return {
+      draw_id: b.draw_id,
+      bet_type: b.bet_type,
+      numbers: typeof b.numbers === 'string' ? b.numbers : JSON.stringify(b.numbers),
+      amount: Number(b.repeat_amount != null ? b.repeat_amount : b.amount)
+    };
   });
   var btn = document.querySelector('#rep-preview button');
   if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
@@ -3404,14 +3419,14 @@ function carregarCaixa() {
     lista = toArray(lista);
     var total = lista.reduce(function(s, b) { return s + Number(b.amount || 0); }, 0);
     var totalBilhetes = (function() {
-      var set = {}; lista.forEach(function(b) { if (b.ticket_code) set[b.ticket_code] = 1; }); return Object.keys(set).length;
+      var set = {}; lista.forEach(function(b) { var tc = b.ticket_code || b.ticket_id; if (tc) set[tc] = 1; }); return Object.keys(set).length;
     })();
     var totalApostas = lista.length;
     var titulo = _caixaTab === 'hoje' ? 'Relatório de Hoje' : 'Relatório Geral';
     // Agrupar por ticket_code para exibir
     var ticketMap = {}; var ticketOrder = [];
     lista.forEach(function(b) {
-      var tc = b.ticket_code || 'sem-código';
+      var tc = b.ticket_code || b.ticket_id || 'sem-código';
       if (!ticketMap[tc]) { ticketMap[tc] = []; ticketOrder.push(tc); }
       ticketMap[tc].push(b);
     });
@@ -3485,9 +3500,19 @@ function abrirCotacoes() {
 function carregarCotacoes() {
   var el = document.getElementById('list-cotacoes');
   el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
-  sbGet('modality_settings', 'is_active=eq.true&order=id.asc').then(function(lista) {
-    _cotacoesCache = toArray(lista);
-    lista = toArray(lista);
+  var regionId = st.user && st.user.region_id;
+  var regionalPromise = regionId ? apiPublic('/regions/quotations/' + regionId) : Promise.resolve([]);
+  Promise.all([apiPublic('/modality-settings'), regionalPromise]).then(function(all) {
+    var lista = toArray(all[0]);
+    var regionais = toArray(all[1]);
+    var porTipo = {};
+    regionais.forEach(function(item) { porTipo[String(item.bet_type || '').toUpperCase()] = Number(item.multiplier); });
+    lista.forEach(function(item) {
+      var regional = porTipo[String(item.bet_type || '').toUpperCase()];
+      item.quotation_source = regional != null ? 'Regional' : 'Global';
+      if (regional != null) item.multiplier = regional;
+    });
+    _cotacoesCache = lista;
     if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Sem cotações disponíveis.</div>'; return; }
     var html2 = '';
     lista.forEach(function(c) {
@@ -3496,7 +3521,7 @@ function carregarCotacoes() {
       html2 += '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center">' +
         '<div>' +
           '<div style="font-weight:600;font-size:14px;color:#1B4332">' + (c.label || c.bet_type || '–') + '</div>' +
-          '<div style="font-size:11px;color:#888;margin-top:2px">' + (c.bet_type || '') + cm + '</div>' +
+          '<div style="font-size:11px;color:#888;margin-top:2px">' + (c.bet_type || '') + cm + ' · ' + c.quotation_source + '</div>' +
         '</div>' +
         '<div style="background:#E8F5E9;padding:5px 12px;border-radius:16px;font-weight:700;font-size:15px;color:#2E7D32">' + mult + '</div>' +
       '</div>';
@@ -3504,6 +3529,59 @@ function carregarCotacoes() {
     el.innerHTML = html2;
   }).catch(function(e) {
     el.innerHTML = '<div style="color:#c62828;padding:20px">Erro: ' + e.message + '</div>';
+  });
+}
+
+// ── IMPRESSORA ───────────────────────────────────────────────
+function abrirImpressora() {
+  go('s-impressora');
+  var log = document.getElementById('printer-menu-log');
+  if (log) {
+    log.style.display = 'block';
+    log.style.background = '#ECEFF1';
+    log.style.color = '#37474F';
+    log.textContent = 'Use Diagnóstico para identificar o driver do POS ou Teste para imprimir um comprovante curto.';
+  }
+}
+
+function testarImpressoraMenu() {
+  var W = 32;
+  var texto = '\n' + centrar('MONTE DE OURO', W) + '\n' +
+    centrar('TESTE DE IMPRESSORA', W) + '\n' +
+    '================================\n' +
+    'Data: ' + new Date().toLocaleString('pt-BR') + '\n' +
+    'POS/API: CONECTADO\n' +
+    '================================\n\n';
+  if (!window.NativePrinter) {
+    mostrarSimulacaoResultado(texto);
+    return;
+  }
+  try {
+    var raw = window.NativePrinter.printText(texto);
+    var resposta = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (resposta && resposta.ok) printLog('✓ Teste enviado. Driver: ' + (resposta.driver || '?'), true);
+    else {
+      printLog('✗ Impressora indisponível; abrindo simulação.', false);
+      mostrarSimulacaoResultado(texto);
+    }
+  } catch(e) {
+    printLog('✗ Falha: ' + e.message, false);
+    mostrarSimulacaoResultado(texto);
+  }
+}
+
+// ── REGULAMENTO ──────────────────────────────────────────────
+function abrirRegulamento() {
+  go('s-regulamento');
+  var resumo = document.getElementById('reg-modalidades');
+  resumo.textContent = 'Consultando modalidades ativas...';
+  apiPublic('/modality-settings').then(function(lista) {
+    lista = toArray(lista).filter(function(item) {
+      return item.is_active === true || item.is_active === 1 || item.is_active === '1';
+    });
+    resumo.textContent = lista.length + ' modalidades ativas no servidor. As cotações aplicadas devem ser conferidas no botão Cotações.';
+  }).catch(function(e) {
+    resumo.textContent = 'Não foi possível consultar as modalidades: ' + e.message;
   });
 }
 
@@ -3724,7 +3802,7 @@ function imprimirCaixa() {
       var lista = _caixaCache;
       var total = lista.reduce(function(s, b) { return s + Number(b.amount || 0); }, 0);
       var ticketSet = {};
-      lista.forEach(function(b) { if (b.ticket_code) ticketSet[b.ticket_code] = 1; });
+      lista.forEach(function(b) { var code = b.ticket_code || b.ticket_id; if (code) ticketSet[code] = 1; });
       var totalBilhetes = Object.keys(ticketSet).length;
       var SEP = '================================';
       var W   = 32;
@@ -3741,7 +3819,7 @@ function imprimirCaixa() {
       // Agrupar por ticket
       var ticketMap = {}, ticketOrder = [];
       lista.forEach(function(b) {
-        var tc = b.ticket_code || 'sem-cod';
+        var tc = b.ticket_code || b.ticket_id || 'sem-cod';
         if (!ticketMap[tc]) { ticketMap[tc] = { val: 0, cnt: 0, dt: b.created_at }; ticketOrder.push(tc); }
         ticketMap[tc].val += Number(b.amount || 0);
         ticketMap[tc].cnt++;
@@ -3889,6 +3967,46 @@ function imprimirCotacoes() {
   </div>
   <div class="scroll-y lst-pad" id="list-cotacoes">
     <div style="text-align:center;padding:30px;color:#888">Carregando...</div>
+  </div>
+</div>
+
+<!-- ═══════════ IMPRESSORA ═══════════ -->
+<div id="s-impressora" class="sc">
+  <div class="hdr-green">
+    <button class="back" onclick="go('s-main')">‹</button>
+    <span>Impressora</span>
+    <span></span>
+  </div>
+  <div class="scroll-y" style="padding:18px">
+    <div style="background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
+      <div style="font-weight:700;color:#1B4332;font-size:17px;margin-bottom:8px">Impressora térmica do POS</div>
+      <div style="font-size:13px;color:#666;line-height:1.5;margin-bottom:16px">O diagnóstico identifica o serviço Xcheng, portas seriais e drivers alternativos. O teste imprime um comprovante curto sem criar aposta.</div>
+      <button onclick="diagnosticarImpressora()" style="width:100%;padding:14px;border:0;border-radius:8px;background:#546E7A;color:#fff;font-size:15px;font-weight:700;margin-bottom:10px">DIAGNÓSTICO</button>
+      <button onclick="testarImpressoraMenu()" style="width:100%;padding:14px;border:0;border-radius:8px;background:#8E24AA;color:#fff;font-size:15px;font-weight:700">IMPRIMIR TESTE</button>
+      <pre id="printer-menu-log" style="display:none;white-space:pre-wrap;font:12px/1.45 monospace;padding:12px;border-radius:8px;margin-top:14px;max-height:420px;overflow:auto"></pre>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ REGULAMENTO ═══════════ -->
+<div id="s-regulamento" class="sc">
+  <div class="hdr-green">
+    <button class="back" onclick="go('s-main')">‹</button>
+    <span>Regulamento</span>
+    <span></span>
+  </div>
+  <div class="scroll-y" style="padding:16px">
+    <div style="background:#fff;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.1);font-size:13px;line-height:1.55;color:#333">
+      <div style="font-size:18px;font-weight:800;color:#1B4332;margin-bottom:10px">Regras operacionais do POS</div>
+      <p><b>Valor de entrada:</b> é o valor informado antes da aplicação dos controles.</p>
+      <p><b>Controle 1:</b> multiplica ou divide o valor pela quantidade de jogos informados.</p>
+      <p><b>Controle 2:</b> multiplica ou divide pelas posições, combinações ou permutações previstas na modalidade. Modalidades sem segundo fator mantêm o valor recebido do primeiro controle.</p>
+      <p><b>Padrão:</b> o POS inicia em Multiplicar/Multiplicar. A divisão só deve ser selecionada quando solicitada pelo cliente.</p>
+      <p><b>Premiação:</b> utiliza a saída final dos controles multiplicada pela cotação efetiva da região do vendedor. O resultado e a situação do bilhete dependem da extração oficial finalizada.</p>
+      <p><b>Bilhete:</b> confira extração, modalidade, números, controles e valor antes de finalizar. O código único identifica a aposta para consulta e baixa.</p>
+      <p><b>Auditoria 160:</b> recurso de teste que usa saldo fictício e não altera o saldo real. Ele não substitui uma aposta comercial.</p>
+      <div id="reg-modalidades" style="margin-top:14px;padding:12px;border-radius:8px;background:#E8F5E9;color:#1B5E20;font-weight:600">Consultando modalidades ativas...</div>
+    </div>
   </div>
 </div>
 </body>
