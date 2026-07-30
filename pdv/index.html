@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.15 · TESTE</div>
+    <div class="login-version">versão 7.16 · TESTE</div>
   </div>
 </div>
 
@@ -603,7 +603,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#3949AB" onclick="abrirExtracoes()"><span class="mn-ico">🗓️</span>Extrações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.15 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.16 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1107,6 +1107,7 @@ var st = {
 
 // ─── Navegação ────────────────────────────────────────────────────────────────
 function go(id) {
+  if (id !== 's-extracoes') pararAtualizacaoExtracoes();
   var all = document.querySelectorAll('.sc');
   for (var i = 0; i < all.length; i++) all[i].classList.remove('on');
   document.getElementById(id).classList.add('on');
@@ -3218,9 +3219,20 @@ function colunas(esq, dir, w) {
 function aviso(f) { alert(f + '\nEm desenvolvimento.'); }
 
 // ── EXTRAÇÕES ──────────────────────────────────────────────
+var _timerExtracoes = null;
 function abrirExtracoes() {
   go('s-extracoes');
   carregarExtracoes();
+  pararAtualizacaoExtracoes();
+  _timerExtracoes = setInterval(function() {
+    if (document.getElementById('s-extracoes').classList.contains('on')) carregarExtracoes(true);
+  }, 30000);
+}
+function pararAtualizacaoExtracoes() {
+  if (_timerExtracoes) {
+    clearInterval(_timerExtracoes);
+    _timerExtracoes = null;
+  }
 }
 function escaparHtml(valor) {
   return String(valor == null ? '' : valor)
@@ -3230,9 +3242,9 @@ function escaparHtml(valor) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
-function carregarExtracoes() {
+function carregarExtracoes(silencioso) {
   var el = document.getElementById('list-extracoes');
-  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Consultando o servidor Monte de Ouro...</div>';
+  if (!silencioso) el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Consultando o servidor Monte de Ouro...</div>';
   apiPublic('/draws').then(function(data) {
     var lista = toArray(data).filter(function(draw) {
       return String(draw.title || '').toUpperCase().indexOf('AUDITORIA') !== 0;
@@ -3273,8 +3285,10 @@ function carregarExtracoes() {
     origem.textContent = 'Dados atualizados pela API oficial do Monte de Ouro';
     el.appendChild(origem);
   }).catch(function(e) {
-    el.innerHTML = '<div style="color:#c62828;padding:20px;text-align:center">Não foi possível consultar as extrações.<br><small>' +
-      escaparHtml(e.message) + '</small><br><br><button onclick="carregarExtracoes()" style="padding:9px 18px;background:#3949AB;color:#fff;border:0;border-radius:7px">Tentar novamente</button></div>';
+    if (!silencioso) {
+      el.innerHTML = '<div style="color:#c62828;padding:20px;text-align:center">Não foi possível consultar as extrações.<br><small>' +
+        escaparHtml(e.message) + '</small><br><br>A nova tentativa será automática.</div>';
+    }
   });
 }
 
@@ -3927,7 +3941,7 @@ function imprimirCotacoes() {
   <div class="hdr-green">
     <button class="back" onclick="go('s-main')">‹</button>
     <span>Extrações</span>
-    <button onclick="carregarExtracoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
+    <span></span>
   </div>
   <div class="scroll-y lst-pad" id="list-extracoes">
     <div style="text-align:center;padding:30px;color:#888">Carregando...</div>
