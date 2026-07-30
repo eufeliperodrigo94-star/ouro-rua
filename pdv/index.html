@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.12 · TESTE</div>
+    <div class="login-version">versão 7.13 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.12 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.13 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1398,7 +1398,8 @@ function enviarSangriaAuditoria() {
   status.textContent += '\n\nENVIANDO PELO POS...';
   var body = {
     bets: _audit160.bets,
-    customer_phone: st.user ? (st.user.phone || '') : ''
+    customer_phone: st.user ? (st.user.phone || '') : '',
+    audit_mode: true
   };
   api('/bets/batch', {
     method: 'POST',
@@ -1407,18 +1408,25 @@ function enviarSangriaAuditoria() {
   }).then(function(result) {
     _audit160.ticket_id = result.ticketId || result.ticket_id || '';
     _audit160.total_amount = Number(result.totalAmount || result.total_amount || 0);
+    _audit160.fictitious_balance_before = Number(result.fictitiousBalanceBefore || 0);
+    _audit160.fictitious_balance_after = Number(result.fictitiousBalanceAfter || 0);
     localStorage.setItem('audit160.last', JSON.stringify({
       audit_id: _audit160.audit_id,
       draw_id: _audit160.draw.id,
       ticket_id: _audit160.ticket_id,
       cases: _audit160.cases,
       total_amount: _audit160.total_amount,
+      fictitious_balance_before: _audit160.fictitious_balance_before,
+      fictitious_balance_after: _audit160.fictitious_balance_after,
       sent_at: new Date().toISOString()
     }));
     status.textContent +=
       '\nSUCESSO\nBilhete: ' + _audit160.ticket_id +
       '\nCasos: 160\nRegistros enviados: ' + _audit160.bets.length +
-      '\nTotal API: R$ ' + _audit160.total_amount.toFixed(2);
+      '\nTotal API: R$ ' + _audit160.total_amount.toFixed(2) +
+      '\nSaldo fictício: R$ ' + _audit160.fictitious_balance_before.toFixed(2) +
+      ' → R$ ' + _audit160.fictitious_balance_after.toFixed(2) +
+      '\nSaldo real: NÃO ALTERADO';
     var print = document.getElementById('audit-print');
     print.disabled = false;
     print.style.opacity = '1';
@@ -1460,6 +1468,8 @@ function montarBilheteSangriaAuditoria() {
   texto += SEP + '\n';
   texto += 'Audit: ' + _audit160.audit_id + '\n';
   if (enviado) texto += 'Bilhete: ' + _audit160.ticket_id + '\n';
+  texto += 'Saldo: FICTICIO DE AUDITORIA\n';
+  texto += 'Saldo real: NAO ALTERADO\n';
   texto += 'Extracao:\n' + quebrarTextoTermico(_audit160.draw.title, W) + '\n';
   texto += 'Casos: 160 (40 x MM/MD/DM/DD)\n';
   texto += SEP + '\n';
