@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.5 · TESTE</div>
+    <div class="login-version">versão 7.6 · TESTE</div>
   </div>
 </div>
 
@@ -599,9 +599,29 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#D81B60" onclick="aviso('Regulamento')"><span class="mn-ico">📜</span>Regulamento</button>
       <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
+      <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.5 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.6 · TESTE · MonteDeOuroPOS</div>
+  </div>
+</div>
+
+<!-- Modo exclusivo do APK de teste: 40 modalidades x MM/MD/DM/DD. -->
+<div id="s-audit" class="sc">
+  <div class="hdr-green">
+    <button class="back" onclick="go('s-main')">‹</button>
+    <span>Sangria de Auditoria</span>
+    <span></span>
+  </div>
+  <div class="scroll-y" style="padding:18px">
+    <div style="background:#FFF3E0;border:2px solid #E65100;border-radius:10px;padding:14px;color:#4E342E;font-size:14px;line-height:1.5">
+      <b>AMBIENTE DE TESTE</b><br>
+      Gera um único bilhete com 160 casos: 40 modalidades nos modos MM, MD, DM e DD.
+      Cada caso usa dois jogos vencedores para exercer os dois controles.
+    </div>
+    <div id="audit-status" style="white-space:pre-wrap;font-family:monospace;background:#ECEFF1;border-radius:8px;padding:12px;margin-top:12px;min-height:150px;font-size:12px;line-height:1.45">Aguardando preparação.</div>
+    <button id="audit-prepare" onclick="prepararSangriaAuditoria()" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:8px;background:#1565C0;color:white;font-size:16px;font-weight:700">PREPARAR 160 CASOS</button>
+    <button id="audit-send" onclick="enviarSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:16px;border:0;border-radius:8px;background:#B71C1C;color:white;font-size:16px;font-weight:700;opacity:.45">ENVIAR BILHETE DE AUDITORIA</button>
   </div>
 </div>
 
@@ -1168,6 +1188,210 @@ function refreshMe() {
     localStorage.setItem('user', JSON.stringify(user));
     updateUI();
   }).catch(function() {});
+}
+
+// ── SANGRIA DE AUDITORIA (somente APK TESTE) ────────────────────────────────
+var _audit160 = null;
+
+function abrirSangriaAuditoria() {
+  _audit160 = null;
+  var status = document.getElementById('audit-status');
+  var send = document.getElementById('audit-send');
+  status.textContent = 'Aguardando preparação.\n\nRequer sorteio PENDING com título iniciado por AUDITORIA POS 160.';
+  send.disabled = true;
+  send.style.opacity = '.45';
+  go('s-audit');
+}
+
+function auditBaseType(bt) {
+  var keys = [
+    'MILHAR_CENTENA_INVERTIDO', 'MILHAR_CENTENA', 'CENTENA_INVERTIDA',
+    'MILHAR_INVERTIDA', 'MILHAR', 'CENTENA', 'DEZENA', 'GRUPO'
+  ];
+  for (var i = 0; i < keys.length; i++) {
+    if (bt === keys[i] || bt.indexOf(keys[i] + '_') === 0) return keys[i];
+  }
+  return '';
+}
+
+function auditWinningGame(bt) {
+  var upper = String(bt || '').toUpperCase().replace(/-/g, '_');
+  var last = upper.indexOf('_6_10') >= 0;
+  var special = {
+    'DUQUE_GRUPO_1_5':'9,11', 'DUQUE_GRUPO_6_10':'23,2',
+    'TERNO_GRUPO_1_5':'9,11,13', 'TERNO_GRUPO_6_10':'23,2,5',
+    'DUQUE_DEZENA_1_5':'34,44', 'DUQUE_DEZENA_6_10':'89,05',
+    'TERNO_DEZENA_1_5':'34,44,50', 'TERNO_DEZENA_6_10':'89,05,18'
+  };
+  if (special[upper]) return special[upper];
+  var first = {
+    'MILHAR':'1234', 'CENTENA':'234', 'DEZENA':'34', 'GRUPO':'9',
+    'MILHAR_CENTENA':'1234', 'MILHAR_INVERTIDA':'4321',
+    'CENTENA_INVERTIDA':'432', 'MILHAR_CENTENA_INVERTIDO':'4321'
+  };
+  var sixth = {
+    'MILHAR':'6489', 'CENTENA':'489', 'DEZENA':'89', 'GRUPO':'23',
+    'MILHAR_CENTENA':'6489', 'MILHAR_INVERTIDA':'9846',
+    'CENTENA_INVERTIDA':'984', 'MILHAR_CENTENA_INVERTIDO':'9846'
+  };
+  var base = auditBaseType(upper);
+  return (last ? sixth : first)[base] || '';
+}
+
+function auditRepeatedEntry(mod) {
+  var game = auditWinningGame(mod.bet_type);
+  if (!game) throw new Error('Sem número vencedor para ' + mod.bet_type);
+  return game + ',' + game;
+}
+
+function auditNormalizeMod(raw) {
+  var info = modInfo(raw.bet_type);
+  return {
+    bet_type: raw.bet_type,
+    label: raw.label || modLabel(raw),
+    multiplier: raw.multiplier,
+    charge_multiplier: raw.charge_multiplier ? Number(raw.charge_multiplier) : 1,
+    factor: raw.factor ? Number(raw.factor) : 1,
+    q: raw.digits || raw.q || info.q,
+    g: raw.is_grupo || raw.g || info.g,
+    min: raw.min_combo || raw.min || info.min
+  };
+}
+
+function auditPayloadRows(draw, mod, mode) {
+  var entry = auditRepeatedEntry(mod);
+  var values = calculatedModeValues(mode.value, mode.p, mode.r, mod, entry);
+  var accounting = betAccounting(mod, entry, values.total, values.gameTotals);
+  return accounting.games.map(function(game, index) {
+    var row = {
+      draw_id: draw.id,
+      numbers: game.trim(),
+      amount: parseFloat(accounting.unitAmounts[index].toFixed(6)),
+      bet_type: String(mod.bet_type).toLowerCase()
+    };
+    if (mod.multiplier != null) row.multiplier = Number(mod.multiplier);
+    return row;
+  });
+}
+
+function prepararSangriaAuditoria() {
+  var status = document.getElementById('audit-status');
+  var prepare = document.getElementById('audit-prepare');
+  var send = document.getElementById('audit-send');
+  prepare.disabled = true;
+  status.textContent = 'Consultando sorteio e modalidades no host...';
+  Promise.all([apiPublic('/draws'), apiPublic('/modality-settings')]).then(function(all) {
+    var draws = toArray(all[0]).filter(function(draw) {
+      return String(draw.status || '').toLowerCase() === 'pending' &&
+        String(draw.title || '').toUpperCase().indexOf('AUDITORIA POS 160') === 0;
+    });
+    if (draws.length !== 1) {
+      throw new Error('Esperado exatamente 1 sorteio PENDING AUDITORIA POS 160; encontrados: ' + draws.length);
+    }
+    var mods = toArray(all[1]).filter(function(mod) {
+      var active = mod.is_active;
+      return active === 1 || active === true || active === '1' || active === 'true';
+    }).map(auditNormalizeMod);
+    if (mods.length !== 40) throw new Error('Esperadas 40 modalidades ativas; recebidas: ' + mods.length);
+    mods.sort(function(a, b) { return String(a.bet_type).localeCompare(String(b.bet_type)); });
+
+    // Valores-base distintos deixam MM/MD/DM/DD rastreáveis no banco.
+    var modes = [
+      { code:'MM', p:'m', r:'m', value:1.01 },
+      { code:'MD', p:'m', r:'d', value:1.02 },
+      { code:'DM', p:'d', r:'m', value:1.03 },
+      { code:'DD', p:'d', r:'d', value:1.04 }
+    ];
+    var cases = [], bets = [];
+    mods.forEach(function(mod) {
+      modes.forEach(function(mode) {
+        var rows = auditPayloadRows(draws[0], mod, mode);
+        cases.push({
+          index: cases.length + 1,
+          bet_type: mod.bet_type,
+          mode: mode.code,
+          base_value: mode.value,
+          numbers: auditRepeatedEntry(mod),
+          row_count: rows.length,
+          expected_total: rows.reduce(function(sum, row) {
+            return sum + Number(row.amount) *
+              Math.max(1, backendCombinationCount(mod, row.numbers)) *
+              Math.max(1, Number(mod.charge_multiplier || 1));
+          }, 0)
+        });
+        bets = bets.concat(rows);
+      });
+    });
+    if (cases.length !== 160) throw new Error('Matriz incompleta: ' + cases.length + ' casos.');
+    _audit160 = {
+      audit_id: 'POS160-' + Date.now().toString(36).toUpperCase(),
+      draw: draws[0],
+      cases: cases,
+      bets: bets
+    };
+    var expected = cases.reduce(function(sum, item) { return sum + item.expected_total; }, 0);
+    status.textContent =
+      'PRONTO PARA ENVIO\n' +
+      'Auditoria: ' + _audit160.audit_id + '\n' +
+      'Sorteio: #' + draws[0].id + ' ' + draws[0].title + '\n' +
+      'Modalidades: ' + mods.length + '\n' +
+      'Casos: ' + cases.length + ' (MM/MD/DM/DD)\n' +
+      'Registros API previstos: ' + bets.length + '\n' +
+      'Custo previsto: R$ ' + expected.toFixed(2) + '\n\n' +
+      'Toque ENVIAR somente para executar a sangria.';
+    send.disabled = false;
+    send.style.opacity = '1';
+  }).catch(function(error) {
+    _audit160 = null;
+    status.textContent = 'BLOQUEADO\n' + error.message;
+  }).finally(function() {
+    prepare.disabled = false;
+  });
+}
+
+function enviarSangriaAuditoria() {
+  if (!_audit160) return;
+  var status = document.getElementById('audit-status');
+  var send = document.getElementById('audit-send');
+  var phrase = prompt('Operação financeira de teste.\nDigite SANGRIA 160 para confirmar:');
+  if (phrase !== 'SANGRIA 160') {
+    status.textContent += '\n\nEnvio cancelado: frase de confirmação incorreta.';
+    return;
+  }
+  if (!confirm('Enviar agora 160 casos pelo POS para o host de TESTE?')) return;
+  send.disabled = true;
+  send.style.opacity = '.45';
+  status.textContent += '\n\nENVIANDO PELO POS...';
+  var body = {
+    bets: _audit160.bets,
+    customer_phone: st.user ? (st.user.phone || '') : ''
+  };
+  api('/bets/batch', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    noAutoLogout: true
+  }).then(function(result) {
+    _audit160.ticket_id = result.ticketId || result.ticket_id || '';
+    _audit160.total_amount = Number(result.totalAmount || result.total_amount || 0);
+    localStorage.setItem('audit160.last', JSON.stringify({
+      audit_id: _audit160.audit_id,
+      draw_id: _audit160.draw.id,
+      ticket_id: _audit160.ticket_id,
+      cases: _audit160.cases,
+      total_amount: _audit160.total_amount,
+      sent_at: new Date().toISOString()
+    }));
+    status.textContent +=
+      '\nSUCESSO\nBilhete: ' + _audit160.ticket_id +
+      '\nCasos: 160\nRegistros enviados: ' + _audit160.bets.length +
+      '\nTotal API: R$ ' + _audit160.total_amount.toFixed(2);
+    refreshMe();
+  }).catch(function(error) {
+    status.textContent += '\nFALHA\n' + error.message +
+      '\nNÃO REENVIAR sem conferir o banco.';
+    send.disabled = false;
+    send.style.opacity = '1';
+  });
 }
 
 // ─── Sorteios ────────────────────────────────────────────────────────────────
