@@ -295,24 +295,6 @@
         </table>
       </div>
     </div>
-    <div class="page" id="p-resultados">
-      <div class="page-header">Resultados</div>
-      <div class="filter-bar">
-        <select id="r-modalidade">
-          <option value="">Escolher Modalidade</option>
-        </select>
-        <input type="date" id="r-data">
-        <button class="btn-blue" onclick="loadResultados()">Buscar</button>
-      </div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr>
-            <th>Sorteio</th><th>Modalidade</th><th>Números</th><th>Data</th>
-          </tr></thead>
-          <tbody id="r-tbody"><tr><td colspan="4" class="loading">selecione a modalidade e data</td></tr></tbody>
-        </table>
-      </div>
-    </div>
     <div class="page" id="p-venda">
       <div class="page-header">Venda</div>
       <div class="filter-bar">
@@ -687,6 +669,449 @@
 
   </div>
 </div>
+
+<!-- ============================================================ -->
+<!-- p-resultados ESTRUTURADO -->
+<!-- ============================================================ -->
+<div class="page" id="p-resultados">
+  <div class="page-header">Resultado do Sorteio</div>
+  <div class="filter-bar">
+    <select id="res-sorteio" style="min-width:240px;">
+      <option value="">Selecione o Sorteio</option>
+    </select>
+    <input type="date" id="res-data" onchange="loadSorteiosResultado()">
+    <button class="btn-blue" onclick="salvarResultadoEstruturado()">💾 Salvar Resultado</button>
+  </div>
+  <div id="res-wrap" style="display:none;margin-top:12px;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr style="background:#1565C0;color:#fff;">
+        <th style="padding:8px;text-align:center;width:40px;">Prêmio</th>
+        <th style="padding:8px;">Número (4 dígitos)</th>
+        <th style="padding:8px;text-align:center;">Grupo</th>
+        <th style="padding:8px;">Animal</th>
+      </tr></thead>
+      <tbody id="res-tbody"></tbody>
+    </table>
+    <div id="res-msg" style="margin-top:10px;font-weight:600;"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-mapa — MAPA DE APOSTAS -->
+<!-- ============================================================ -->
+<div class="page" id="p-mapa">
+  <div class="page-header">Mapa de Apostas</div>
+  <div class="filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <input type="date" id="mapa-de" style="width:130px;">
+    <input type="date" id="mapa-ate" style="width:130px;">
+    <select id="mapa-sorteio" style="min-width:200px;">
+      <option value="">Todos os Sorteios</option>
+    </select>
+    <select id="mapa-modalidade">
+      <option value="">Todas as Modalidades</option>
+      <option value="milhar">Milhar</option>
+      <option value="centena">Centena</option>
+      <option value="grupo">Grupo</option>
+      <option value="dezena">Dezena</option>
+    </select>
+    <select id="mapa-premio">
+      <option value="">Todos os Prêmios</option>
+      <option value="1">1º</option>
+      <option value="2">2º</option>
+      <option value="3">3º</option>
+      <option value="4">4º</option>
+      <option value="5">5º</option>
+    </select>
+    <button class="btn-blue" onclick="loadMapa()">🔍 Buscar</button>
+  </div>
+  <div style="margin:10px 0;font-size:12px;color:#888;">
+    <span style="background:#e8f5e9;border:1px solid #4CAF50;padding:2px 8px;border-radius:4px;margin-right:6px;">▪ Livre</span>
+    <span style="background:#fff8e1;border:1px solid #FF8F00;padding:2px 8px;border-radius:4px;margin-right:6px;">▪ Médio</span>
+    <span style="background:#ffebee;border:1px solid #e53935;padding:2px 8px;border-radius:4px;">▪ Alto/Limite</span>
+  </div>
+  <div id="mapa-grid" style="display:flex;flex-wrap:wrap;gap:4px;padding:8px;background:#fafafa;border-radius:8px;min-height:100px;">
+    <span style="color:#aaa;font-size:13px;">Selecione os filtros e clique em Buscar</span>
+  </div>
+  <div id="mapa-resumo" style="margin-top:12px;display:none;">
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Número</th><th>Apostas</th><th>Total (R$)</th><th>Exposição</th></tr></thead>
+        <tbody id="mapa-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-ranking — RANKING DE VENDAS -->
+<!-- ============================================================ -->
+<div class="page" id="p-ranking">
+  <div class="page-header">Ranking de Vendas</div>
+  <div class="filter-bar">
+    <input type="date" id="rank-de">
+    <input type="date" id="rank-ate">
+    <select id="rank-tipo">
+      <option value="entrada">Total Vendido</option>
+      <option value="liquido">Líquido</option>
+      <option value="apostas">Qtd Apostas</option>
+    </select>
+    <button class="btn-blue" onclick="loadRanking()">🏆 Gerar Ranking</button>
+  </div>
+  <div id="rank-content" style="margin-top:16px;"></div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-geral-final — GERAL FINAL -->
+<!-- ============================================================ -->
+<div class="page" id="p-geral-final">
+  <div class="page-header">Geral Final</div>
+  <div class="filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <input type="date" id="gf-de" style="width:130px;">
+    <input type="date" id="gf-ate" style="width:130px;">
+    <select id="gf-vendedor">
+      <option value="">Todos os Vendedores</option>
+    </select>
+    <select id="gf-tipo">
+      <option value="geral">Geral</option>
+      <option value="ppagos">P.Pagos</option>
+    </select>
+    <select id="gf-agrupar">
+      <option value="nao">Não Agrupar</option>
+      <option value="sim">Agrupar por Área</option>
+    </select>
+    <button class="btn-blue" onclick="loadGeralFinal()">📊 Calcular</button>
+    <button class="btn-blue" style="background:#555;" onclick="printSection('gf-print-area')">🖨 Imprimir</button>
+  </div>
+  <div id="gf-print-area">
+    <div class="tbl-wrap" style="margin-top:12px;">
+      <table>
+        <thead><tr>
+          <th>Vendedor</th>
+          <th>Entrada</th>
+          <th>Prêmios</th>
+          <th>Comissão</th>
+          <th>Líquido</th>
+          <th>Apostas</th>
+        </tr></thead>
+        <tbody id="gf-tbody"><tr><td colspan="6" class="loading">selecione os filtros</td></tr></tbody>
+      </table>
+    </div>
+    <div id="gf-totais" style="display:none;background:#1565C0;color:#fff;border-radius:8px;padding:16px;margin-top:12px;display:flex;gap:24px;flex-wrap:wrap;"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-geral-caixa — GERAL CAIXA -->
+<!-- ============================================================ -->
+<div class="page" id="p-geral-caixa">
+  <div class="page-header">Geral Caixa</div>
+  <div class="filter-bar" style="flex-wrap:wrap;gap:8px;">
+    <input type="date" id="gc-de" style="width:130px;">
+    <input type="date" id="gc-ate" style="width:130px;">
+    <select id="gc-vendedor">
+      <option value="">Todos</option>
+    </select>
+    <select id="gc-tipo">
+      <option value="comissao">Comissão</option>
+      <option value="bolinho">Bolinho + Comissão</option>
+      <option value="ppagos">P.Pagos</option>
+      <option value="liquido">Só Líquido</option>
+    </select>
+    <select id="gc-agrupar">
+      <option value="nao">Não Agrupar</option>
+      <option value="sim">Agrupar Área</option>
+    </select>
+    <button class="btn-blue" onclick="loadGeralCaixa()">📊 Calcular</button>
+  </div>
+  <!-- Cards de totais -->
+  <div id="gc-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Vendedor</th><th>Entrada</th><th>Prêmios</th><th>Comissão</th><th>Líquido</th>
+      </tr></thead>
+      <tbody id="gc-tbody"><tr><td colspan="5" class="loading">selecione os filtros</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-geral-extracao — GERAL POR EXTRAÇÃO -->
+<!-- ============================================================ -->
+<div class="page" id="p-geral-extracao">
+  <div class="page-header">Geral por Extração</div>
+  <div class="filter-bar">
+    <input type="date" id="ge-de">
+    <input type="date" id="ge-ate">
+    <select id="ge-extracao">
+      <option value="">Todas as Extrações</option>
+    </select>
+    <button class="btn-blue" onclick="loadGeralExtracao()">📊 Calcular</button>
+  </div>
+  <div class="tbl-wrap" style="margin-top:12px;">
+    <table>
+      <thead><tr>
+        <th>Extração</th><th>Sorteios</th><th>Apostas</th><th>Entrada</th><th>Prêmios</th><th>Líquido</th>
+      </tr></thead>
+      <tbody id="ge-tbody"><tr><td colspan="6" class="loading">selecione os filtros</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-coletas — COLETAS POR VENDEDOR -->
+<!-- ============================================================ -->
+<div class="page" id="p-coletas">
+  <div class="page-header">Coletas por Vendedor</div>
+  <div class="filter-bar">
+    <input type="date" id="col-de">
+    <input type="date" id="col-ate">
+    <select id="col-vendedor">
+      <option value="">Todos</option>
+    </select>
+    <button class="btn-blue" onclick="loadColetas()">🔍 Buscar</button>
+  </div>
+  <div class="tbl-wrap" style="margin-top:12px;">
+    <table>
+      <thead><tr>
+        <th>Vendedor</th><th>Data</th><th>Apostas</th><th>Valor</th><th>Prêmios</th><th>Comissão</th><th>Líquido</th>
+      </tr></thead>
+      <tbody id="col-tbody"><tr><td colspan="7" class="loading">selecione os filtros</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-terminais-a — TERMINAIS / MONITORAMENTO -->
+<!-- ============================================================ -->
+<div class="page" id="p-terminais-a">
+  <div class="page-header">Terminais</div>
+  <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+    <button class="btn-blue" onclick="loadTerminais()">🔄 Atualizar</button>
+    <span id="term-updated" style="font-size:12px;color:#aaa;"></span>
+  </div>
+  <div id="term-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;">
+    <span style="color:#aaa;font-size:13px;">Carregando terminais...</span>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-despesas — DESPESAS -->
+<!-- ============================================================ -->
+<div class="page" id="p-despesas">
+  <div class="page-header">Despesas</div>
+  <div class="filter-bar">
+    <input type="date" id="desp-de">
+    <input type="date" id="desp-ate">
+    <select id="desp-cat">
+      <option value="">Todas as Categorias</option>
+      <option value="fixo">Fixo</option>
+      <option value="variavel">Variável</option>
+      <option value="pessoal">Pessoal</option>
+      <option value="outros">Outros</option>
+    </select>
+    <button class="btn-blue" onclick="loadDespesas()">🔍 Buscar</button>
+    <button class="btn-blue" style="background:#2E7D32;" onclick="showNovaDespesa()">+ Nova</button>
+  </div>
+  <!-- Form nova despesa -->
+  <div id="desp-form" style="display:none;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;margin-bottom:14px;">
+    <b style="display:block;margin-bottom:10px;">Nova Despesa</b>
+    <div class="filter-bar" style="flex-wrap:wrap;gap:8px;">
+      <input type="date" id="desp-f-data" style="width:130px;">
+      <input type="text" id="desp-f-desc" placeholder="Descrição" style="flex:1;min-width:160px;">
+      <select id="desp-f-cat">
+        <option value="fixo">Fixo</option>
+        <option value="variavel">Variável</option>
+        <option value="pessoal">Pessoal</option>
+        <option value="outros">Outros</option>
+      </select>
+      <input type="number" id="desp-f-valor" placeholder="Valor R$" min="0" step="0.01" style="width:120px;">
+      <button class="btn-blue" style="background:#2E7D32;" onclick="saveDespesa()">💾 Salvar</button>
+      <button class="btn-blue" style="background:#888;" onclick="document.getElementById('desp-form').style.display='none'">Cancelar</button>
+    </div>
+    <div id="desp-f-err" style="color:#e53935;font-size:12px;margin-top:6px;"></div>
+  </div>
+  <div id="desp-totais" style="display:none;background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:10px;display:flex;gap:20px;"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Ação</th></tr></thead>
+      <tbody id="desp-tbody"><tr><td colspan="5" class="loading">selecione os filtros</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-digitacao — DIGITAÇÃO DE FICHA -->
+<!-- ============================================================ -->
+<div class="page" id="p-digitacao">
+  <div class="page-header">Digitação de Ficha</div>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;">
+    <!-- Painel esquerdo: form -->
+    <div style="flex:1;min-width:280px;max-width:420px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;">
+      <div class="form-row">
+        <label>Vendedor:</label>
+        <select id="dig-vendedor" style="width:100%;">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Sorteio:</label>
+        <select id="dig-sorteio" style="width:100%;">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Modalidade:</label>
+        <select id="dig-modal" style="width:100%;">
+          <option value="milhar">Milhar</option>
+          <option value="centena">Centena</option>
+          <option value="grupo">Grupo</option>
+          <option value="dezena">Dezena</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Prêmio:</label>
+        <select id="dig-premio" style="width:100%;">
+          <option value="1">1º</option>
+          <option value="2">2º</option>
+          <option value="3">3º</option>
+          <option value="4">4º</option>
+          <option value="5">5º</option>
+          <option value="123">1º ao 3º</option>
+          <option value="1234">1º ao 4º</option>
+          <option value="12345">1º ao 5º</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>Número:</label>
+        <input type="text" id="dig-numero" maxlength="4" placeholder="ex: 1234" style="font-size:22px;font-family:monospace;text-align:center;letter-spacing:4px;width:100%;" oninput="digAutoGrupo()">
+        <div id="dig-grupo-hint" style="font-size:12px;color:#1565C0;margin-top:2px;"></div>
+      </div>
+      <div class="form-row">
+        <label>Valor (R$):</label>
+        <input type="number" id="dig-valor" min="0.01" step="0.01" placeholder="0,00" style="width:100%;font-size:18px;">
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn-blue" style="flex:1;" onclick="digAddItem()">+ Adicionar</button>
+        <button class="btn-blue" style="background:#2E7D32;flex:1;" onclick="digFinalizar()">✓ Finalizar</button>
+      </div>
+      <div id="dig-err" style="color:#e53935;font-size:12px;margin-top:6px;"></div>
+    </div>
+    <!-- Painel direito: itens adicionados -->
+    <div style="flex:2;min-width:280px;">
+      <b>Itens da Ficha</b>
+      <div id="dig-lista" style="margin-top:8px;min-height:60px;border:1px solid #e0e0e0;border-radius:8px;padding:10px;background:#fafafa;">
+        <span style="color:#aaa;font-size:13px;">Nenhum item ainda</span>
+      </div>
+      <div id="dig-total" style="margin-top:8px;font-weight:700;font-size:15px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-caixa-area — CAIXA ÁREA -->
+<!-- ============================================================ -->
+<div class="page" id="p-caixa-area">
+  <div class="page-header">Caixa Área</div>
+  <div class="filter-bar">
+    <input type="date" id="ca-de">
+    <input type="date" id="ca-ate">
+    <button class="btn-blue" onclick="loadCaixaArea()">📊 Calcular</button>
+  </div>
+  <!-- Summary cards -->
+  <div id="ca-cards" style="display:flex;gap:12px;flex-wrap:wrap;margin:14px 0;"></div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th>Data</th><th>Entrada</th><th>Prêmios Pagos</th><th>Comissão</th><th>Despesas</th><th>Líquido</th>
+      </tr></thead>
+      <tbody id="ca-tbody"><tr><td colspan="6" class="loading">selecione os filtros</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-fechamento — FECHAMENTO VENDEDOR -->
+<!-- ============================================================ -->
+<div class="page" id="p-fechamento">
+  <div class="page-header">Fechamento Vendedor</div>
+  <div class="filter-bar">
+    <input type="date" id="fech-de">
+    <input type="date" id="fech-ate">
+    <select id="fech-vendedor">
+      <option value="">Selecione o Vendedor</option>
+    </select>
+    <button class="btn-blue" onclick="loadFechamento()">📋 Gerar Fechamento</button>
+    <button class="btn-blue" style="background:#555;" onclick="printSection('fech-print-area')">🖨 Imprimir</button>
+  </div>
+  <div id="fech-print-area">
+    <div id="fech-content" style="margin-top:12px;"></div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
+<!-- p-parametros — PARÂMETROS DO SISTEMA -->
+<!-- ============================================================ -->
+<div class="page" id="p-parametros">
+  <div class="page-header">Parâmetros do Sistema</div>
+  <div class="form-wrap" style="max-width:600px;">
+    <div class="form-row">
+      <label>Nome da Banca:</label>
+      <input type="text" id="par-nome" placeholder="Ex: SorteOuro" style="width:100%;">
+    </div>
+    <div class="form-row">
+      <label>Mensagem Rodapé Bilhete:</label>
+      <textarea id="par-rodape" rows="2" style="width:100%;resize:vertical;border:1px solid #ccc;border-radius:4px;padding:6px;"></textarea>
+    </div>
+    <div class="form-row">
+      <label>Limite Prêmio Exibe POS (R$):</label>
+      <input type="number" id="par-limite-pos" min="0" step="0.01" style="width:160px;">
+    </div>
+    <div class="form-row">
+      <label>Limite Venda Diário (R$):</label>
+      <input type="number" id="par-limite-diario" min="0" step="0.01" style="width:160px;">
+    </div>
+    <div class="form-row">
+      <label>Usa Seninha:</label>
+      <select id="par-seninha" style="width:160px;">
+        <option value="sim">Sim</option>
+        <option value="nao">Não</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Limite Cons. Premiada (R$):</label>
+      <input type="number" id="par-limite-cons" min="0" step="0.01" style="width:160px;">
+    </div>
+    <div class="form-row">
+      <label>Consulta Premiada:</label>
+      <select id="par-cons-prem" style="width:220px;">
+        <option value="qualquer">Qualquer Vendedor</option>
+        <option value="mesmo">Só o Mesmo Vendedor</option>
+        <option value="area">Mesma Área</option>
+        <option value="regiao">Mesma Região</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>Validade Poule (dias):</label>
+      <input type="number" id="par-validade" min="1" max="365" value="30" style="width:100px;">
+    </div>
+    <div class="form-row">
+      <label>Mensagem Consulta Premiada:</label>
+      <textarea id="par-msg-cons" rows="2" style="width:100%;resize:vertical;border:1px solid #ccc;border-radius:4px;padding:6px;"></textarea>
+    </div>
+    <hr style="border:none;border-top:1px solid #e0e0e0;margin:16px 0;">
+    <b style="display:block;margin-bottom:10px;">Atalhos do Terminal</b>
+    <div id="par-atalhos" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <!-- gerado por JS -->
+    </div>
+    <hr style="border:none;border-top:1px solid #e0e0e0;margin:16px 0;">
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button class="btn-blue" style="background:#2E7D32;" onclick="saveParametros()">💾 Salvar Parâmetros</button>
+      <span id="par-msg" style="font-weight:600;"></span>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-sorteio">
   <div class="modal">
     <h3>Novo Sorteio</h3>
@@ -745,7 +1170,7 @@
 </div>
 
 <script>
-var SB_URL="https://kopdmeuihtkmpisaedxo.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE",st={token:null,user:null},MENU=[{id:"p-dashboard",label:"Dashboard",load:loadDashboard},{id:"p-vendedores",label:"Vendedores",load:loadVendedores},{id:"p-saldo",label:"Saldo",load:loadSaldoPage},{id:"p-caixa",label:"Caixa",load:initCaixa},{id:"p-apostas",label:"Apostas",load:initApostas},{id:"p-descarrego",label:"Descarrego",load:loadDescarregoPage},{id:"p-lancamentos",label:"Lançamentos",load:initLancamentos},{id:"p-prestacao",label:"Prestar Contas",load:initPrestacao},{id:"p-extracoes",label:"Extrações",load:loadExtracoesPage},{id:"p-sorteios",label:"Sorteios",load:loadSorteiosPage},{id:"p-resultados",label:"Resultados",load:initResultados},{id:"p-venda",label:"Venda",load:initVenda},{id:"p-comissoes",label:"Comissões",load:loadComissoes},{id:"p-bilhetes",label:"Bilhetes",load:initBilhetes},{id:"p-auditoria",label:"Auditoria",load:function(){}},{id:"p-modalidades",label:"Modalidades",load:loadModalidades},{id:"p-gerentes",label:"Gerentes",load:loadGerentesPage},{id:"p-cidades",label:"Cidades",load:loadCidadesPage},{id:"p-config",label:"Config",load:loadConfig}];function buildNav(){var e=document.getElementById("nav");MENU.forEach(function(t){var n=document.createElement("div");n.className="nav-item",n.id="nav-"+t.id,n.textContent=t.label,n.onclick=function(){showPage(t.id),t.load&&t.load()},e.appendChild(n)});var t=document.createElement("div");t.className="nav-item",t.textContent="Sair",t.style.marginTop="auto",t.style.color="#e53935",t.style.borderTop="1px solid #333",t.onclick=doLogout,e.appendChild(t)}function showPage(e){document.querySelectorAll(".page").forEach(function(e){e.classList.remove("on")}),document.querySelectorAll(".nav-item").forEach(function(e){e.classList.remove("active")});var t=document.getElementById(e);t&&t.classList.add("on");var n=document.getElementById("nav-"+e);n&&n.classList.add("active")}var _EXTRACOES_CACHE=[],_ROUTE={"/api/extracoes":"extracoes","/api/horarios-extracoes":"horarios_extracoes","/api/users":"vendedores","/api/bets":"apostas","/api/draws":"sorteios","/api/transactions":"transacoes","/api/commission-settings":"commission_settings","/api/audit-log":"audit_log","/api/system-config":"system_config","/api/modality-settings":"modality_settings","/api/bets/summary":"apostas"};function _sbH(e){var t={"Content-Type":"application/json",Accept:"application/json",apikey:SB_KEY};return e&&Object.keys(e).forEach(function(n){t[n]=e[n]}),t}function _rpc(e,t){return fetch(SB_URL+"/rest/v1/rpc/"+e,{method:"POST",headers:_sbH(),body:JSON.stringify(t||{})}).then(_sbResp)}function _sbResp(e){return 204===e.status?{}:e.json().then(function(t){if(!e.ok)throw new Error(t&&(t.message||t.hint||t.details||t.error)||"Erro "+e.status);return t})}function _sbFilter(e,t){return({user:function(e){return["user_id=eq."+e]},draw:function(e){return["draw_id=eq."+e]},status:function(e){return["status=eq."+e]},bet_type:function(e){return["bet_type=eq."+e]},action:function(e){return["action=eq."+e]},date_from:function(e){return["created_at=gte."+e+"T00:00:00"]},date_to:function(e){return["created_at=lte."+e+"T23:59:59"]},date:function(e){return["date=eq."+e]},limit:function(e){return["limit="+e]},order:function(e){return["order="+e]},select:function(e){return["select="+e]},is_active:function(e){return["is_active=eq."+e]},extracao_id:function(e){return["extracao_id=eq."+e]},id:function(e){return["id=eq."+e]}}[e]||function(t){return[e+"=eq."+t]})(t)}function api(e,t,n){var a,o=t.split("?"),d=o[0].replace(/\/+$/,""),r=o[1]||"";if("/api/auth/login"===d)return _rpc("admin_login",{p_phone:n.phone,p_password:n.password}).then(function(e){if(!e||!e.id)throw new Error("Credenciais inválidas");return{access:"sb_ok",user:e}});if(a=d.match(/^\/api\/bets\/(\d+)\/cancel$/))return fetch(SB_URL+"/rest/v1/apostas?id=eq."+a[1],{method:"PATCH",headers:_sbH({Prefer:"return=representation"}),body:JSON.stringify({status:"cancelled"})}).then(_sbResp);if(a=d.match(/^\/api\/users\/(\d+)\/add_balance$/))return _rpc("add_balance",{p_user_id:+a[1],p_amount:n&&n.amount||0});if(a=d.match(/^\/api\/users\/(\d+)\/settlement$/))return _rpc("prestar_conta",{p_user_id:+a[1],p_total:n&&n.total||0,p_admin_id:st.user&&st.user.id||null});if(a=d.match(/^\/api\/draws\/(\d+)\/result$/))return _rpc("salvar_resultado",{p_id:+a[1],p_result:n&&n.result||""});if("/api/commission-settings"===d&&("POST"===e||"PATCH"===e))return _rpc("upsert_commission_settings",{p_milhar:n.milhar||null,p_centena:n.centena||null,p_dezena:n.dezena||null,p_unidade:n.unidade||null,p_duque_dezena:n.duque_dezena||null,p_duque_centena:n.duque_centena||null,p_terno_dezena:n.terno_dezena||null,p_terno_centena:n.terno_centena||null,p_general_commission:n.general_commission||n.p2500||null});var s=null,l=null,i=d.match(/^(.*?)\/(\d+)$/);if(i?(s=_ROUTE[i[1]],l=i[2]):s=_ROUTE[d],!s)return Promise.reject(new Error("Rota não mapeada: "+d));var c=l?["id=eq."+l]:[];r&&r.split("&").forEach(function(e){if(e){var t=e.split("=");_sbFilter(t[0],t.slice(1).join("=")).forEach(function(e){c.push(e)})}});var u=SB_URL+"/rest/v1/"+s;c.length&&(u+="?"+c.join("&")),"GET"!==e||l||(u+=(c.length?"&":"?")+"order=created_at.desc",r.includes("limit=")||(u+="&limit=200"));var m={method:e,headers:_sbH("GET"!==e?{Prefer:"return=representation"}:{})};return n&&"GET"!==e&&"DELETE"!==e&&(m.body=JSON.stringify(n)),fetch(u,m).then(_sbResp).catch(function(e){if(e instanceof TypeError)throw new Error("Sem conexão com o Supabase");throw e})}function fmtBRL(e){return"R$ "+Number(e||0).toFixed(2).replace(".",",").replace(/\B(?=(\d{3})+(?!\d))/g,".")}function fmtDt(e){return e?new Date(e).toLocaleString("pt-BR"):"—"}function today(){return(new Date).toISOString().split("T")[0]}function doLogin(){var e=document.getElementById("lg-phone").value.trim(),t=document.getElementById("lg-pass").value,n=document.getElementById("lg-err");n.textContent="",e&&t?(n.textContent="Verificando...",api("POST","/api/auth/login/",{phone:e,password:t}).then(function(t){st.user=t.user||{phone:e},st.token=t.access||"sb_ok",localStorage.setItem("so_token",st.token),localStorage.setItem("so_user",JSON.stringify(st.user)),document.getElementById("admin-label").textContent=st.user.name||st.user.phone||"admin",document.getElementById("s-login").style.display="none",document.getElementById("app").classList.add("on"),buildNav(),loadExtracoesCache(),showPage("p-vendedores"),loadVendedores()}).catch(function(e){n.textContent=e.message||"Credenciais inválidas"})):n.textContent="Preencha login e senha"}function doLogout(){st.token=null,st.user=null,document.getElementById("app").classList.remove("on"),document.getElementById("s-login").style.display="flex",document.getElementById("nav").innerHTML="",document.getElementById("lg-pass").value=""}["lg-phone","lg-pass"].forEach(function(e){document.getElementById(e).addEventListener("keydown",function(e){"Enter"===e.key&&doLogin()})});var _vendedores=[];function loadVendedores(){api("GET","/api/users/").then(function(e){renderVendedores(_vendedores=Array.isArray(e)?e:e.results||[]),populateVendedoreSelects()}).catch(function(e){document.getElementById("v-tbody").innerHTML='<tr><td colspan="5" class="text-red">'+e.message+"</td></tr>"})}function filterVendedores(){var e=document.getElementById("v-search").value.toLowerCase();renderVendedores(_vendedores.filter(function(t){return(t.phone||"").toLowerCase().includes(e)||(t.username||"").toLowerCase().includes(e)||(t.name||"").toLowerCase().includes(e)}))}function renderVendedores(e){var t=document.getElementById("v-tbody");e.length?t.innerHTML=e.map(function(e){var t=e.name||e.username||e.phone||e.id;return"<tr><td>"+t+"</td><td>"+fmtBRL(e.balance||e.saldo||0)+"</td><td>"+(!1!==e.is_active&&"inactive"!==e.status?'<span class="badge-ativo">Ativo</span>':'<span class="badge-inativo">Inativo</span>')+'</td><td><button class="btn-sm-green" onclick="editVendedor('+e.id+')">Editar</button></td><td><span style="cursor:pointer;color:#e53935;font-size:13px;" onclick="confirmApagar('+e.id+",'"+t+"')\">Apagar</span></td></tr>"}).join(""):t.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum vendedor</td></tr>'}function populateVendedoreSelects(){["s-vendedor","l-vendedor","a-vendedor","pc-gerente","vd-vendedor","cx-vendedor-filter"].forEach(function(e){var t=document.getElementById(e);if(t){var n=t.options[0]?t.options[0].outerHTML:"";t.innerHTML=n,_vendedores.forEach(function(e){var n=document.createElement("option");n.value=e.id,n.textContent=e.name||e.username||e.phone||e.id,t.appendChild(n)})}});var e=document.getElementById("s-vendedor");e&&!e._wired&&(e._wired=!0,e.addEventListener("change",function(){var t=_vendedores.find(function(t){return String(t.id)===e.value});document.getElementById("s-atual").textContent=t?fmtBRL(t.balance||t.saldo):"—"}))}function prepareForm(){document.getElementById("form-v-title").textContent="Criar vendedor",document.getElementById("fv-id").value="",document.getElementById("fv-criado").value="",document.getElementById("fv-phone").value="",document.getElementById("fv-pass").value="",document.getElementById("fv-nome").value="",document.getElementById("fv-saldo").value="1000",document.getElementById("fv-status").value="active",document.getElementById("fv-endereco").value="",document.getElementById("fv-tel2").value="",document.getElementById("fv-err").textContent=""}function editVendedor(e){var t=_vendedores.find(function(t){return t.id===e});t&&(showPage("p-criar-vendedor"),document.getElementById("form-v-title").textContent="Editar vendedor",document.getElementById("fv-id").value=t.id,document.getElementById("fv-criado").value=t.date_joined?new Date(t.date_joined).toLocaleDateString("pt-BR"):"",document.getElementById("fv-phone").value=t.phone||t.username||"",document.getElementById("fv-pass").value="",document.getElementById("fv-nome").value=t.name||"",document.getElementById("fv-saldo").value=t.balance||t.saldo||0,document.getElementById("fv-status").value=!1!==t.is_active&&"inactive"!==t.status?"active":"inactive",document.getElementById("fv-endereco").value=t.address||t.endereco||"",document.getElementById("fv-tel2").value=t.phone2||"",document.getElementById("fv-err").textContent="")}function saveVendedor(){var e=document.getElementById("fv-id").value,t=document.getElementById("fv-phone").value.trim(),n=document.getElementById("fv-nome").value.trim(),a=document.getElementById("fv-pass").value,o=document.getElementById("fv-err");t?_rpc("upsert_vendedor",{p_id:e?+e:null,p_phone:t,p_name:n||t,p_password:a||null,p_balance:parseFloat(document.getElementById("fv-saldo").value)||0,p_is_active:"active"===document.getElementById("fv-status").value}).then(function(){showPage("p-vendedores"),loadVendedores()}).catch(function(e){o.textContent=e.message}):o.textContent="Informe o telefone"}function confirmApagar(e,t){document.getElementById("mc-title").textContent="Apagar vendedor",document.getElementById("mc-msg").textContent='Deseja apagar "'+t+'"? Esta ação não pode ser desfeita.',document.getElementById("mc-ok").onclick=function(){api("DELETE","/api/users/"+e+"/").then(function(){closeModal("modal-confirm"),loadVendedores()}).catch(function(e){alert(e.message)})},document.getElementById("modal-confirm").classList.add("on")}function loadSaldoPage(){populateVendedoreSelects()}function addSaldo(){var e=document.getElementById("s-vendedor").value,t=parseFloat(document.getElementById("s-valor").value)||0,n=document.getElementById("s-msg");return e?t<=0?(n.textContent="Informe um valor positivo",void(n.style.color="#e53935")):void api("POST","/api/users/"+e+"/add_balance/",{amount:t}).then(function(a){n.textContent="Saldo adicionado com sucesso!",n.style.color="#4CAF50",document.getElementById("s-valor").value="";var o=_vendedores.find(function(t){return String(t.id)===e});o&&(o.balance=(o.balance||0)+t,document.getElementById("s-atual").textContent=fmtBRL(o.balance))}).catch(function(e){n.textContent=e.message,n.style.color="#e53935"}):(n.textContent="Selecione o vendedor",void(n.style.color="#e53935"))}function fetchAllBets(e){return api("GET","/api/bets/?"+(e||[]).concat(["limit=500"]).join("&")).then(function(e){return Array.isArray(e)?e:e.results||[]})}function getCommissionRate(e){return parseFloat(e&&(e.commission_rate||e.comissao_geral||e.general_commission))||10}function calcTotals(e,t){var n=null==t||isNaN(t)?10:Number(t),a=0,o=0,d=0,r=0;e.forEach(function(e){var t=parseFloat(e.total_amount||e.amount||0),n=parseFloat(e.prize_amount||e.premio||0);"cancelled"===e.status?r+=t:(a+=t,"pending"===e.status?o+=t:"won"===e.status&&(d+=n))});var s=a*(n/100);return{entrada:a,aberto:o,pago:d,naoPago:0,premios:d,cancel:r,comissao:s,total:a-d-s}}function initCaixa(){document.getElementById("cx-de").value=today(),document.getElementById("cx-ate").value=today(),populateVendedoreSelects(),loadCaixa()}function loadCaixa(){var e=[],t=document.getElementById("cx-de").value,n=document.getElementById("cx-ate").value,a=document.getElementById("cx-vendedor-filter").value;t&&e.push("date_from="+t),n&&e.push("date_to="+n),a&&e.push("user="+a);var o=document.getElementById("cx-tbody");o.innerHTML='<tr><td colspan="6" class="loading">buscando...</td></tr>',fetchAllBets(e).then(function(e){var t=calcTotals(e,null);document.getElementById("cx-entrada").textContent=fmtBRL(t.entrada),document.getElementById("cx-aberto").textContent=fmtBRL(t.aberto),document.getElementById("cx-nao-pago").textContent=fmtBRL(t.naoPago),document.getElementById("cx-pago").textContent=fmtBRL(t.pago),document.getElementById("cx-comissao").textContent=fmtBRL(t.comissao),document.getElementById("cx-cancel").textContent=fmtBRL(t.cancel);var n=document.getElementById("cx-total");n.textContent=fmtBRL(t.total),n.style.color=t.total>=0?"#4CAF50":"#e53935";var a={};e.forEach(function(e){var t=e.user_phone||e.seller||e.user||"?";a[t]||(a[t]={apostado:0,premio:0,comissao:0,count:0});var n=parseFloat(e.total_amount||e.amount||0),o=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(a[t].apostado+=n,a[t].premio+=o,a[t].comissao+=.1*n,a[t].count++)});var d=Object.keys(a);d.length?o.innerHTML=d.map(function(e){var t=a[e];return"<tr><td>"+e+"</td><td>"+fmtBRL(t.apostado)+"</td><td>"+fmtBRL(t.premio)+"</td><td>"+fmtBRL(t.comissao)+'</td><td style="font-size:12px;color:#aaa;">'+t.count+" aposta(s)</td><td>"+fmtBRL(t.apostado-t.premio-t.comissao)+"</td></tr>"}).join(""):o.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Sem apostas no período</td></tr>'}).catch(function(e){document.getElementById("cx-total").textContent=e.message,document.getElementById("cx-total").style.color="#e53935"})}function statusBadge(e){return"pending"===e?'<span class="badge-ativo">Pendente</span>':"won"===e?'<span class="badge-ganhou">Ganhou</span>':"lost"===e?'<span style="color:#aaa;font-size:12px;">Perdeu</span>':"cancelled"===e?'<span class="badge-cancelado">Cancelado</span>':e||"—"}function initApostas(){populateVendedoreSelects(),document.getElementById("a-date").value=today(),api("GET","/api/draws/").then(function(e){var t=Array.isArray(e)?e:e.results||[],n=document.getElementById("a-draw");t.forEach(function(e){var t=document.createElement("option");t.value=e.id,t.textContent=e.name+(e.draw_time?" "+e.draw_time.slice(0,5):""),n.appendChild(t)})})}function loadApostas(){var e=[],t=document.getElementById("a-vendedor").value,n=document.getElementById("a-status").value,a=document.getElementById("a-draw").value,o=document.getElementById("a-date").value,d=document.getElementById("a-num").value.trim();t&&e.push("user="+t),n&&e.push("status="+n),a&&e.push("draw="+a),o&&(e.push("date_from="+o),e.push("date_to="+o)),d&&e.push("id="+d);var r=document.getElementById("a-tbody");r.innerHTML='<tr><td colspan="8" class="loading">buscando...</td></tr>',api("GET","/api/bets/?"+e.join("&")).then(function(e){var t=Array.isArray(e)?e:e.results||[];if(t.length){var n=0,a=0,o=0,d=0;t.forEach(function(e){var t=parseFloat(e.total_amount||e.amount||0),r=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(n+=t),"pending"===e.status&&o++,"won"===e.status&&(d++,a+=r)}),r.innerHTML=t.map(function(e){var t=(e.bets||e.selections||[]).map(function(e){return e.numbers||e.palpite||e.number||""}).join(" | ");!t&&e.numbers&&(t=e.numbers);var n="pending"===e.status?'<button class="btn-sm-green" style="background:#e53935;font-size:11px;padding:3px 8px;" onclick="cancelarAposta('+e.id+')">Cancelar</button>':"—";return"<tr><td>"+e.id+"</td><td>"+(e.user_phone||e.seller||"—")+'</td><td style="font-size:12px;">'+(e.bet_type||e.modality||"—")+'</td><td style="font-family:monospace;font-size:11px;max-width:140px;word-break:break-all;">'+(t||"—")+"</td><td>"+fmtBRL(e.total_amount||e.amount)+"</td><td>"+statusBadge(e.status)+'</td><td style="font-size:12px;">'+fmtDt(e.created_at||e.date)+"</td><td>"+n+"</td></tr>"}).join("")+'<tr style="background:#f0f0f0;font-weight:700;border-top:2px solid #ddd;"><td colspan="4">TOTAL ('+t.length+" apostas · "+o+" pend. · "+d+" ganhou)</td><td>"+fmtBRL(n)+'</td><td class="text-red">'+fmtBRL(a)+'</td><td colspan="2" style="color:#4CAF50;">'+fmtBRL(n-a)+" líq.</td></tr>"}else r.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Nenhuma aposta encontrada</td></tr>'}).catch(function(e){r.innerHTML='<tr><td colspan="8" class="text-red">'+e.message+"</td></tr>"})}function cancelarAposta(e){document.getElementById("mc-title").textContent="Cancelar aposta",document.getElementById("mc-msg").textContent="Cancelar aposta #"+e+"? Esta ação não pode ser desfeita.",document.getElementById("mc-ok").onclick=function(){api("POST","/api/bets/"+e+"/cancel/").then(function(){closeModal("modal-confirm"),loadApostas()}).catch(function(e){alert(e.message)})},document.getElementById("modal-confirm").classList.add("on")}function initLancamentos(){populateVendedoreSelects(),document.getElementById("l-data").value=today(),loadLancamentos()}var _lancamentos=[];function loadLancamentos(){var e=document.getElementById("l-vendedor").value,t=document.getElementById("l-data").value,n=["limit=100"];e&&n.push("user="+e),t&&(n.push("date_from="+t),n.push("date_to="+t)),api("GET","/api/transactions/?"+n.join("&")).then(function(e){_lancamentos=Array.isArray(e)?e:e.results||[],renderLancamentos()}).catch(function(){renderLancamentos()})}function renderLancamentos(){var e=document.getElementById("l-tbody");if(_lancamentos.length){var t=0,n=0;_lancamentos.forEach(function(e){var a=parseFloat(e.amount||0);"credit"===e.type||"prize"===e.type?t+=a:n+=a}),e.innerHTML=_lancamentos.slice(0,50).map(function(e){var t=parseFloat(e.amount||0),n="credit"===e.type||"prize"===e.type;return"<tr><td>"+(e.user_phone||e.user_name||e.operator||"—")+'</td><td style="color:'+(n?"#4CAF50":"#e53935")+';font-weight:600;">'+(n?"+":"−")+fmtBRL(t)+"</td><td>"+(e.type||e.tipo||"—")+"</td><td>"+fmtDt(e.created_at||e.date)+'</td><td><button class="btn-sm-green" style="background:#e53935" onclick="delLancamento('+e.id+')">X</button></td></tr>'}).join("")+'<tr style="background:#f0f0f0;font-weight:700;border-top:2px solid #ddd;"><td>TOTAL</td><td style="color:#4CAF50;">+'+fmtBRL(t)+'</td><td style="color:#e53935;">−'+fmtBRL(n)+'</td><td style="font-weight:700;">'+fmtBRL(t-n)+"</td><td></td></tr>"}else e.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum lançamento</td></tr>'}function saveLancamento(){var e=document.getElementById("l-vendedor").value,t=document.getElementById("l-msg");if(!e)return t.textContent="Selecione o vendedor",void(t.style.color="#e53935");api("POST","/api/transactions/",{user:e,date:document.getElementById("l-data").value,type:document.getElementById("l-tipo").value,amount:parseFloat(document.getElementById("l-valor").value)||0}).then(function(){t.textContent="Salvo!",t.style.color="#4CAF50",loadLancamentos()}).catch(function(e){t.textContent=e.message,t.style.color="#e53935"})}function delLancamento(e){confirm("Excluir lançamento #"+e+"?")&&api("DELETE","/api/transactions/"+e+"/").then(loadLancamentos).catch(function(e){alert(e.message)})}function initPrestacao(){populateVendedoreSelects(),document.getElementById("pc-de").value=today(),document.getElementById("pc-ate").value=today()}function loadPrestacao(){var e=document.getElementById("pc-de").value,t=document.getElementById("pc-ate").value,n=document.getElementById("pc-gerente").value,a=document.getElementById("pc-tbody");a.innerHTML='<tr><td colspan="8" class="loading">calculando...</td></tr>';var o=n?_vendedores.filter(function(e){return String(e.id)===n}):_vendedores;if(o.length){var d=o.map(function(n){var a=["user="+n.id];e&&a.push("date_from="+e),t&&a.push("date_to="+t);var o=fetchAllBets(a),d=api("GET","/api/transactions/?user="+n.id+(e?"&date_from="+e:"")+(t?"&date_to="+t:"")+"&limit=200").then(function(e){return Array.isArray(e)?e:e.results||[]}).catch(function(){return[]});return Promise.all([o,d]).then(function(e){var t=e[0],a=e[1],o=getCommissionRate(n),d=calcTotals(t,o),r=0;a.forEach(function(e){var t=parseFloat(e.amount||0);"credit"===e.type||"prize"===e.type?r+=t:r-=t});var s=d.entrada-(d.pago+d.naoPago)-d.comissao+r;return{v:n,nome:n.name||n.username||n.phone||n.id,entrada:d.entrada,aberto:d.aberto,saidas:d.pago+d.naoPago,comissao:d.comissao,lancamentos:r,total:s,taxa:o}})});Promise.all(d).then(function(e){e.length?a.innerHTML=e.map(function(e){var t=e.total>=0?"#333":"#e53935";return"<tr><td>"+e.nome+' <small style="color:#aaa">('+e.taxa+"%)</small></td><td>"+fmtBRL(e.entrada)+"</td><td>"+fmtBRL(e.aberto)+'</td><td class="text-red">'+fmtBRL(e.saidas)+'</td><td style="color:#e67e00;">'+fmtBRL(e.comissao)+"</td><td>"+fmtBRL(e.lancamentos)+'</td><td style="font-weight:700;color:'+t+'">'+fmtBRL(e.total)+'</td><td><button class="btn-sm-green" onclick="prestarConta('+e.v.id+","+e.total.toFixed(2)+')">Prestar contas</button></td></tr>'}).join(""):a.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Sem dados</td></tr>'}).catch(function(e){a.innerHTML='<tr><td colspan="8" class="text-red">'+e.message+"</td></tr>"})}else a.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Nenhum vendedor</td></tr>'}function prestacaoTodos(){confirm("Prestar conta com todos os vendedores listados?")&&loadPrestacao()}function prestarConta(e,t){var n=null!=t?"Prestar conta? Total calculado: "+fmtBRL(t):"Prestar conta com este vendedor?";confirm(n)&&api("POST","/api/users/"+e+"/settlement/",{total:t}).then(function(){alert("Conta prestada!"),loadVendedores(),loadPrestacao()}).catch(function(e){alert(e.message)})}var _sorteios=[];function loadSorteiosPage(){document.getElementById("so-data").value=today(),loadSorteios()}function loadSorteios(){var e=document.getElementById("so-data").value,t=document.getElementById("so-status").value,n=document.getElementById("so-tbody");n.innerHTML='<tr><td colspan="6" class="loading">buscando...</td></tr>';var a="select=*,extracoes(name)&limit=50&order=date.desc,hora.asc";e&&(a+="&date=eq."+e),t&&(a+="&status=eq."+t),fetch(SB_URL+"/rest/v1/sorteios?"+a,{headers:_sbH()}).then(_sbResp).then(function(e){(_sorteios=Array.isArray(e)?e:[]).length?n.innerHTML=_sorteios.map(function(e){var t="open"===e.status?'<span class="badge-ativo">Aberto</span>':'<span class="badge-inativo">Encerrado</span>',n=e.result?(String(e.result).indexOf("\n")>=0?String(e.result).split("\n")[0].trim()+' <span style="color:#aaa;font-size:11px;">[+'+(String(e.result).trim().split("\n").filter(function(l){return l.trim();}).length-1)+' linhas]</span>':e.result):"—",a="open"===e.status?'<button class="btn-sm-green" onclick="showModalResultado('+e.id+",'"+(e.title||"").replace(/'/g,"")+"')\">Inserir resultado</button>":n,o=e.extracoes&&e.extracoes.name||e.title||"—",d=e.hora?e.hora.slice(0,5):"",r=e.date?e.date.split("-").reverse().join("/"):fmtDt(e.created_at);return"<tr><td>"+e.id+"</td><td><b>"+o+"</b>"+(d?' <span style="color:#888;">'+d+"</span>":"")+"</td><td>"+r+"</td><td>"+t+"</td><td>"+n+"</td><td>"+a+"</td></tr>"}).join(""):n.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Nenhum sorteio</td></tr>'}).catch(function(e){n.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+"</td></tr>"})}function showModalNovoSorteio(){var e=document.getElementById("ms-extracao");e.innerHTML='<option value="">Selecione...</option>',_EXTRACOES_CACHE.forEach(function(t){var n=document.createElement("option");n.value=t.id,n.textContent=t.name,e.appendChild(n)}),document.getElementById("ms-data").value=today(),document.getElementById("ms-hora").innerHTML='<option value="">Selecione a extração primeiro</option>',document.getElementById("ms-err").textContent="",document.getElementById("modal-sorteio").classList.add("on")}function loadHorariosModal(){var e=document.getElementById("ms-extracao").value,t=document.getElementById("ms-hora");t.innerHTML='<option value="">Carregando...</option>',e?api("GET","/api/horarios-extracoes/?extracao_id="+e+"&is_active=true&order=hora.asc").then(function(e){(e=Array.isArray(e)?e:[]).length?t.innerHTML=e.map(function(e){return'<option value="'+e.hora+'">'+e.hora.slice(0,5)+"</option>"}).join(""):t.innerHTML='<option value="">Nenhum horário cadastrado</option>'}):t.innerHTML='<option value="">Selecione a extração primeiro</option>'}function criarSorteio(){var e=parseInt(document.getElementById("ms-extracao").value),t=document.getElementById("ms-data").value,n=document.getElementById("ms-hora").value,a=document.getElementById("ms-err");if(e)if(t)if(n){var o=_EXTRACOES_CACHE.find(function(t){return t.id===e});var tit=(o?o.name:"Sorteio")+" "+n.slice(0,5)+" - "+t.split("-").reverse().join("/");_rpc("criar_sorteio",{p_extracao_id:e,p_date:t,p_hora:n,p_title:tit}).then(function(){closeModal("modal-sorteio"),loadSorteios()}).catch(function(e){a.textContent=e.message})}else a.textContent="Selecione o horário";else a.textContent="Informe a data";else a.textContent="Selecione a extração"}function showModalResultado(e,t){var s=_sorteios.find(function(x){return x.id===e;});var r=s&&s.result?s.result:"";document.getElementById("mr-id").value=e,document.getElementById("mr-nome").value=t,document.getElementById("mr-nums").value=r,document.getElementById("mr-err").textContent="",document.getElementById("modal-resultado").classList.add("on")}function salvarResultado(){var e=document.getElementById("mr-id").value,t=document.getElementById("mr-nums").value.trim();t?api("POST","/api/draws/"+e+"/result/",{result:t}).then(function(){closeModal("modal-resultado"),loadSorteios()}).catch(function(e){document.getElementById("mr-err").textContent=e.message}):document.getElementById("mr-err").textContent="Informe os números"}function initResultados(){document.getElementById("r-data").value=today(),api("GET","/api/modality-settings/").then(function(e){var t=Array.isArray(e)?e:e.results||[],n=document.getElementById("r-modalidade");t.forEach(function(e){var t=document.createElement("option");t.value=e.bet_type||e.id,t.textContent=e.label||e.bet_type,n.appendChild(t)})})}function loadResultados(){var e=document.getElementById("r-modalidade").value,t=document.getElementById("r-data").value,n=document.getElementById("r-tbody");n.innerHTML='<tr><td colspan="4" class="loading">buscando...</td></tr>';var a=[];e&&a.push("bet_type="+e),t&&a.push("date="+t),api("GET","/api/draws/?"+a.join("&")).then(function(t){var a=Array.isArray(t)?t:t.results||[];a.length?n.innerHTML=a.map(function(t){return"<tr><td>"+(t.name||t.id)+"</td><td>"+(t.bet_type||e||"—")+'</td><td style="font-family:monospace;">'+(t.result||"—")+"</td><td>"+fmtDt(t.draw_time||t.scheduled_at)+"</td></tr>"}).join(""):n.innerHTML='<tr><td colspan="4" style="padding:20px;text-align:center;color:#aaa">Nenhum resultado</td></tr>'}).catch(function(e){n.innerHTML='<tr><td colspan="4" class="text-red">'+e.message+"</td></tr>"})}function initVenda(){populateVendedoreSelects(),document.getElementById("vd-de").value=today(),document.getElementById("vd-ate").value=today()}function loadVenda(){var e=document.getElementById("vd-vendedor").value,t=document.getElementById("vd-de").value,n=document.getElementById("vd-ate").value,a=[];e&&a.push("user="+e),t&&a.push("date_from="+t),n&&a.push("date_to="+n);var o=document.getElementById("vd-tbody");document.getElementById("vd-resumo").style.display="block",o.innerHTML='<tr><td colspan="6" class="loading">calculando...</td></tr>',api("GET","/api/bets/summary/?"+a.join("&")).then(function(e){renderVendaRows((Array.isArray(e)?e:e.results||[e]).map(function(e){var t=parseFloat(e.total_amount||e.amount||0),n=parseFloat(e.prize_amount||e.prizes||0),a=parseFloat(e.commission_total||0)||.1*t;return{nome:e.seller||e.user_phone||"—",count:e.count||0,entrada:t,premios:n,comissao:a}}))}).catch(function(){fetchAllBets(a).then(function(e){var t={};e.forEach(function(e){var n=e.user_phone||e.seller||String(e.user)||"?",a=_vendedores.find(function(t){return String(t.id)===String(e.user)||t.phone===e.user_phone});a&&(n=a.name||a.username||a.phone||n),t[n]||(t[n]={count:0,entrada:0,premios:0,taxa:getCommissionRate(a)});var o=parseFloat(e.total_amount||e.amount||0),d=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(t[n].count++,t[n].entrada+=o,"won"===e.status&&(t[n].premios+=d))}),renderVendaRows(Object.keys(t).map(function(e){var n=t[e];return{nome:e,count:n.count,entrada:n.entrada,premios:n.premios,comissao:n.entrada*(n.taxa/100)}}))}).catch(function(e){o.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+"</td></tr>"})})}function renderVendaRows(e){var t=document.getElementById("vd-tbody");if(e.length){var n=0,a=0,o=0,d=0;e.forEach(function(e){n+=e.entrada,a+=e.premios,o+=e.comissao,d+=e.count}),t.innerHTML=e.map(function(e){var t=e.entrada-e.premios-e.comissao;return"<tr><td>"+e.nome+"</td><td>"+e.count+"</td><td>"+fmtBRL(e.entrada)+'</td><td class="text-red">'+fmtBRL(e.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(e.comissao)+'</td><td style="font-weight:700;color:'+(t>=0?"#333":"#e53935")+'">'+fmtBRL(t)+"</td></tr>"}).join("")+'<tr style="background:#f0f0f0;font-weight:700;"><td>TOTAL</td><td>'+d+"</td><td>"+fmtBRL(n)+'</td><td class="text-red">'+fmtBRL(a)+'</td><td style="color:#e67e00;">'+fmtBRL(o)+"</td><td>"+fmtBRL(n-a-o)+"</td></tr>"}else t.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Sem dados no período</td></tr>'}function loadComissoes(){api("GET","/api/commission-settings/").then(function(e){var t=Array.isArray(e)?e[0]:e;t&&(null!=t.milhar&&(document.getElementById("cm-milhar").value=t.milhar),null!=t.grupo&&(document.getElementById("cm-grupo").value=t.grupo),null!=t.seninha&&(document.getElementById("cm-seninha").value=t.seninha),null!=t.sena&&(document.getElementById("cm-sena").value=t.sena),null!=t.bolao&&(document.getElementById("cm-bolao").value=t.bolao),null!=t.p2500&&(document.getElementById("cm-2p500").value=t.p2500),null!=t.rifa&&(document.getElementById("cm-rifa").value=t.rifa))}).catch(function(){})}function saveComissoes(){api("POST","/api/commission-settings/",{milhar:parseFloat(document.getElementById("cm-milhar").value)||0,grupo:parseFloat(document.getElementById("cm-grupo").value)||0,seninha:parseFloat(document.getElementById("cm-seninha").value)||0,sena:parseFloat(document.getElementById("cm-sena").value)||0,bolao:parseFloat(document.getElementById("cm-bolao").value)||0,p2500:parseFloat(document.getElementById("cm-2p500").value)||0,rifa:parseFloat(document.getElementById("cm-rifa").value)||0}).then(function(){document.getElementById("cm-msg").textContent="Salvo!",document.getElementById("cm-msg").style.color="#4CAF50"}).catch(function(e){document.getElementById("cm-msg").textContent=e.message,document.getElementById("cm-msg").style.color="#e53935"})}function loadAuditoria(){var e=document.getElementById("au-de").value,t=document.getElementById("au-ate").value,n=document.getElementById("au-acao").value,a=[];e&&a.push("date_from="+e),t&&a.push("date_to="+t),n&&a.push("action="+n);var o=document.getElementById("au-tbody");o.innerHTML='<tr><td colspan="5" class="loading">buscando...</td></tr>',api("GET","/api/audit-log/?"+a.join("&")).then(function(e){var t=Array.isArray(e)?e:e.results||[];t.length?o.innerHTML=t.map(function(e){return"<tr><td>"+(e.admin_name||"—")+"</td><td>"+(e.action||"—")+'</td><td style="font-size:12px;">'+(e.detail?JSON.stringify(e.detail):"—")+"</td><td>"+(e.ip_address||"—")+"</td><td>"+fmtDt(e.created_at)+"</td></tr>"}).join(""):o.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum registro</td></tr>'}).catch(function(e){o.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+"</td></tr>"})}function loadConfig(){document.getElementById("cfg-api-base").value=SB_URL;var e=localStorage.getItem("so_cfg_texto")||"SorteOuro, sua sorte começa aqui";document.getElementById("cfg-texto-bilhete").value=e,api("GET","/api/system-config/").then(function(e){(Array.isArray(e)?e:[]).forEach(function(e){var t=document.getElementById("cfg-"+e.key.replace(/_/g,"-"));t&&(t.value=e.value)})}).catch(function(){})}function saveConfig(){localStorage.setItem("so_cfg_texto",document.getElementById("cfg-texto-bilhete").value),document.getElementById("cfg-msg").textContent="Configurações salvas!",document.getElementById("cfg-msg").style.color="#4CAF50",[{key:"apostas_ativas",value:document.getElementById("cfg-apostas").value},{key:"milhar_brinde",value:document.getElementById("cfg-milhar-brinde").value},{key:"mb_min",value:document.getElementById("cfg-mb-min").value},{key:"mb_premio",value:document.getElementById("cfg-mb-premio").value},{key:"tempo_cancelamento",value:document.getElementById("cfg-tempo-cancel").value},{key:"texto_bilhete",value:document.getElementById("cfg-texto-bilhete").value}].forEach(function(e){fetch(SB_URL+"/rest/v1/system_config?key=eq."+e.key,{method:"PATCH",headers:_sbH({Prefer:"return=minimal"}),body:JSON.stringify({value:e.value,updated_at:(new Date).toISOString()})})})}function closeModal(e){document.getElementById(e).classList.remove("on")}document.querySelectorAll(".modal-overlay").forEach(function(e){e.addEventListener("click",function(t){t.target===e&&e.classList.remove("on")})});var _bilheteAtual=null;function initBilhetes(){document.getElementById("bil-codigo").value="",document.getElementById("bil-resultado").style.display="none",document.getElementById("bil-err").style.display="none",document.getElementById("bil-codigo").focus()}function buscarBilhete(){var e=document.getElementById("bil-codigo").value.trim().toUpperCase(),t=document.getElementById("bil-err"),n=document.getElementById("bil-resultado");if(t.style.display="none",n.style.display="none",_bilheteAtual=null,!e)return t.textContent="Informe o código do bilhete.",void(t.style.display="block");fetch(SB_URL+"/rest/v1/apostas?ticket_code=eq."+encodeURIComponent(e)+"&select=*,vendedores(name,phone),sorteios(title,date,hora,result,extracoes(name))&limit=1",{headers:_sbH()}).then(_sbResp).then(function(n){var a=Array.isArray(n)?n:[];if(!a.length)return t.textContent="Bilhete não encontrado: "+e,void(t.style.display="block");renderBilhete(_bilheteAtual=a[0])}).catch(function(e){t.textContent=e.message,t.style.display="block"})}function renderBilhete(e){var t=document.getElementById("bil-resultado"),n=e.status||"open";document.getElementById("bil-status-badge").innerHTML='<span style="background:'+({open:"#1565C0",won:"#2E7D32",paid:"#555",cancelled:"#e53935",lost:"#888"}[n]||"#888")+';color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">'+({open:"Aberta",won:"Ganhadora ✓",paid:"Paga ✓",cancelled:"Cancelada",lost:"Não ganhou"}[n]||n)+"</span>",document.getElementById("bil-code").textContent=e.ticket_code||"—";var a=e.vendedores;document.getElementById("bil-vendedor").textContent=a?a.name||a.phone:e.user_phone||"—",document.getElementById("bil-modalidade").textContent=e.bet_type||"—";var o=e.numbers;if("string"==typeof o)try{o=JSON.parse(o)}catch(e){}document.getElementById("bil-numeros").textContent=Array.isArray(o)?o.join(" · "):o||"—",document.getElementById("bil-valor").textContent=fmtBRL(e.total_amount||e.amount||0),document.getElementById("bil-premio").textContent=fmtBRL(e.prize_amount||0),document.getElementById("bil-data").textContent=fmtDt(e.created_at);var d=document.getElementById("bil-btn-area");document.getElementById("bil-msg").textContent="",d.innerHTML="won"===n?'<button class="btn-green" onclick="darBaixa()" style="width:100%;padding:14px;font-size:15px;border-radius:8px;">✓ Dar Baixa — Confirmar Pagamento de '+fmtBRL(e.prize_amount||0)+"</button>":"paid"===n?'<p style="text-align:center;color:#555;font-size:13px;">Este bilhete já foi pago.</p>':"cancelled"===n?'<p style="text-align:center;color:#e53935;font-size:13px;">Bilhete cancelado — não pode ser pago.</p>':'<p style="text-align:center;color:#888;font-size:13px;">Sorteio ainda não encerrado — aguardando resultado.</p>',t.style.display="block"}function darBaixa(){if(_bilheteAtual){var e=document.getElementById("bil-msg");e.style.color="#888",e.textContent="Processando...",_rpc("pagar_premio",{p_ticket_code:_bilheteAtual.ticket_code,p_admin_id:st.user?st.user.id:null}).then(function(t){e.style.color="#2E7D32",e.textContent="✓ Pagamento registrado com sucesso!",document.getElementById("bil-btn-area").innerHTML="",_bilheteAtual.status="paid",document.getElementById("bil-status-badge").innerHTML='<span style="background:#555;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">Paga ✓</span>'}).catch(function(t){e.style.color="#c62828",e.textContent="✗ "+t.message})}}function loadExtracoesCache(){api("GET","/api/extracoes/?is_active=true&order=name.asc").then(function(e){_EXTRACOES_CACHE=Array.isArray(e)?e:[]}).catch(function(){})}function loadExtracoesPage(){loadExtracoesCache();var e=document.getElementById("ext-lista");e.innerHTML='<p style="color:#aaa">Carregando...</p>',api("GET","/api/extracoes/?order=name.asc").then(function(t){(t=Array.isArray(t)?t:[]).length?(e.innerHTML="",t.forEach(function(t){var n=document.createElement("div");n.style.cssText="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;",n.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><b style="font-size:16px;">'+t.name+'</b><span class="'+(t.is_active?"badge-ativo":"badge-inativo")+'">'+(t.is_active?"Ativa":"Inativa")+'</span></div><div id="h-lista-'+t.id+'" style="margin-bottom:10px;"></div><div style="display:flex;gap:8px;"><input type="time" id="h-inp-'+t.id+'" style="border:1px solid #ccc;border-radius:4px;padding:6px 10px;"><button class="btn-green" onclick="addHorario('+t.id+')">+ Adicionar Horário</button></div><div id="h-err-'+t.id+'" style="color:#e53935;font-size:12px;margin-top:4px;"></div>',e.appendChild(n),renderHorariosExt(t.id)})):e.innerHTML='<p style="color:#aaa">Nenhuma extração</p>'}).catch(function(t){e.innerHTML='<p style="color:#e53935">'+t.message+"</p>"})}function renderHorariosExt(e){var t=document.getElementById("h-lista-"+e);t&&(t.innerHTML='<span style="color:#aaa;font-size:12px;">carregando...</span>',api("GET","/api/horarios-extracoes/?extracao_id="+e+"&order=hora.asc").then(function(n){(n=Array.isArray(n)?n:[]).length?t.innerHTML=n.map(function(t){var min=t.minutos_fechamento||10;return'<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:20px;padding:3px 10px;margin:2px;font-size:13px;">'+t.hora.slice(0,5)+'<span title="Fecha '+min+' min antes" style="background:#e67e00;color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin:0 2px;cursor:pointer;" onclick="editMinFechamento('+t.id+','+min+','+e+')">⏱'+min+'min</span>'+'<button onclick="delHorario('+t.id+","+e+')" style="background:none;border:none;color:#e53935;cursor:pointer;font-size:14px;padding:0 2px;">×</button></span>'}).join(""):t.innerHTML='<span style="color:#aaa;font-size:12px;">Nenhum horário cadastrado</span>'}))}function editMinFechamento(hId,minAtual,extId){var novo=prompt("Minutos de fechamento antes do sorteio:",minAtual);if(novo===null)return;var n=parseInt(novo);if(isNaN(n)||n<1||n>120){alert("Informe um valor entre 1 e 120 minutos.");return;}fetch(SB_URL+"/rest/v1/horarios_extracoes?id=eq."+hId,{method:"PATCH",headers:_sbH({Prefer:"return=minimal"}),body:JSON.stringify({minutos_fechamento:n})}).then(function(){renderHorariosExt(extId);}).catch(function(e){alert(e.message);});}function addHorario(e){var t=document.getElementById("h-inp-"+e).value,n=document.getElementById("h-err-"+e);t?(n.textContent="",api("POST","/api/horarios-extracoes/",{extracao_id:e,hora:t,is_active:!0,minutos_fechamento:10}).then(function(){document.getElementById("h-inp-"+e).value="",renderHorariosExt(e),loadExtracoesCache()}).catch(function(e){n.textContent=e.message})):n.textContent="Informe o horário"}function delHorario(e,t){confirm("Remover este horário?")&&api("DELETE","/api/horarios-extracoes/"+e+"/").then(function(){renderHorariosExt(t),loadExtracoesCache()}).catch(function(e){alert(e.message)})}!function(){var e=localStorage.getItem("so_user"),t=localStorage.getItem("so_token");if(t&&e){try{st.user=JSON.parse(e),st.token=t}catch(e){}st.user&&st.user.id&&(document.getElementById("admin-label").textContent=st.user.name||st.user.phone||"admin",document.getElementById("s-login").style.display="none",document.getElementById("app").classList.add("on"),buildNav(),loadExtracoesCache(),showPage("p-vendedores"),loadVendedores())}}();
+var SB_URL="https://kopdmeuihtkmpisaedxo.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE",st={token:null,user:null},MENU=[{id:"p-dashboard",label:"Dashboard",load:loadDashboard},{id:"p-vendedores",label:"Vendedores",load:loadVendedores},{id:"p-saldo",label:"Saldo",load:loadSaldoPage},{id:"p-caixa",label:"Caixa",load:initCaixa},{id:"p-apostas",label:"Apostas",load:initApostas},{id:"p-descarrego",label:"Descarrego",load:loadDescarregoPage},{id:"p-lancamentos",label:"Lançamentos",load:initLancamentos},{id:"p-prestacao",label:"Prestar Contas",load:initPrestacao},{id:"p-extracoes",label:"Extrações",load:loadExtracoesPage},{id:"p-sorteios",label:"Sorteios",load:loadSorteiosPage},{id:"p-resultados",label:"Resultados",load:initResultados},{id:"p-mapa",label:"Mapa Apostas",load:initMapa},{id:"p-ranking",label:"Ranking",load:initRanking},{id:"p-geral-final",label:"Geral Final",load:initGeralFinal},{id:"p-geral-caixa",label:"Geral Caixa",load:initGeralCaixa},{id:"p-geral-extracao",label:"Geral Extração",load:initGeralExtracao},{id:"p-coletas",label:"Coletas",load:initColetas},{id:"p-terminais-a",label:"Terminais",load:initTerminais},{id:"p-despesas",label:"Despesas",load:initDespesas},{id:"p-digitacao",label:"Digitação",load:initDigitacao},{id:"p-caixa-area",label:"Caixa Área",load:initCaixaArea},{id:"p-fechamento",label:"Fechamento",load:initFechamento},{id:"p-parametros",label:"Parâmetros",load:initParametros},{id:"p-venda",label:"Venda",load:initVenda},{id:"p-comissoes",label:"Comissões",load:loadComissoes},{id:"p-bilhetes",label:"Bilhetes",load:initBilhetes},{id:"p-auditoria",label:"Auditoria",load:function(){}},{id:"p-modalidades",label:"Modalidades",load:loadModalidades},{id:"p-gerentes",label:"Gerentes",load:loadGerentesPage},{id:"p-cidades",label:"Cidades",load:loadCidadesPage},{id:"p-config",label:"Config",load:loadConfig}];function buildNav(){var e=document.getElementById("nav");MENU.forEach(function(t){var n=document.createElement("div");n.className="nav-item",n.id="nav-"+t.id,n.textContent=t.label,n.onclick=function(){showPage(t.id),t.load&&t.load()},e.appendChild(n)});var t=document.createElement("div");t.className="nav-item",t.textContent="Sair",t.style.marginTop="auto",t.style.color="#e53935",t.style.borderTop="1px solid #333",t.onclick=doLogout,e.appendChild(t)}function showPage(e){document.querySelectorAll(".page").forEach(function(e){e.classList.remove("on")}),document.querySelectorAll(".nav-item").forEach(function(e){e.classList.remove("active")});var t=document.getElementById(e);t&&t.classList.add("on");var n=document.getElementById("nav-"+e);n&&n.classList.add("active")}var _EXTRACOES_CACHE=[],_ROUTE={"/api/extracoes":"extracoes","/api/horarios-extracoes":"horarios_extracoes","/api/users":"vendedores","/api/bets":"apostas","/api/draws":"sorteios","/api/transactions":"transacoes","/api/commission-settings":"commission_settings","/api/audit-log":"audit_log","/api/system-config":"system_config","/api/modality-settings":"modality_settings","/api/bets/summary":"apostas"};function _sbH(e){var t={"Content-Type":"application/json",Accept:"application/json",apikey:SB_KEY};return e&&Object.keys(e).forEach(function(n){t[n]=e[n]}),t}function _rpc(e,t){return fetch(SB_URL+"/rest/v1/rpc/"+e,{method:"POST",headers:_sbH(),body:JSON.stringify(t||{})}).then(_sbResp)}function _sbResp(e){return 204===e.status?{}:e.json().then(function(t){if(!e.ok)throw new Error(t&&(t.message||t.hint||t.details||t.error)||"Erro "+e.status);return t})}function _sbFilter(e,t){return({user:function(e){return["user_id=eq."+e]},draw:function(e){return["draw_id=eq."+e]},status:function(e){return["status=eq."+e]},bet_type:function(e){return["bet_type=eq."+e]},action:function(e){return["action=eq."+e]},date_from:function(e){return["created_at=gte."+e+"T00:00:00"]},date_to:function(e){return["created_at=lte."+e+"T23:59:59"]},date:function(e){return["date=eq."+e]},limit:function(e){return["limit="+e]},order:function(e){return["order="+e]},select:function(e){return["select="+e]},is_active:function(e){return["is_active=eq."+e]},extracao_id:function(e){return["extracao_id=eq."+e]},id:function(e){return["id=eq."+e]}}[e]||function(t){return[e+"=eq."+t]})(t)}function api(e,t,n){var a,o=t.split("?"),d=o[0].replace(/\/+$/,""),r=o[1]||"";if("/api/auth/login"===d)return _rpc("admin_login",{p_phone:n.phone,p_password:n.password}).then(function(e){if(!e||!e.id)throw new Error("Credenciais inválidas");return{access:"sb_ok",user:e}});if(a=d.match(/^\/api\/bets\/(\d+)\/cancel$/))return fetch(SB_URL+"/rest/v1/apostas?id=eq."+a[1],{method:"PATCH",headers:_sbH({Prefer:"return=representation"}),body:JSON.stringify({status:"cancelled"})}).then(_sbResp);if(a=d.match(/^\/api\/users\/(\d+)\/add_balance$/))return _rpc("add_balance",{p_user_id:+a[1],p_amount:n&&n.amount||0});if(a=d.match(/^\/api\/users\/(\d+)\/settlement$/))return _rpc("prestar_conta",{p_user_id:+a[1],p_total:n&&n.total||0,p_admin_id:st.user&&st.user.id||null});if(a=d.match(/^\/api\/draws\/(\d+)\/result$/))return _rpc("salvar_resultado",{p_id:+a[1],p_result:n&&n.result||""});if("/api/commission-settings"===d&&("POST"===e||"PATCH"===e))return _rpc("upsert_commission_settings",{p_milhar:n.milhar||null,p_centena:n.centena||null,p_dezena:n.dezena||null,p_unidade:n.unidade||null,p_duque_dezena:n.duque_dezena||null,p_duque_centena:n.duque_centena||null,p_terno_dezena:n.terno_dezena||null,p_terno_centena:n.terno_centena||null,p_general_commission:n.general_commission||n.p2500||null});var s=null,l=null,i=d.match(/^(.*?)\/(\d+)$/);if(i?(s=_ROUTE[i[1]],l=i[2]):s=_ROUTE[d],!s)return Promise.reject(new Error("Rota não mapeada: "+d));var c=l?["id=eq."+l]:[];r&&r.split("&").forEach(function(e){if(e){var t=e.split("=");_sbFilter(t[0],t.slice(1).join("=")).forEach(function(e){c.push(e)})}});var u=SB_URL+"/rest/v1/"+s;c.length&&(u+="?"+c.join("&")),"GET"!==e||l||(u+=(c.length?"&":"?")+"order=created_at.desc",r.includes("limit=")||(u+="&limit=200"));var m={method:e,headers:_sbH("GET"!==e?{Prefer:"return=representation"}:{})};return n&&"GET"!==e&&"DELETE"!==e&&(m.body=JSON.stringify(n)),fetch(u,m).then(_sbResp).catch(function(e){if(e instanceof TypeError)throw new Error("Sem conexão com o Supabase");throw e})}function fmtBRL(e){return"R$ "+Number(e||0).toFixed(2).replace(".",",").replace(/\B(?=(\d{3})+(?!\d))/g,".")}function fmtDt(e){return e?new Date(e).toLocaleString("pt-BR"):"—"}function today(){return(new Date).toISOString().split("T")[0]}function doLogin(){var e=document.getElementById("lg-phone").value.trim(),t=document.getElementById("lg-pass").value,n=document.getElementById("lg-err");n.textContent="",e&&t?(n.textContent="Verificando...",api("POST","/api/auth/login/",{phone:e,password:t}).then(function(t){st.user=t.user||{phone:e},st.token=t.access||"sb_ok",localStorage.setItem("so_token",st.token),localStorage.setItem("so_user",JSON.stringify(st.user)),document.getElementById("admin-label").textContent=st.user.name||st.user.phone||"admin",document.getElementById("s-login").style.display="none",document.getElementById("app").classList.add("on"),buildNav(),loadExtracoesCache(),showPage("p-vendedores"),loadVendedores()}).catch(function(e){n.textContent=e.message||"Credenciais inválidas"})):n.textContent="Preencha login e senha"}function doLogout(){st.token=null,st.user=null,document.getElementById("app").classList.remove("on"),document.getElementById("s-login").style.display="flex",document.getElementById("nav").innerHTML="",document.getElementById("lg-pass").value=""}["lg-phone","lg-pass"].forEach(function(e){document.getElementById(e).addEventListener("keydown",function(e){"Enter"===e.key&&doLogin()})});var _vendedores=[];function loadVendedores(){api("GET","/api/users/").then(function(e){renderVendedores(_vendedores=Array.isArray(e)?e:e.results||[]),populateVendedoreSelects(),populateGeralSelects()}).catch(function(e){document.getElementById("v-tbody").innerHTML='<tr><td colspan="5" class="text-red">'+e.message+"</td></tr>"})}function filterVendedores(){var e=document.getElementById("v-search").value.toLowerCase();renderVendedores(_vendedores.filter(function(t){return(t.phone||"").toLowerCase().includes(e)||(t.username||"").toLowerCase().includes(e)||(t.name||"").toLowerCase().includes(e)}))}function renderVendedores(e){var t=document.getElementById("v-tbody");e.length?t.innerHTML=e.map(function(e){var t=e.name||e.username||e.phone||e.id;return"<tr><td>"+t+"</td><td>"+fmtBRL(e.balance||e.saldo||0)+"</td><td>"+(!1!==e.is_active&&"inactive"!==e.status?'<span class="badge-ativo">Ativo</span>':'<span class="badge-inativo">Inativo</span>')+'</td><td><button class="btn-sm-green" onclick="editVendedor('+e.id+')">Editar</button></td><td><span style="cursor:pointer;color:#e53935;font-size:13px;" onclick="confirmApagar('+e.id+",'"+t+"')\">Apagar</span></td></tr>"}).join(""):t.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum vendedor</td></tr>'}function populateVendedoreSelects(){["s-vendedor","l-vendedor","a-vendedor","pc-gerente","vd-vendedor","cx-vendedor-filter"].forEach(function(e){var t=document.getElementById(e);if(t){var n=t.options[0]?t.options[0].outerHTML:"";t.innerHTML=n,_vendedores.forEach(function(e){var n=document.createElement("option");n.value=e.id,n.textContent=e.name||e.username||e.phone||e.id,t.appendChild(n)})}});var e=document.getElementById("s-vendedor");e&&!e._wired&&(e._wired=!0,e.addEventListener("change",function(){var t=_vendedores.find(function(t){return String(t.id)===e.value});document.getElementById("s-atual").textContent=t?fmtBRL(t.balance||t.saldo):"—"}))}function prepareForm(){document.getElementById("form-v-title").textContent="Criar vendedor",document.getElementById("fv-id").value="",document.getElementById("fv-criado").value="",document.getElementById("fv-phone").value="",document.getElementById("fv-pass").value="",document.getElementById("fv-nome").value="",document.getElementById("fv-saldo").value="1000",document.getElementById("fv-status").value="active",document.getElementById("fv-endereco").value="",document.getElementById("fv-tel2").value="",document.getElementById("fv-err").textContent=""}function editVendedor(e){var t=_vendedores.find(function(t){return t.id===e});t&&(showPage("p-criar-vendedor"),document.getElementById("form-v-title").textContent="Editar vendedor",document.getElementById("fv-id").value=t.id,document.getElementById("fv-criado").value=t.date_joined?new Date(t.date_joined).toLocaleDateString("pt-BR"):"",document.getElementById("fv-phone").value=t.phone||t.username||"",document.getElementById("fv-pass").value="",document.getElementById("fv-nome").value=t.name||"",document.getElementById("fv-saldo").value=t.balance||t.saldo||0,document.getElementById("fv-status").value=!1!==t.is_active&&"inactive"!==t.status?"active":"inactive",document.getElementById("fv-endereco").value=t.address||t.endereco||"",document.getElementById("fv-tel2").value=t.phone2||"",document.getElementById("fv-err").textContent="")}function saveVendedor(){var e=document.getElementById("fv-id").value,t=document.getElementById("fv-phone").value.trim(),n=document.getElementById("fv-nome").value.trim(),a=document.getElementById("fv-pass").value,o=document.getElementById("fv-err");t?_rpc("upsert_vendedor",{p_id:e?+e:null,p_phone:t,p_name:n||t,p_password:a||null,p_balance:parseFloat(document.getElementById("fv-saldo").value)||0,p_is_active:"active"===document.getElementById("fv-status").value}).then(function(){showPage("p-vendedores"),loadVendedores()}).catch(function(e){o.textContent=e.message}):o.textContent="Informe o telefone"}function confirmApagar(e,t){document.getElementById("mc-title").textContent="Apagar vendedor",document.getElementById("mc-msg").textContent='Deseja apagar "'+t+'"? Esta ação não pode ser desfeita.',document.getElementById("mc-ok").onclick=function(){api("DELETE","/api/users/"+e+"/").then(function(){closeModal("modal-confirm"),loadVendedores()}).catch(function(e){alert(e.message)})},document.getElementById("modal-confirm").classList.add("on")}function loadSaldoPage(){populateVendedoreSelects()}function addSaldo(){var e=document.getElementById("s-vendedor").value,t=parseFloat(document.getElementById("s-valor").value)||0,n=document.getElementById("s-msg");return e?t<=0?(n.textContent="Informe um valor positivo",void(n.style.color="#e53935")):void api("POST","/api/users/"+e+"/add_balance/",{amount:t}).then(function(a){n.textContent="Saldo adicionado com sucesso!",n.style.color="#4CAF50",document.getElementById("s-valor").value="";var o=_vendedores.find(function(t){return String(t.id)===e});o&&(o.balance=(o.balance||0)+t,document.getElementById("s-atual").textContent=fmtBRL(o.balance))}).catch(function(e){n.textContent=e.message,n.style.color="#e53935"}):(n.textContent="Selecione o vendedor",void(n.style.color="#e53935"))}function fetchAllBets(e){return api("GET","/api/bets/?"+(e||[]).concat(["limit=500"]).join("&")).then(function(e){return Array.isArray(e)?e:e.results||[]})}function getCommissionRate(e){return parseFloat(e&&(e.commission_rate||e.comissao_geral||e.general_commission))||10}function calcTotals(e,t){var n=null==t||isNaN(t)?10:Number(t),a=0,o=0,d=0,r=0;e.forEach(function(e){var t=parseFloat(e.total_amount||e.amount||0),n=parseFloat(e.prize_amount||e.premio||0);"cancelled"===e.status?r+=t:(a+=t,"pending"===e.status?o+=t:"won"===e.status&&(d+=n))});var s=a*(n/100);return{entrada:a,aberto:o,pago:d,naoPago:0,premios:d,cancel:r,comissao:s,total:a-d-s}}function initCaixa(){document.getElementById("cx-de").value=today(),document.getElementById("cx-ate").value=today(),populateVendedoreSelects(),loadCaixa()}function loadCaixa(){var e=[],t=document.getElementById("cx-de").value,n=document.getElementById("cx-ate").value,a=document.getElementById("cx-vendedor-filter").value;t&&e.push("date_from="+t),n&&e.push("date_to="+n),a&&e.push("user="+a);var o=document.getElementById("cx-tbody");o.innerHTML='<tr><td colspan="6" class="loading">buscando...</td></tr>',fetchAllBets(e).then(function(e){var t=calcTotals(e,null);document.getElementById("cx-entrada").textContent=fmtBRL(t.entrada),document.getElementById("cx-aberto").textContent=fmtBRL(t.aberto),document.getElementById("cx-nao-pago").textContent=fmtBRL(t.naoPago),document.getElementById("cx-pago").textContent=fmtBRL(t.pago),document.getElementById("cx-comissao").textContent=fmtBRL(t.comissao),document.getElementById("cx-cancel").textContent=fmtBRL(t.cancel);var n=document.getElementById("cx-total");n.textContent=fmtBRL(t.total),n.style.color=t.total>=0?"#4CAF50":"#e53935";var a={};e.forEach(function(e){var t=e.user_phone||e.seller||e.user||"?";a[t]||(a[t]={apostado:0,premio:0,comissao:0,count:0});var n=parseFloat(e.total_amount||e.amount||0),o=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(a[t].apostado+=n,a[t].premio+=o,a[t].comissao+=.1*n,a[t].count++)});var d=Object.keys(a);d.length?o.innerHTML=d.map(function(e){var t=a[e];return"<tr><td>"+e+"</td><td>"+fmtBRL(t.apostado)+"</td><td>"+fmtBRL(t.premio)+"</td><td>"+fmtBRL(t.comissao)+'</td><td style="font-size:12px;color:#aaa;">'+t.count+" aposta(s)</td><td>"+fmtBRL(t.apostado-t.premio-t.comissao)+"</td></tr>"}).join(""):o.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Sem apostas no período</td></tr>'}).catch(function(e){document.getElementById("cx-total").textContent=e.message,document.getElementById("cx-total").style.color="#e53935"})}function statusBadge(e){return"pending"===e?'<span class="badge-ativo">Pendente</span>':"won"===e?'<span class="badge-ganhou">Ganhou</span>':"lost"===e?'<span style="color:#aaa;font-size:12px;">Perdeu</span>':"cancelled"===e?'<span class="badge-cancelado">Cancelado</span>':e||"—"}function initApostas(){populateVendedoreSelects(),document.getElementById("a-date").value=today(),api("GET","/api/draws/").then(function(e){var t=Array.isArray(e)?e:e.results||[],n=document.getElementById("a-draw");t.forEach(function(e){var t=document.createElement("option");t.value=e.id,t.textContent=e.name+(e.draw_time?" "+e.draw_time.slice(0,5):""),n.appendChild(t)})})}function loadApostas(){var e=[],t=document.getElementById("a-vendedor").value,n=document.getElementById("a-status").value,a=document.getElementById("a-draw").value,o=document.getElementById("a-date").value,d=document.getElementById("a-num").value.trim();t&&e.push("user="+t),n&&e.push("status="+n),a&&e.push("draw="+a),o&&(e.push("date_from="+o),e.push("date_to="+o)),d&&e.push("id="+d);var r=document.getElementById("a-tbody");r.innerHTML='<tr><td colspan="8" class="loading">buscando...</td></tr>',api("GET","/api/bets/?"+e.join("&")).then(function(e){var t=Array.isArray(e)?e:e.results||[];if(t.length){var n=0,a=0,o=0,d=0;t.forEach(function(e){var t=parseFloat(e.total_amount||e.amount||0),r=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(n+=t),"pending"===e.status&&o++,"won"===e.status&&(d++,a+=r)}),r.innerHTML=t.map(function(e){var t=(e.bets||e.selections||[]).map(function(e){return e.numbers||e.palpite||e.number||""}).join(" | ");!t&&e.numbers&&(t=e.numbers);var n="pending"===e.status?'<button class="btn-sm-green" style="background:#e53935;font-size:11px;padding:3px 8px;" onclick="cancelarAposta('+e.id+')">Cancelar</button>':"—";return"<tr><td>"+e.id+"</td><td>"+(e.user_phone||e.seller||"—")+'</td><td style="font-size:12px;">'+(e.bet_type||e.modality||"—")+'</td><td style="font-family:monospace;font-size:11px;max-width:140px;word-break:break-all;">'+(t||"—")+"</td><td>"+fmtBRL(e.total_amount||e.amount)+"</td><td>"+statusBadge(e.status)+'</td><td style="font-size:12px;">'+fmtDt(e.created_at||e.date)+"</td><td>"+n+"</td></tr>"}).join("")+'<tr style="background:#f0f0f0;font-weight:700;border-top:2px solid #ddd;"><td colspan="4">TOTAL ('+t.length+" apostas · "+o+" pend. · "+d+" ganhou)</td><td>"+fmtBRL(n)+'</td><td class="text-red">'+fmtBRL(a)+'</td><td colspan="2" style="color:#4CAF50;">'+fmtBRL(n-a)+" líq.</td></tr>"}else r.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Nenhuma aposta encontrada</td></tr>'}).catch(function(e){r.innerHTML='<tr><td colspan="8" class="text-red">'+e.message+"</td></tr>"})}function cancelarAposta(e){document.getElementById("mc-title").textContent="Cancelar aposta",document.getElementById("mc-msg").textContent="Cancelar aposta #"+e+"? Esta ação não pode ser desfeita.",document.getElementById("mc-ok").onclick=function(){api("POST","/api/bets/"+e+"/cancel/").then(function(){closeModal("modal-confirm"),loadApostas()}).catch(function(e){alert(e.message)})},document.getElementById("modal-confirm").classList.add("on")}function initLancamentos(){populateVendedoreSelects(),document.getElementById("l-data").value=today(),loadLancamentos()}var _lancamentos=[];function loadLancamentos(){var e=document.getElementById("l-vendedor").value,t=document.getElementById("l-data").value,n=["limit=100"];e&&n.push("user="+e),t&&(n.push("date_from="+t),n.push("date_to="+t)),api("GET","/api/transactions/?"+n.join("&")).then(function(e){_lancamentos=Array.isArray(e)?e:e.results||[],renderLancamentos()}).catch(function(){renderLancamentos()})}function renderLancamentos(){var e=document.getElementById("l-tbody");if(_lancamentos.length){var t=0,n=0;_lancamentos.forEach(function(e){var a=parseFloat(e.amount||0);"credit"===e.type||"prize"===e.type?t+=a:n+=a}),e.innerHTML=_lancamentos.slice(0,50).map(function(e){var t=parseFloat(e.amount||0),n="credit"===e.type||"prize"===e.type;return"<tr><td>"+(e.user_phone||e.user_name||e.operator||"—")+'</td><td style="color:'+(n?"#4CAF50":"#e53935")+';font-weight:600;">'+(n?"+":"−")+fmtBRL(t)+"</td><td>"+(e.type||e.tipo||"—")+"</td><td>"+fmtDt(e.created_at||e.date)+'</td><td><button class="btn-sm-green" style="background:#e53935" onclick="delLancamento('+e.id+')">X</button></td></tr>'}).join("")+'<tr style="background:#f0f0f0;font-weight:700;border-top:2px solid #ddd;"><td>TOTAL</td><td style="color:#4CAF50;">+'+fmtBRL(t)+'</td><td style="color:#e53935;">−'+fmtBRL(n)+'</td><td style="font-weight:700;">'+fmtBRL(t-n)+"</td><td></td></tr>"}else e.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum lançamento</td></tr>'}function saveLancamento(){var e=document.getElementById("l-vendedor").value,t=document.getElementById("l-msg");if(!e)return t.textContent="Selecione o vendedor",void(t.style.color="#e53935");api("POST","/api/transactions/",{user:e,date:document.getElementById("l-data").value,type:document.getElementById("l-tipo").value,amount:parseFloat(document.getElementById("l-valor").value)||0}).then(function(){t.textContent="Salvo!",t.style.color="#4CAF50",loadLancamentos()}).catch(function(e){t.textContent=e.message,t.style.color="#e53935"})}function delLancamento(e){confirm("Excluir lançamento #"+e+"?")&&api("DELETE","/api/transactions/"+e+"/").then(loadLancamentos).catch(function(e){alert(e.message)})}function initPrestacao(){populateVendedoreSelects(),document.getElementById("pc-de").value=today(),document.getElementById("pc-ate").value=today()}function loadPrestacao(){var e=document.getElementById("pc-de").value,t=document.getElementById("pc-ate").value,n=document.getElementById("pc-gerente").value,a=document.getElementById("pc-tbody");a.innerHTML='<tr><td colspan="8" class="loading">calculando...</td></tr>';var o=n?_vendedores.filter(function(e){return String(e.id)===n}):_vendedores;if(o.length){var d=o.map(function(n){var a=["user="+n.id];e&&a.push("date_from="+e),t&&a.push("date_to="+t);var o=fetchAllBets(a),d=api("GET","/api/transactions/?user="+n.id+(e?"&date_from="+e:"")+(t?"&date_to="+t:"")+"&limit=200").then(function(e){return Array.isArray(e)?e:e.results||[]}).catch(function(){return[]});return Promise.all([o,d]).then(function(e){var t=e[0],a=e[1],o=getCommissionRate(n),d=calcTotals(t,o),r=0;a.forEach(function(e){var t=parseFloat(e.amount||0);"credit"===e.type||"prize"===e.type?r+=t:r-=t});var s=d.entrada-(d.pago+d.naoPago)-d.comissao+r;return{v:n,nome:n.name||n.username||n.phone||n.id,entrada:d.entrada,aberto:d.aberto,saidas:d.pago+d.naoPago,comissao:d.comissao,lancamentos:r,total:s,taxa:o}})});Promise.all(d).then(function(e){e.length?a.innerHTML=e.map(function(e){var t=e.total>=0?"#333":"#e53935";return"<tr><td>"+e.nome+' <small style="color:#aaa">('+e.taxa+"%)</small></td><td>"+fmtBRL(e.entrada)+"</td><td>"+fmtBRL(e.aberto)+'</td><td class="text-red">'+fmtBRL(e.saidas)+'</td><td style="color:#e67e00;">'+fmtBRL(e.comissao)+"</td><td>"+fmtBRL(e.lancamentos)+'</td><td style="font-weight:700;color:'+t+'">'+fmtBRL(e.total)+'</td><td><button class="btn-sm-green" onclick="prestarConta('+e.v.id+","+e.total.toFixed(2)+')">Prestar contas</button></td></tr>'}).join(""):a.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Sem dados</td></tr>'}).catch(function(e){a.innerHTML='<tr><td colspan="8" class="text-red">'+e.message+"</td></tr>"})}else a.innerHTML='<tr><td colspan="8" style="padding:20px;text-align:center;color:#aaa">Nenhum vendedor</td></tr>'}function prestacaoTodos(){confirm("Prestar conta com todos os vendedores listados?")&&loadPrestacao()}function prestarConta(e,t){var n=null!=t?"Prestar conta? Total calculado: "+fmtBRL(t):"Prestar conta com este vendedor?";confirm(n)&&api("POST","/api/users/"+e+"/settlement/",{total:t}).then(function(){alert("Conta prestada!"),loadVendedores(),loadPrestacao()}).catch(function(e){alert(e.message)})}var _sorteios=[];function loadSorteiosPage(){document.getElementById("so-data").value=today(),loadSorteios()}function loadSorteios(){var e=document.getElementById("so-data").value,t=document.getElementById("so-status").value,n=document.getElementById("so-tbody");n.innerHTML='<tr><td colspan="6" class="loading">buscando...</td></tr>';var a="select=*,extracoes(name)&limit=50&order=date.desc,hora.asc";e&&(a+="&date=eq."+e),t&&(a+="&status=eq."+t),fetch(SB_URL+"/rest/v1/sorteios?"+a,{headers:_sbH()}).then(_sbResp).then(function(e){(_sorteios=Array.isArray(e)?e:[]).length?n.innerHTML=_sorteios.map(function(e){var t="open"===e.status?'<span class="badge-ativo">Aberto</span>':'<span class="badge-inativo">Encerrado</span>',n=e.result?(String(e.result).indexOf("\n")>=0?String(e.result).split("\n")[0].trim()+' <span style="color:#aaa;font-size:11px;">[+'+(String(e.result).trim().split("\n").filter(function(l){return l.trim();}).length-1)+' linhas]</span>':e.result):"—",a="open"===e.status?'<button class="btn-sm-green" onclick="showModalResultado('+e.id+",'"+(e.title||"").replace(/'/g,"")+"')\">Inserir resultado</button>":n,o=e.extracoes&&e.extracoes.name||e.title||"—",d=e.hora?e.hora.slice(0,5):"",r=e.date?e.date.split("-").reverse().join("/"):fmtDt(e.created_at);return"<tr><td>"+e.id+"</td><td><b>"+o+"</b>"+(d?' <span style="color:#888;">'+d+"</span>":"")+"</td><td>"+r+"</td><td>"+t+"</td><td>"+n+"</td><td>"+a+"</td></tr>"}).join(""):n.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Nenhum sorteio</td></tr>'}).catch(function(e){n.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+"</td></tr>"})}function showModalNovoSorteio(){var e=document.getElementById("ms-extracao");e.innerHTML='<option value="">Selecione...</option>',_EXTRACOES_CACHE.forEach(function(t){var n=document.createElement("option");n.value=t.id,n.textContent=t.name,e.appendChild(n)}),document.getElementById("ms-data").value=today(),document.getElementById("ms-hora").innerHTML='<option value="">Selecione a extração primeiro</option>',document.getElementById("ms-err").textContent="",document.getElementById("modal-sorteio").classList.add("on")}function loadHorariosModal(){var e=document.getElementById("ms-extracao").value,t=document.getElementById("ms-hora");t.innerHTML='<option value="">Carregando...</option>',e?api("GET","/api/horarios-extracoes/?extracao_id="+e+"&is_active=true&order=hora.asc").then(function(e){(e=Array.isArray(e)?e:[]).length?t.innerHTML=e.map(function(e){return'<option value="'+e.hora+'">'+e.hora.slice(0,5)+"</option>"}).join(""):t.innerHTML='<option value="">Nenhum horário cadastrado</option>'}):t.innerHTML='<option value="">Selecione a extração primeiro</option>'}function criarSorteio(){var e=parseInt(document.getElementById("ms-extracao").value),t=document.getElementById("ms-data").value,n=document.getElementById("ms-hora").value,a=document.getElementById("ms-err");if(e)if(t)if(n){var o=_EXTRACOES_CACHE.find(function(t){return t.id===e});var tit=(o?o.name:"Sorteio")+" "+n.slice(0,5)+" - "+t.split("-").reverse().join("/");_rpc("criar_sorteio",{p_extracao_id:e,p_date:t,p_hora:n,p_title:tit}).then(function(){closeModal("modal-sorteio"),loadSorteios()}).catch(function(e){a.textContent=e.message})}else a.textContent="Selecione o horário";else a.textContent="Informe a data";else a.textContent="Selecione a extração"}function showModalResultado(e,t){var s=_sorteios.find(function(x){return x.id===e;});var r=s&&s.result?s.result:"";document.getElementById("mr-id").value=e,document.getElementById("mr-nome").value=t,document.getElementById("mr-nums").value=r,document.getElementById("mr-err").textContent="",document.getElementById("modal-resultado").classList.add("on")}function salvarResultado(){var e=document.getElementById("mr-id").value,t=document.getElementById("mr-nums").value.trim();t?api("POST","/api/draws/"+e+"/result/",{result:t}).then(function(){closeModal("modal-resultado"),loadSorteios()}).catch(function(e){document.getElementById("mr-err").textContent=e.message}):document.getElementById("mr-err").textContent="Informe os números"}function initResultados(){document.getElementById("r-data").value=today(),api("GET","/api/modality-settings/").then(function(e){var t=Array.isArray(e)?e:e.results||[],n=document.getElementById("r-modalidade");t.forEach(function(e){var t=document.createElement("option");t.value=e.bet_type||e.id,t.textContent=e.label||e.bet_type,n.appendChild(t)})})}function loadResultados(){var e=document.getElementById("r-modalidade").value,t=document.getElementById("r-data").value,n=document.getElementById("r-tbody");n.innerHTML='<tr><td colspan="4" class="loading">buscando...</td></tr>';var a=[];e&&a.push("bet_type="+e),t&&a.push("date="+t),api("GET","/api/draws/?"+a.join("&")).then(function(t){var a=Array.isArray(t)?t:t.results||[];a.length?n.innerHTML=a.map(function(t){return"<tr><td>"+(t.name||t.id)+"</td><td>"+(t.bet_type||e||"—")+'</td><td style="font-family:monospace;">'+(t.result||"—")+"</td><td>"+fmtDt(t.draw_time||t.scheduled_at)+"</td></tr>"}).join(""):n.innerHTML='<tr><td colspan="4" style="padding:20px;text-align:center;color:#aaa">Nenhum resultado</td></tr>'}).catch(function(e){n.innerHTML='<tr><td colspan="4" class="text-red">'+e.message+"</td></tr>"})}function initVenda(){populateVendedoreSelects(),document.getElementById("vd-de").value=today(),document.getElementById("vd-ate").value=today()}function loadVenda(){var e=document.getElementById("vd-vendedor").value,t=document.getElementById("vd-de").value,n=document.getElementById("vd-ate").value,a=[];e&&a.push("user="+e),t&&a.push("date_from="+t),n&&a.push("date_to="+n);var o=document.getElementById("vd-tbody");document.getElementById("vd-resumo").style.display="block",o.innerHTML='<tr><td colspan="6" class="loading">calculando...</td></tr>',api("GET","/api/bets/summary/?"+a.join("&")).then(function(e){renderVendaRows((Array.isArray(e)?e:e.results||[e]).map(function(e){var t=parseFloat(e.total_amount||e.amount||0),n=parseFloat(e.prize_amount||e.prizes||0),a=parseFloat(e.commission_total||0)||.1*t;return{nome:e.seller||e.user_phone||"—",count:e.count||0,entrada:t,premios:n,comissao:a}}))}).catch(function(){fetchAllBets(a).then(function(e){var t={};e.forEach(function(e){var n=e.user_phone||e.seller||String(e.user)||"?",a=_vendedores.find(function(t){return String(t.id)===String(e.user)||t.phone===e.user_phone});a&&(n=a.name||a.username||a.phone||n),t[n]||(t[n]={count:0,entrada:0,premios:0,taxa:getCommissionRate(a)});var o=parseFloat(e.total_amount||e.amount||0),d=parseFloat(e.prize_amount||0);"cancelled"!==e.status&&(t[n].count++,t[n].entrada+=o,"won"===e.status&&(t[n].premios+=d))}),renderVendaRows(Object.keys(t).map(function(e){var n=t[e];return{nome:e,count:n.count,entrada:n.entrada,premios:n.premios,comissao:n.entrada*(n.taxa/100)}}))}).catch(function(e){o.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+"</td></tr>"})})}function renderVendaRows(e){var t=document.getElementById("vd-tbody");if(e.length){var n=0,a=0,o=0,d=0;e.forEach(function(e){n+=e.entrada,a+=e.premios,o+=e.comissao,d+=e.count}),t.innerHTML=e.map(function(e){var t=e.entrada-e.premios-e.comissao;return"<tr><td>"+e.nome+"</td><td>"+e.count+"</td><td>"+fmtBRL(e.entrada)+'</td><td class="text-red">'+fmtBRL(e.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(e.comissao)+'</td><td style="font-weight:700;color:'+(t>=0?"#333":"#e53935")+'">'+fmtBRL(t)+"</td></tr>"}).join("")+'<tr style="background:#f0f0f0;font-weight:700;"><td>TOTAL</td><td>'+d+"</td><td>"+fmtBRL(n)+'</td><td class="text-red">'+fmtBRL(a)+'</td><td style="color:#e67e00;">'+fmtBRL(o)+"</td><td>"+fmtBRL(n-a-o)+"</td></tr>"}else t.innerHTML='<tr><td colspan="6" style="padding:20px;text-align:center;color:#aaa">Sem dados no período</td></tr>'}function loadComissoes(){api("GET","/api/commission-settings/").then(function(e){var t=Array.isArray(e)?e[0]:e;t&&(null!=t.milhar&&(document.getElementById("cm-milhar").value=t.milhar),null!=t.grupo&&(document.getElementById("cm-grupo").value=t.grupo),null!=t.seninha&&(document.getElementById("cm-seninha").value=t.seninha),null!=t.sena&&(document.getElementById("cm-sena").value=t.sena),null!=t.bolao&&(document.getElementById("cm-bolao").value=t.bolao),null!=t.p2500&&(document.getElementById("cm-2p500").value=t.p2500),null!=t.rifa&&(document.getElementById("cm-rifa").value=t.rifa))}).catch(function(){})}function saveComissoes(){api("POST","/api/commission-settings/",{milhar:parseFloat(document.getElementById("cm-milhar").value)||0,grupo:parseFloat(document.getElementById("cm-grupo").value)||0,seninha:parseFloat(document.getElementById("cm-seninha").value)||0,sena:parseFloat(document.getElementById("cm-sena").value)||0,bolao:parseFloat(document.getElementById("cm-bolao").value)||0,p2500:parseFloat(document.getElementById("cm-2p500").value)||0,rifa:parseFloat(document.getElementById("cm-rifa").value)||0}).then(function(){document.getElementById("cm-msg").textContent="Salvo!",document.getElementById("cm-msg").style.color="#4CAF50"}).catch(function(e){document.getElementById("cm-msg").textContent=e.message,document.getElementById("cm-msg").style.color="#e53935"})}function loadAuditoria(){var e=document.getElementById("au-de").value,t=document.getElementById("au-ate").value,n=document.getElementById("au-acao").value,a=[];e&&a.push("date_from="+e),t&&a.push("date_to="+t),n&&a.push("action="+n);var o=document.getElementById("au-tbody");o.innerHTML='<tr><td colspan="5" class="loading">buscando...</td></tr>',api("GET","/api/audit-log/?"+a.join("&")).then(function(e){var t=Array.isArray(e)?e:e.results||[];t.length?o.innerHTML=t.map(function(e){return"<tr><td>"+(e.admin_name||"—")+"</td><td>"+(e.action||"—")+'</td><td style="font-size:12px;">'+(e.detail?JSON.stringify(e.detail):"—")+"</td><td>"+(e.ip_address||"—")+"</td><td>"+fmtDt(e.created_at)+"</td></tr>"}).join(""):o.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum registro</td></tr>'}).catch(function(e){o.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+"</td></tr>"})}function loadConfig(){document.getElementById("cfg-api-base").value=SB_URL;var e=localStorage.getItem("so_cfg_texto")||"SorteOuro, sua sorte começa aqui";document.getElementById("cfg-texto-bilhete").value=e,api("GET","/api/system-config/").then(function(e){(Array.isArray(e)?e:[]).forEach(function(e){var t=document.getElementById("cfg-"+e.key.replace(/_/g,"-"));t&&(t.value=e.value)})}).catch(function(){})}function saveConfig(){localStorage.setItem("so_cfg_texto",document.getElementById("cfg-texto-bilhete").value),document.getElementById("cfg-msg").textContent="Configurações salvas!",document.getElementById("cfg-msg").style.color="#4CAF50",[{key:"apostas_ativas",value:document.getElementById("cfg-apostas").value},{key:"milhar_brinde",value:document.getElementById("cfg-milhar-brinde").value},{key:"mb_min",value:document.getElementById("cfg-mb-min").value},{key:"mb_premio",value:document.getElementById("cfg-mb-premio").value},{key:"tempo_cancelamento",value:document.getElementById("cfg-tempo-cancel").value},{key:"texto_bilhete",value:document.getElementById("cfg-texto-bilhete").value}].forEach(function(e){fetch(SB_URL+"/rest/v1/system_config?key=eq."+e.key,{method:"PATCH",headers:_sbH({Prefer:"return=minimal"}),body:JSON.stringify({value:e.value,updated_at:(new Date).toISOString()})})})}function closeModal(e){document.getElementById(e).classList.remove("on")}document.querySelectorAll(".modal-overlay").forEach(function(e){e.addEventListener("click",function(t){t.target===e&&e.classList.remove("on")})});var _bilheteAtual=null;function initBilhetes(){document.getElementById("bil-codigo").value="",document.getElementById("bil-resultado").style.display="none",document.getElementById("bil-err").style.display="none",document.getElementById("bil-codigo").focus()}function buscarBilhete(){var e=document.getElementById("bil-codigo").value.trim().toUpperCase(),t=document.getElementById("bil-err"),n=document.getElementById("bil-resultado");if(t.style.display="none",n.style.display="none",_bilheteAtual=null,!e)return t.textContent="Informe o código do bilhete.",void(t.style.display="block");fetch(SB_URL+"/rest/v1/apostas?ticket_code=eq."+encodeURIComponent(e)+"&select=*,vendedores(name,phone),sorteios(title,date,hora,result,extracoes(name))&limit=1",{headers:_sbH()}).then(_sbResp).then(function(n){var a=Array.isArray(n)?n:[];if(!a.length)return t.textContent="Bilhete não encontrado: "+e,void(t.style.display="block");renderBilhete(_bilheteAtual=a[0])}).catch(function(e){t.textContent=e.message,t.style.display="block"})}function renderBilhete(e){var t=document.getElementById("bil-resultado"),n=e.status||"open";document.getElementById("bil-status-badge").innerHTML='<span style="background:'+({open:"#1565C0",won:"#2E7D32",paid:"#555",cancelled:"#e53935",lost:"#888"}[n]||"#888")+';color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">'+({open:"Aberta",won:"Ganhadora ✓",paid:"Paga ✓",cancelled:"Cancelada",lost:"Não ganhou"}[n]||n)+"</span>",document.getElementById("bil-code").textContent=e.ticket_code||"—";var a=e.vendedores;document.getElementById("bil-vendedor").textContent=a?a.name||a.phone:e.user_phone||"—",document.getElementById("bil-modalidade").textContent=e.bet_type||"—";var o=e.numbers;if("string"==typeof o)try{o=JSON.parse(o)}catch(e){}document.getElementById("bil-numeros").textContent=Array.isArray(o)?o.join(" · "):o||"—",document.getElementById("bil-valor").textContent=fmtBRL(e.total_amount||e.amount||0),document.getElementById("bil-premio").textContent=fmtBRL(e.prize_amount||0),document.getElementById("bil-data").textContent=fmtDt(e.created_at);var d=document.getElementById("bil-btn-area");document.getElementById("bil-msg").textContent="",d.innerHTML="won"===n?'<button class="btn-green" onclick="darBaixa()" style="width:100%;padding:14px;font-size:15px;border-radius:8px;">✓ Dar Baixa — Confirmar Pagamento de '+fmtBRL(e.prize_amount||0)+"</button>":"paid"===n?'<p style="text-align:center;color:#555;font-size:13px;">Este bilhete já foi pago.</p>':"cancelled"===n?'<p style="text-align:center;color:#e53935;font-size:13px;">Bilhete cancelado — não pode ser pago.</p>':'<p style="text-align:center;color:#888;font-size:13px;">Sorteio ainda não encerrado — aguardando resultado.</p>',t.style.display="block"}function darBaixa(){if(_bilheteAtual){var e=document.getElementById("bil-msg");e.style.color="#888",e.textContent="Processando...",_rpc("pagar_premio",{p_ticket_code:_bilheteAtual.ticket_code,p_admin_id:st.user?st.user.id:null}).then(function(t){e.style.color="#2E7D32",e.textContent="✓ Pagamento registrado com sucesso!",document.getElementById("bil-btn-area").innerHTML="",_bilheteAtual.status="paid",document.getElementById("bil-status-badge").innerHTML='<span style="background:#555;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">Paga ✓</span>'}).catch(function(t){e.style.color="#c62828",e.textContent="✗ "+t.message})}}function loadExtracoesCache(){api("GET","/api/extracoes/?is_active=true&order=name.asc").then(function(e){_EXTRACOES_CACHE=Array.isArray(e)?e:[]}).catch(function(){})}function loadExtracoesPage(){loadExtracoesCache();var e=document.getElementById("ext-lista");e.innerHTML='<p style="color:#aaa">Carregando...</p>',api("GET","/api/extracoes/?order=name.asc").then(function(t){(t=Array.isArray(t)?t:[]).length?(e.innerHTML="",t.forEach(function(t){var n=document.createElement("div");n.style.cssText="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;",n.innerHTML='<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"><b style="font-size:16px;">'+t.name+'</b><span class="'+(t.is_active?"badge-ativo":"badge-inativo")+'">'+(t.is_active?"Ativa":"Inativa")+'</span></div><div id="h-lista-'+t.id+'" style="margin-bottom:10px;"></div><div style="display:flex;gap:8px;"><input type="time" id="h-inp-'+t.id+'" style="border:1px solid #ccc;border-radius:4px;padding:6px 10px;"><button class="btn-green" onclick="addHorario('+t.id+')">+ Adicionar Horário</button></div><div id="h-err-'+t.id+'" style="color:#e53935;font-size:12px;margin-top:4px;"></div>',e.appendChild(n),renderHorariosExt(t.id)})):e.innerHTML='<p style="color:#aaa">Nenhuma extração</p>'}).catch(function(t){e.innerHTML='<p style="color:#e53935">'+t.message+"</p>"})}function renderHorariosExt(e){var t=document.getElementById("h-lista-"+e);t&&(t.innerHTML='<span style="color:#aaa;font-size:12px;">carregando...</span>',api("GET","/api/horarios-extracoes/?extracao_id="+e+"&order=hora.asc").then(function(n){(n=Array.isArray(n)?n:[]).length?t.innerHTML=n.map(function(t){var min=t.minutos_fechamento||10;return'<span style="display:inline-flex;align-items:center;gap:4px;background:#f0f0f0;border-radius:20px;padding:3px 10px;margin:2px;font-size:13px;">'+t.hora.slice(0,5)+'<span title="Fecha '+min+' min antes" style="background:#e67e00;color:#fff;font-size:10px;border-radius:10px;padding:1px 6px;margin:0 2px;cursor:pointer;" onclick="editMinFechamento('+t.id+','+min+','+e+')">⏱'+min+'min</span>'+'<button onclick="delHorario('+t.id+","+e+')" style="background:none;border:none;color:#e53935;cursor:pointer;font-size:14px;padding:0 2px;">×</button></span>'}).join(""):t.innerHTML='<span style="color:#aaa;font-size:12px;">Nenhum horário cadastrado</span>'}))}function editMinFechamento(hId,minAtual,extId){var novo=prompt("Minutos de fechamento antes do sorteio:",minAtual);if(novo===null)return;var n=parseInt(novo);if(isNaN(n)||n<1||n>120){alert("Informe um valor entre 1 e 120 minutos.");return;}fetch(SB_URL+"/rest/v1/horarios_extracoes?id=eq."+hId,{method:"PATCH",headers:_sbH({Prefer:"return=minimal"}),body:JSON.stringify({minutos_fechamento:n})}).then(function(){renderHorariosExt(extId);}).catch(function(e){alert(e.message);});}function addHorario(e){var t=document.getElementById("h-inp-"+e).value,n=document.getElementById("h-err-"+e);t?(n.textContent="",api("POST","/api/horarios-extracoes/",{extracao_id:e,hora:t,is_active:!0,minutos_fechamento:10}).then(function(){document.getElementById("h-inp-"+e).value="",renderHorariosExt(e),loadExtracoesCache()}).catch(function(e){n.textContent=e.message})):n.textContent="Informe o horário"}function delHorario(e,t){confirm("Remover este horário?")&&api("DELETE","/api/horarios-extracoes/"+e+"/").then(function(){renderHorariosExt(t),loadExtracoesCache()}).catch(function(e){alert(e.message)})}!function(){var e=localStorage.getItem("so_user"),t=localStorage.getItem("so_token");if(t&&e){try{st.user=JSON.parse(e),st.token=t}catch(e){}st.user&&st.user.id&&(document.getElementById("admin-label").textContent=st.user.name||st.user.phone||"admin",document.getElementById("s-login").style.display="none",document.getElementById("app").classList.add("on"),buildNav(),loadExtracoesCache(),showPage("p-vendedores"),loadVendedores())}}();
 
 
 // ═══════════════════════════════════════════════════════════════
@@ -1961,6 +2386,845 @@ renderBilhete = function(e) {
     t._timer = setTimeout(function() { t.style.opacity = '0'; }, 2500);
   }
 })();
+
+
+
+/* ==============================================================
+   GRUPOS DO BICHO
+   ============================================================== */
+var GRUPOS_BICHO = [
+  null, // index 0 unused
+  'Avestruz','Águia','Burro','Borboleta','Cachorro',
+  'Cabra','Carneiro','Camelo','Cobra','Coelho',
+  'Cavalo','Elefante','Galo','Gato','Jacaré',
+  'Leão','Macaco','Porco','Pavão','Peru',
+  'Touro','Tigre','Urso','Veado','Vaca'
+];
+function numToGrupo(num) {
+  var s = String(num).replace(/\D/g,'');
+  if (!s) return null;
+  var dez = parseInt(s.slice(-2)) || 100;
+  if (dez === 0) return 25;
+  return Math.ceil(dez / 4);
+}
+function grupoAnimal(g) {
+  return GRUPOS_BICHO[g] || '?';
+}
+
+/* ==============================================================
+   p-resultados ESTRUTURADO
+   ============================================================== */
+function initResultados() {
+  document.getElementById('res-data').value = today();
+  buildResultadoForm();
+  loadSorteiosResultado();
+}
+function buildResultadoForm() {
+  var tb = document.getElementById('res-tbody');
+  var rows = '';
+  for (var i = 1; i <= 10; i++) {
+    rows += '<tr style="border-bottom:1px solid #eee;">' +
+      '<td style="padding:8px;text-align:center;font-weight:700;background:#f5f5f5;">' + i + 'º</td>' +
+      '<td style="padding:6px;"><input type="text" id="rn-'+i+'" maxlength="4" placeholder="0000" style="width:90px;font-size:18px;font-family:monospace;text-align:center;letter-spacing:3px;border:1px solid #ccc;border-radius:4px;padding:6px;" oninput="onResNumInput('+i+')" onblur="onResNumBlur('+i+')"></td>' +
+      '<td style="padding:8px;text-align:center;font-weight:700;font-size:18px;" id="rg-'+i+'" style="color:#1565C0;">—</td>' +
+      '<td style="padding:8px;font-size:14px;" id="ra-'+i+'">—</td>' +
+      '</tr>';
+  }
+  tb.innerHTML = rows;
+}
+function onResNumInput(n) {
+  var v = document.getElementById('rn-'+n).value.replace(/\D/g,'');
+  document.getElementById('rn-'+n).value = v;
+  if (v.length >= 2) {
+    var g = numToGrupo(v);
+    document.getElementById('rg-'+n).textContent = g;
+    document.getElementById('ra-'+n).textContent = grupoAnimal(g);
+  } else {
+    document.getElementById('rg-'+n).textContent = '—';
+    document.getElementById('ra-'+n).textContent = '—';
+  }
+}
+function onResNumBlur(n) {
+  var v = document.getElementById('rn-'+n).value.replace(/\D/g,'');
+  if (v && v.length < 4) v = v.padStart(4, '0');
+  document.getElementById('rn-'+n).value = v;
+  onResNumInput(n);
+  // auto-focus next
+  var next = document.getElementById('rn-'+(n+1));
+  if (next && !next.value) next.focus();
+}
+function loadSorteiosResultado() {
+  var dt = document.getElementById('res-data').value;
+  var sel = document.getElementById('res-sorteio');
+  sel.innerHTML = '<option value="">Selecione o Sorteio</option>';
+  document.getElementById('res-wrap').style.display = 'none';
+  if (!dt) return;
+  fetch(SB_URL+'/rest/v1/sorteios?date=eq.'+dt+'&order=hora.asc&select=*,extracoes(name)',{headers:_sbH()})
+    .then(_sbResp).then(function(rows){
+      (rows||[]).forEach(function(s){
+        var o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = (s.extracoes&&s.extracoes.name||s.title||'Sorteio') + ' ' + (s.hora||'').slice(0,5);
+        o.dataset.result = s.result || '';
+        sel.appendChild(o);
+      });
+    });
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var sel = document.getElementById('res-sorteio');
+  if (sel) {
+    sel.addEventListener('change', function(){
+      var opt = sel.options[sel.selectedIndex];
+      if (!opt || !opt.value) { document.getElementById('res-wrap').style.display='none'; return; }
+      document.getElementById('res-wrap').style.display = 'block';
+      // Pre-fill if result exists
+      var res = opt.dataset.result || '';
+      var lines = res.trim().split('\n').filter(Boolean);
+      for (var i = 1; i <= 10; i++) {
+        var el = document.getElementById('rn-'+i);
+        if (el) { el.value = lines[i-1] ? lines[i-1].trim().replace(/\D/g,'').slice(0,4) : ''; onResNumInput(i); }
+      }
+    });
+  }
+});
+function salvarResultadoEstruturado() {
+  var sid = document.getElementById('res-sorteio').value;
+  if (!sid) { alert('Selecione o sorteio'); return; }
+  var nums = [];
+  for (var i = 1; i <= 10; i++) {
+    var v = document.getElementById('rn-'+i).value.replace(/\D/g,'').padStart(4,'0');
+    nums.push(v);
+  }
+  var resultStr = nums.join('\n');
+  var msg = document.getElementById('res-msg');
+  msg.style.color = '#888'; msg.textContent = 'Salvando...';
+  api('POST','/api/draws/'+sid+'/result/',{result:resultStr}).then(function(){
+    msg.style.color = '#2E7D32'; msg.textContent = '✓ Resultado salvo com sucesso!';
+  }).catch(function(e){ msg.style.color='#e53935'; msg.textContent='✗ '+e.message; });
+}
+
+/* ==============================================================
+   p-mapa — MAPA DE APOSTAS
+   ============================================================== */
+function initMapa() {
+  document.getElementById('mapa-de').value = today();
+  document.getElementById('mapa-ate').value = today();
+  // Populate sorteios select
+  var sel = document.getElementById('mapa-sorteio');
+  sel.innerHTML = '<option value="">Todos os Sorteios</option>';
+  _sorteios.forEach(function(s){
+    var o = document.createElement('option');
+    o.value = s.id;
+    o.textContent = (s.extracoes&&s.extracoes.name||s.title||'#'+s.id)+' '+(s.hora||'').slice(0,5);
+    sel.appendChild(o);
+  });
+}
+function loadMapa() {
+  var de = document.getElementById('mapa-de').value;
+  var ate = document.getElementById('mapa-ate').value;
+  var sorteio = document.getElementById('mapa-sorteio').value;
+  var modal = document.getElementById('mapa-modalidade').value;
+  var premio = document.getElementById('mapa-premio').value;
+  var grid = document.getElementById('mapa-grid');
+  var tbody = document.getElementById('mapa-tbody');
+  grid.innerHTML = '<span style="color:#aaa;">Carregando...</span>';
+  document.getElementById('mapa-resumo').style.display = 'none';
+
+  var params = ['limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+  if (sorteio) params.push('draw='+sorteio);
+  if (modal) params.push('bet_type='+modal);
+
+  fetchAllBets(params).then(function(bets){
+    // Count by number
+    var numMap = {};
+    bets.forEach(function(b){
+      if ('cancelled' === b.status) return;
+      var nums = b.numbers;
+      if ('string'===typeof nums) try{nums=JSON.parse(nums);}catch(e){}
+      if (!Array.isArray(nums)) nums = nums ? [nums] : [];
+      nums.forEach(function(n){
+        n = String(n).replace(/\D/g,'');
+        if (!n) return;
+        if (!numMap[n]) numMap[n] = {count:0,total:0};
+        var amt = parseFloat(b.total_amount||b.amount||0)/Math.max(nums.length,1);
+        numMap[n].count++;
+        numMap[n].total += amt;
+      });
+    });
+
+    var keys = Object.keys(numMap).sort(function(a,b){return numMap[b].total-numMap[a].total;});
+    if (!keys.length) { grid.innerHTML='<span style="color:#aaa;font-size:13px;">Nenhuma aposta encontrada</span>'; return; }
+
+    var maxVal = keys.reduce(function(m,k){return Math.max(m,numMap[k].total);},0);
+
+    // Grid cards
+    grid.innerHTML = keys.slice(0,200).map(function(n){
+      var d = numMap[n];
+      var pct = maxVal>0 ? d.total/maxVal : 0;
+      var bg = pct > 0.7 ? '#ffebee' : pct > 0.35 ? '#fff8e1' : '#e8f5e9';
+      var border = pct > 0.7 ? '#e53935' : pct > 0.35 ? '#FF8F00' : '#4CAF50';
+      return '<div style="background:'+bg+';border:2px solid '+border+';border-radius:6px;padding:6px 10px;text-align:center;min-width:70px;">' +
+        '<div style="font-family:monospace;font-size:15px;font-weight:700;">'+n+'</div>' +
+        '<div style="font-size:11px;color:#555;">'+d.count+'x</div>' +
+        '<div style="font-size:11px;font-weight:600;">'+fmtBRL(d.total)+'</div></div>';
+    }).join('');
+
+    // Table
+    document.getElementById('mapa-resumo').style.display = 'block';
+    tbody.innerHTML = keys.slice(0,50).map(function(n){
+      var d = numMap[n];
+      return '<tr><td>'+n+'</td><td>'+d.count+'</td><td>'+fmtBRL(d.total)+'</td><td>' +
+        '<div style="background:#eee;border-radius:4px;height:8px;width:100%;"><div style="background:#1565C0;border-radius:4px;height:8px;width:'+Math.round((d.total/maxVal)*100)+'%;"></div></div>' +
+        fmtBRL(d.total)+'</td></tr>';
+    }).join('');
+  }).catch(function(e){ grid.innerHTML='<span style="color:#e53935;">'+e.message+'</span>'; });
+}
+
+/* ==============================================================
+   p-ranking — RANKING DE VENDAS
+   ============================================================== */
+function initRanking() {
+  document.getElementById('rank-de').value = today();
+  document.getElementById('rank-ate').value = today();
+}
+function loadRanking() {
+  var de = document.getElementById('rank-de').value;
+  var ate = document.getElementById('rank-ate').value;
+  var tipo = document.getElementById('rank-tipo').value;
+  var content = document.getElementById('rank-content');
+  content.innerHTML = '<p style="color:#aaa;">Carregando...</p>';
+
+  var params = ['limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+
+  fetchAllBets(params).then(function(bets){
+    var map = {};
+    bets.forEach(function(b){
+      if ('cancelled'===b.status) return;
+      var uid = b.user_phone || b.seller || String(b.user) || '?';
+      var vend = _vendedores.find(function(v){ return String(v.id)===String(b.user)||v.phone===b.user_phone; });
+      if (vend) uid = vend.name || vend.phone || uid;
+      if (!map[uid]) map[uid] = {entrada:0,premios:0,apostas:0};
+      var amt = parseFloat(b.total_amount||b.amount||0);
+      var pr = parseFloat(b.prize_amount||0);
+      map[uid].entrada += amt;
+      map[uid].apostas++;
+      if ('won'===b.status) map[uid].premios += pr;
+    });
+
+    var keys = Object.keys(map).sort(function(a,b){
+      if (tipo==='apostas') return map[b].apostas - map[a].apostas;
+      if (tipo==='liquido') return (map[b].entrada-map[b].premios) - (map[a].entrada-map[a].premios);
+      return map[b].entrada - map[a].entrada;
+    });
+
+    if (!keys.length) { content.innerHTML='<p style="color:#aaa;">Nenhum dado</p>'; return; }
+    var maxVal = keys.reduce(function(m,k){ return Math.max(m, tipo==='apostas'?map[k].apostas:tipo==='liquido'?(map[k].entrada-map[k].premios):map[k].entrada); }, 0);
+
+    var medals = ['🥇','🥈','🥉'];
+    content.innerHTML = '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      keys.map(function(k,i){
+        var d = map[k];
+        var val = tipo==='apostas' ? d.apostas : tipo==='liquido' ? (d.entrada-d.premios) : d.entrada;
+        var pct = maxVal>0 ? Math.round((val/maxVal)*100) : 0;
+        var medal = medals[i] || (i+1)+'.';
+        return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px 16px;">' +
+          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">' +
+          '<span style="font-weight:700;font-size:15px;">'+medal+' '+k+'</span>' +
+          '<span style="font-weight:700;font-size:16px;color:#1565C0;">'+(tipo==='apostas'?val+' apostas':fmtBRL(val))+'</span></div>' +
+          '<div style="background:#eee;border-radius:4px;height:10px;"><div style="background:#1565C0;border-radius:4px;height:10px;width:'+pct+'%;transition:width 0.5s;"></div></div>' +
+          '<div style="font-size:12px;color:#888;margin-top:4px;">'+d.apostas+' apostas · Entrada: '+fmtBRL(d.entrada)+' · Prêmios: '+fmtBRL(d.premios)+'</div>' +
+          '</div>';
+      }).join('') + '</div>';
+  }).catch(function(e){ content.innerHTML='<p style="color:#e53935;">'+e.message+'</p>'; });
+}
+
+/* ==============================================================
+   p-geral-final — GERAL FINAL
+   ============================================================== */
+function initGeralFinal() {
+  document.getElementById('gf-de').value = today();
+  document.getElementById('gf-ate').value = today();
+  populateGeralSelects();
+}
+function populateGeralSelects() {
+  ['gf-vendedor','gc-vendedor','col-vendedor','fech-vendedor'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    var first = sel.options[0] ? sel.options[0].outerHTML : '';
+    sel.innerHTML = first;
+    _vendedores.forEach(function(v){
+      var o = document.createElement('option');
+      o.value = v.id;
+      o.textContent = v.name||v.phone||v.id;
+      sel.appendChild(o);
+    });
+  });
+  // Extrações
+  ['ge-extracao'].forEach(function(id){
+    var sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = '<option value="">Todas as Extrações</option>';
+    _EXTRACOES_CACHE.forEach(function(e){
+      var o = document.createElement('option');
+      o.value = e.id;
+      o.textContent = e.name;
+      sel.appendChild(o);
+    });
+  });
+}
+function loadGeralFinal() {
+  var de = document.getElementById('gf-de').value;
+  var ate = document.getElementById('gf-ate').value;
+  var vend = document.getElementById('gf-vendedor').value;
+  var tipo = document.getElementById('gf-tipo').value;
+  var tbody = document.getElementById('gf-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">calculando...</td></tr>';
+
+  var targets = vend ? _vendedores.filter(function(v){return String(v.id)===vend;}) : _vendedores;
+  if (!targets.length) { tbody.innerHTML='<tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center;">Nenhum vendedor</td></tr>'; return; }
+
+  var promises = targets.map(function(v){
+    var params = ['user='+v.id,'limit=500'];
+    if (de) params.push('date_from='+de);
+    if (ate) params.push('date_to='+ate);
+    return fetchAllBets(params).then(function(bets){
+      var t = calcTotals(bets, getCommissionRate(v));
+      return {nome:v.name||v.phone||v.id, entrada:t.entrada, premios:t.pago, comissao:t.comissao, liquido:t.total, count:bets.filter(function(b){return b.status!=='cancelled';}).length};
+    });
+  });
+
+  Promise.all(promises).then(function(rows){
+    rows = rows.filter(function(r){ return r.entrada>0 || tipo!=='ppagos'; });
+    if ('ppagos'===tipo) rows = rows.filter(function(r){ return r.premios>0; });
+    var totEntrada=0,totPremios=0,totCom=0,totLiq=0,totAp=0;
+    rows.forEach(function(r){ totEntrada+=r.entrada; totPremios+=r.premios; totCom+=r.comissao; totLiq+=r.liquido; totAp+=r.count; });
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr><td>'+r.nome+'</td><td>'+fmtBRL(r.entrada)+'</td><td class="text-red">'+fmtBRL(r.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(r.comissao)+'</td><td style="font-weight:700;color:'+(r.liquido>=0?'#2E7D32':'#e53935')+'">'+fmtBRL(r.liquido)+'</td><td>'+r.count+'</td></tr>';
+    }).join('') +
+    '<tr style="background:#1565C0;color:#fff;font-weight:700;"><td>TOTAL</td><td>'+fmtBRL(totEntrada)+'</td><td>'+fmtBRL(totPremios)+'</td><td>'+fmtBRL(totCom)+'</td><td>'+fmtBRL(totLiq)+'</td><td>'+totAp+'</td></tr>';
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+'</td></tr>'; });
+}
+
+/* ==============================================================
+   p-geral-caixa — GERAL CAIXA
+   ============================================================== */
+function initGeralCaixa() {
+  document.getElementById('gc-de').value = today();
+  document.getElementById('gc-ate').value = today();
+}
+function loadGeralCaixa() {
+  var de = document.getElementById('gc-de').value;
+  var ate = document.getElementById('gc-ate').value;
+  var vend = document.getElementById('gc-vendedor').value;
+  var tipo = document.getElementById('gc-tipo').value;
+  var tbody = document.getElementById('gc-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">calculando...</td></tr>';
+
+  var params = ['limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+  if (vend) params.push('user='+vend);
+
+  fetchAllBets(params).then(function(bets){
+    var map = {};
+    bets.forEach(function(b){
+      if ('cancelled'===b.status) return;
+      var uid = b.user_phone||b.seller||String(b.user)||'?';
+      var v = _vendedores.find(function(v){return String(v.id)===String(b.user)||v.phone===b.user_phone;});
+      if (v) uid = v.name||v.phone||uid;
+      if (!map[uid]) map[uid]={entrada:0,premios:0,comissao:0};
+      var amt = parseFloat(b.total_amount||b.amount||0);
+      var pr = parseFloat(b.prize_amount||0);
+      map[uid].entrada += amt;
+      map[uid].comissao += amt*0.1;
+      if ('won'===b.status) map[uid].premios += pr;
+    });
+
+    var keys = Object.keys(map).sort();
+    var totE=0,totP=0,totC=0;
+    keys.forEach(function(k){ totE+=map[k].entrada; totP+=map[k].premios; totC+=map[k].comissao; });
+
+    var cards = document.getElementById('gc-cards');
+    cards.innerHTML = [
+      {label:'Entrada',val:totE,color:'#1565C0'},
+      {label:'Prêmios',val:totP,color:'#e53935'},
+      {label:'Comissão',val:totC,color:'#e67e00'},
+      {label:'Líquido',val:totE-totP-totC,color:totE-totP-totC>=0?'#2E7D32':'#e53935'}
+    ].map(function(c){
+      return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:14px 18px;min-width:140px;">' +
+        '<div style="font-size:12px;color:#888;margin-bottom:4px;">'+c.label+'</div>' +
+        '<div style="font-size:20px;font-weight:700;color:'+c.color+';">'+fmtBRL(c.val)+'</div></div>';
+    }).join('');
+
+    tbody.innerHTML = keys.map(function(k){
+      var d = map[k];
+      var liq = d.entrada - d.premios - d.comissao;
+      var show = tipo==='ppagos'?d.premios : tipo==='liquido'?liq : tipo==='bolinho'?d.entrada-d.premios : d.comissao;
+      return '<tr><td>'+k+'</td><td>'+fmtBRL(d.entrada)+'</td><td class="text-red">'+fmtBRL(d.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(d.comissao)+'</td><td style="font-weight:700;color:'+(liq>=0?'#333':'#e53935')+'">'+fmtBRL(liq)+'</td></tr>';
+    }).join('') +
+    '<tr style="background:#f0f0f0;font-weight:700;"><td>TOTAL</td><td>'+fmtBRL(totE)+'</td><td>'+fmtBRL(totP)+'</td><td>'+fmtBRL(totC)+'</td><td>'+fmtBRL(totE-totP-totC)+'</td></tr>';
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+'</td></tr>'; });
+}
+
+/* ==============================================================
+   p-geral-extracao
+   ============================================================== */
+function initGeralExtracao() {
+  document.getElementById('ge-de').value = today();
+  document.getElementById('ge-ate').value = today();
+}
+function loadGeralExtracao() {
+  var de = document.getElementById('ge-de').value;
+  var ate = document.getElementById('ge-ate').value;
+  var ext = document.getElementById('ge-extracao').value;
+  var tbody = document.getElementById('ge-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">calculando...</td></tr>';
+
+  var q = 'limit=100&order=date.desc,hora.asc&select=*,extracoes(name)';
+  if (de) q += '&date=gte.'+de;
+  if (ate) q += '&date=lte.'+ate;
+  if (ext) q += '&extracao_id=eq.'+ext;
+
+  fetch(SB_URL+'/rest/v1/sorteios?'+q,{headers:_sbH()}).then(_sbResp).then(function(sorteios){
+    if (!sorteios||!sorteios.length){
+      tbody.innerHTML='<tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center;">Nenhum sorteio</td></tr>';
+      return;
+    }
+    var map={};
+    sorteios.forEach(function(s){
+      var nome = (s.extracoes&&s.extracoes.name)||s.title||'?';
+      if (!map[nome]) map[nome]={sorteios:0,apostas:0,entrada:0,premios:0};
+      map[nome].sorteios++;
+    });
+    // For each sorteio fetch bets
+    var promises = sorteios.map(function(s){
+      return fetchAllBets(['draw='+s.id,'limit=500']).then(function(bets){
+        var nome = (s.extracoes&&s.extracoes.name)||s.title||'?';
+        bets.forEach(function(b){
+          if ('cancelled'===b.status) return;
+          map[nome].apostas++;
+          map[nome].entrada += parseFloat(b.total_amount||b.amount||0);
+          if ('won'===b.status) map[nome].premios += parseFloat(b.prize_amount||0);
+        });
+      });
+    });
+    Promise.all(promises).then(function(){
+      var keys = Object.keys(map);
+      var totS=0,totA=0,totE=0,totP=0;
+      keys.forEach(function(k){ totS+=map[k].sorteios; totA+=map[k].apostas; totE+=map[k].entrada; totP+=map[k].premios; });
+      tbody.innerHTML = keys.map(function(k){
+        var d=map[k]; var liq=d.entrada-d.premios;
+        return '<tr><td>'+k+'</td><td>'+d.sorteios+'</td><td>'+d.apostas+'</td><td>'+fmtBRL(d.entrada)+'</td><td class="text-red">'+fmtBRL(d.premios)+'</td><td style="font-weight:700;color:'+(liq>=0?'#2E7D32':'#e53935')+'">'+fmtBRL(liq)+'</td></tr>';
+      }).join('') +
+      '<tr style="background:#f0f0f0;font-weight:700;"><td>TOTAL</td><td>'+totS+'</td><td>'+totA+'</td><td>'+fmtBRL(totE)+'</td><td>'+fmtBRL(totP)+'</td><td>'+fmtBRL(totE-totP)+'</td></tr>';
+    });
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+'</td></tr>'; });
+}
+
+/* ==============================================================
+   p-coletas
+   ============================================================== */
+function initColetas() {
+  document.getElementById('col-de').value = today();
+  document.getElementById('col-ate').value = today();
+}
+function loadColetas() {
+  var de = document.getElementById('col-de').value;
+  var ate = document.getElementById('col-ate').value;
+  var vend = document.getElementById('col-vendedor').value;
+  var tbody = document.getElementById('col-tbody');
+  tbody.innerHTML = '<tr><td colspan="7" class="loading">carregando...</td></tr>';
+
+  var params = ['limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+  if (vend) params.push('user='+vend);
+
+  fetchAllBets(params).then(function(bets){
+    // Group by vendedor+date
+    var map = {};
+    bets.forEach(function(b){
+      if ('cancelled'===b.status) return;
+      var uid = b.user_phone||b.seller||String(b.user)||'?';
+      var v = _vendedores.find(function(v){return String(v.id)===String(b.user)||v.phone===b.user_phone;});
+      if (v) uid = v.name||v.phone||uid;
+      var dt = (b.created_at||b.date||'').slice(0,10);
+      var key = uid+'|'+dt;
+      if (!map[key]) map[key]={nome:uid,data:dt,apostas:0,valor:0,premios:0,comissao:0};
+      var amt = parseFloat(b.total_amount||b.amount||0);
+      map[key].apostas++;
+      map[key].valor += amt;
+      map[key].comissao += amt*0.1;
+      if ('won'===b.status) map[key].premios += parseFloat(b.prize_amount||0);
+    });
+    var rows = Object.values(map).sort(function(a,b){ return b.data.localeCompare(a.data)||a.nome.localeCompare(b.nome); });
+    if (!rows.length) { tbody.innerHTML='<tr><td colspan="7" style="color:#aaa;padding:20px;text-align:center;">Nenhuma coleta</td></tr>'; return; }
+    tbody.innerHTML = rows.map(function(r){
+      var liq = r.valor-r.premios-r.comissao;
+      return '<tr><td>'+r.nome+'</td><td>'+r.data.split('-').reverse().join('/')+'</td><td>'+r.apostas+'</td><td>'+fmtBRL(r.valor)+'</td><td class="text-red">'+fmtBRL(r.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(r.comissao)+'</td><td style="font-weight:700;">'+fmtBRL(liq)+'</td></tr>';
+    }).join('');
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="7" class="text-red">'+e.message+'</td></tr>'; });
+}
+
+/* ==============================================================
+   p-terminais-a — TERMINAIS
+   ============================================================== */
+function initTerminais() { loadTerminais(); }
+function loadTerminais() {
+  var grid = document.getElementById('term-grid');
+  grid.innerHTML = '<span style="color:#aaa;font-size:13px;">Carregando...</span>';
+  // Fetch vendedores with last activity
+  var upd = document.getElementById('term-updated');
+  upd.textContent = 'Atualizado: '+new Date().toLocaleTimeString('pt-BR');
+
+  fetch(SB_URL+'/rest/v1/vendedores?select=*&limit=100',{headers:_sbH()})
+    .then(_sbResp).then(function(vends){
+      if (!vends||!vends.length){grid.innerHTML='<span style="color:#aaa;">Nenhum terminal cadastrado</span>';return;}
+      grid.innerHTML = vends.map(function(v){
+        var ativo = v.is_active!==false;
+        var ultimo = v.ultimo_acesso||v.last_login||null;
+        var diffMin = ultimo ? Math.floor((Date.now()-new Date(ultimo))/60000) : null;
+        var online = diffMin!==null && diffMin<10;
+        var statusColor = !ativo?'#888':online?'#2E7D32':'#e67e00';
+        var statusText = !ativo?'Inativo':online?'Online':'Offline';
+        var saldo = parseFloat(v.balance||v.saldo||0);
+        return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px;position:relative;">' +
+          '<div style="position:absolute;top:10px;right:10px;width:10px;height:10px;border-radius:50%;background:'+statusColor+';" title="'+statusText+'"></div>' +
+          '<div style="font-weight:700;font-size:14px;margin-bottom:4px;">'+( v.name||v.phone||v.id)+'</div>' +
+          '<div style="font-size:12px;color:#888;margin-bottom:8px;">'+statusText+(diffMin!==null?' · '+(diffMin<60?diffMin+'min':Math.floor(diffMin/60)+'h')+'':'')+' atrás</div>' +
+          '<div style="font-size:13px;">Saldo: <b style="color:'+(saldo>=0?'#333':'#e53935')+'">'+fmtBRL(saldo)+'</b></div>' +
+          '<div style="margin-top:8px;display:flex;gap:6px;">' +
+          '<button class="btn-sm-green" onclick="editVendedor('+v.id+')" style="font-size:11px;">✏ Editar</button>' +
+          '</div></div>';
+      }).join('');
+    }).catch(function(e){ grid.innerHTML='<span style="color:#e53935;">'+e.message+'</span>'; });
+}
+
+/* ==============================================================
+   p-despesas
+   ============================================================== */
+var _despesas = [];
+function initDespesas() {
+  document.getElementById('desp-de').value = today();
+  document.getElementById('desp-ate').value = today();
+  loadDespesas();
+}
+function showNovaDespesa() {
+  document.getElementById('desp-form').style.display = 'block';
+  document.getElementById('desp-f-data').value = today();
+  document.getElementById('desp-f-desc').value = '';
+  document.getElementById('desp-f-valor').value = '';
+  document.getElementById('desp-f-err').textContent = '';
+  document.getElementById('desp-f-desc').focus();
+}
+function loadDespesas() {
+  var de = document.getElementById('desp-de').value;
+  var ate = document.getElementById('desp-ate').value;
+  var cat = document.getElementById('desp-cat').value;
+  var tbody = document.getElementById('desp-tbody');
+  tbody.innerHTML = '<tr><td colspan="5" class="loading">carregando...</td></tr>';
+
+  var q = 'order=data.desc&limit=200';
+  if (de) q += '&data=gte.'+de;
+  if (ate) q += '&data=lte.'+ate;
+  if (cat) q += '&categoria=eq.'+cat;
+
+  fetch(SB_URL+'/rest/v1/despesas?'+q,{headers:_sbH()}).then(_sbResp).then(function(rows){
+    _despesas = rows||[];
+    if (!_despesas.length){ tbody.innerHTML='<tr><td colspan="5" style="color:#aaa;padding:20px;text-align:center;">Nenhuma despesa</td></tr>'; return; }
+    var total = _despesas.reduce(function(s,d){return s+parseFloat(d.valor||0);},0);
+    tbody.innerHTML = _despesas.map(function(d){
+      return '<tr><td>'+(d.data?d.data.split('-').reverse().join('/'):'—')+'</td><td>'+( d.descricao||'—')+'</td><td>'+(d.categoria||'—')+'</td><td>'+fmtBRL(d.valor)+'</td>' +
+        '<td><button class="btn-sm-green" style="background:#e53935;font-size:11px;" onclick="delDespesa('+d.id+')">X</button></td></tr>';
+    }).join('') +
+    '<tr style="background:#f0f0f0;font-weight:700;"><td colspan="3">TOTAL</td><td>'+fmtBRL(total)+'</td><td></td></tr>';
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+'</td></tr>'; });
+}
+function saveDespesa() {
+  var desc = document.getElementById('desp-f-desc').value.trim();
+  var val = parseFloat(document.getElementById('desp-f-valor').value)||0;
+  var err = document.getElementById('desp-f-err');
+  if (!desc) {err.textContent='Informe a descrição';return;}
+  if (val<=0) {err.textContent='Informe o valor';return;}
+  fetch(SB_URL+'/rest/v1/despesas',{method:'POST',
+    headers:_sbH({Prefer:'return=minimal'}),
+    body:JSON.stringify({data:document.getElementById('desp-f-data').value, descricao:desc, categoria:document.getElementById('desp-f-cat').value, valor:val})
+  }).then(function(){
+    document.getElementById('desp-form').style.display='none';
+    loadDespesas();
+  }).catch(function(e){err.textContent=e.message;});
+}
+function delDespesa(id) {
+  if (!confirm('Excluir despesa?')) return;
+  fetch(SB_URL+'/rest/v1/despesas?id=eq.'+id,{method:'DELETE',headers:_sbH()}).then(function(){loadDespesas();}).catch(function(e){alert(e.message);});
+}
+
+/* ==============================================================
+   p-digitacao — DIGITAÇÃO DE FICHA
+   ============================================================== */
+var _digItems = [];
+function initDigitacao() {
+  populateVendedoreSelects();
+  // Load today's sorteios
+  var sel = document.getElementById('dig-sorteio');
+  sel.innerHTML = '<option value="">Selecione...</option>';
+  fetch(SB_URL+'/rest/v1/sorteios?date=eq.'+today()+'&status=eq.open&order=hora.asc&select=id,title,hora,extracoes(name)',{headers:_sbH()})
+    .then(_sbResp).then(function(rows){
+      (rows||[]).forEach(function(s){
+        var o = document.createElement('option');
+        o.value = s.id;
+        o.textContent = (s.extracoes&&s.extracoes.name||s.title)+(s.hora?' '+s.hora.slice(0,5):'');
+        sel.appendChild(o);
+      });
+    });
+  _digItems = [];
+  renderDigLista();
+}
+function digAutoGrupo() {
+  var v = document.getElementById('dig-numero').value.replace(/\D/g,'');
+  document.getElementById('dig-numero').value = v;
+  var hint = document.getElementById('dig-grupo-hint');
+  if (v.length >= 2) {
+    var g = numToGrupo(v);
+    hint.textContent = 'Grupo '+g+' — '+grupoAnimal(g);
+  } else {
+    hint.textContent = '';
+  }
+}
+function digAddItem() {
+  var vend = document.getElementById('dig-vendedor').value;
+  var sort = document.getElementById('dig-sorteio').value;
+  var modal = document.getElementById('dig-modal').value;
+  var num = document.getElementById('dig-numero').value.replace(/\D/g,'');
+  var val = parseFloat(document.getElementById('dig-valor').value)||0;
+  var err = document.getElementById('dig-err');
+  err.textContent = '';
+  if (!vend) {err.textContent='Selecione o vendedor';return;}
+  if (!sort) {err.textContent='Selecione o sorteio';return;}
+  if (!num) {err.textContent='Informe o número';return;}
+  if (val<=0) {err.textContent='Informe o valor';return;}
+  var g = numToGrupo(num);
+  _digItems.push({modal:modal, num:num.padStart(4,'0'), val:val, grupo:g, animal:grupoAnimal(g), sorteio_id:sort});
+  document.getElementById('dig-numero').value = '';
+  document.getElementById('dig-valor').value = '';
+  document.getElementById('dig-grupo-hint').textContent = '';
+  document.getElementById('dig-numero').focus();
+  renderDigLista();
+}
+function digRemoveItem(i) { _digItems.splice(i,1); renderDigLista(); }
+function renderDigLista() {
+  var el = document.getElementById('dig-lista');
+  var tot = document.getElementById('dig-total');
+  if (!_digItems.length) { el.innerHTML='<span style="color:#aaa;font-size:13px;">Nenhum item ainda</span>'; tot.textContent=''; return; }
+  var sum = _digItems.reduce(function(s,x){return s+x.val;},0);
+  el.innerHTML = '<table style="width:100%;border-collapse:collapse;">' +
+    '<thead><tr style="font-size:12px;color:#888;"><th style="text-align:left;padding:4px;">Modal.</th><th>Número</th><th>Grupo/Animal</th><th>Valor</th><th></th></tr></thead>' +
+    '<tbody>' + _digItems.map(function(it,i){
+      return '<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:4px;font-size:12px;">'+it.modal+'</td><td style="font-family:monospace;font-weight:700;">'+it.num+'</td><td style="font-size:12px;color:#1565C0;">'+it.grupo+' – '+it.animal+'</td><td>'+fmtBRL(it.val)+'</td><td><button onclick="digRemoveItem('+i+')" style="background:none;border:none;color:#e53935;cursor:pointer;font-size:16px;">×</button></td></tr>';
+    }).join('') + '</tbody></table>';
+  tot.textContent = 'Total: ' + fmtBRL(sum) + ' (' + _digItems.length + ' itens)';
+}
+function digFinalizar() {
+  if (!_digItems.length) {document.getElementById('dig-err').textContent='Adicione pelo menos um item';return;}
+  var vend = document.getElementById('dig-vendedor').value;
+  var err = document.getElementById('dig-err');
+  err.textContent = '';
+  if (!vend) {err.textContent='Selecione o vendedor';return;}
+  // Submit each item as an aposta
+  var p = _digItems.map(function(it){
+    return _rpc('registrar_aposta_admin',{p_user_id:+vend,p_draw_id:+it.sorteio_id,p_bet_type:it.modal,p_numbers:JSON.stringify([it.num]),p_amount:it.val}).catch(function(e){return {error:e.message};});
+  });
+  Promise.all(p).then(function(results){
+    var erros = results.filter(function(r){return r&&r.error;});
+    if (erros.length) { err.textContent = erros[0].error; return; }
+    alert('✓ '+_digItems.length+' aposta(s) registrada(s) com sucesso!');
+    _digItems = [];
+    renderDigLista();
+  });
+}
+
+/* ==============================================================
+   p-caixa-area
+   ============================================================== */
+function initCaixaArea() {
+  document.getElementById('ca-de').value = today();
+  document.getElementById('ca-ate').value = today();
+}
+function loadCaixaArea() {
+  var de = document.getElementById('ca-de').value;
+  var ate = document.getElementById('ca-ate').value;
+  var tbody = document.getElementById('ca-tbody');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading">calculando...</td></tr>';
+
+  var params = ['limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+
+  fetchAllBets(params).then(function(bets){
+    // Group by date
+    var map = {};
+    bets.forEach(function(b){
+      if ('cancelled'===b.status) return;
+      var dt = (b.created_at||b.date||'').slice(0,10);
+      if (!map[dt]) map[dt]={entrada:0,premios:0,comissao:0};
+      var amt = parseFloat(b.total_amount||b.amount||0);
+      map[dt].entrada += amt;
+      map[dt].comissao += amt*0.1;
+      if ('won'===b.status) map[dt].premios += parseFloat(b.prize_amount||0);
+    });
+    var dates = Object.keys(map).sort().reverse();
+    var totE=0,totP=0,totC=0;
+    dates.forEach(function(d){ totE+=map[d].entrada; totP+=map[d].premios; totC+=map[d].comissao; });
+
+    var cards = document.getElementById('ca-cards');
+    cards.innerHTML = [
+      {label:'Entrada',val:totE,color:'#1565C0'},
+      {label:'Prêmios Pagos',val:totP,color:'#e53935'},
+      {label:'Comissão',val:totC,color:'#e67e00'},
+      {label:'Líquido',val:totE-totP-totC,color:totE-totP-totC>=0?'#2E7D32':'#e53935'}
+    ].map(function(c){
+      return '<div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:14px 18px;min-width:140px;">' +
+        '<div style="font-size:12px;color:#888;margin-bottom:4px;">'+c.label+'</div>' +
+        '<div style="font-size:20px;font-weight:700;color:'+c.color+';">'+fmtBRL(c.val)+'</div></div>';
+    }).join('');
+
+    if (!dates.length){ tbody.innerHTML='<tr><td colspan="6" style="color:#aaa;padding:20px;text-align:center;">Nenhum dado</td></tr>';return;}
+    tbody.innerHTML = dates.map(function(d){
+      var r=map[d]; var liq=r.entrada-r.premios-r.comissao;
+      return '<tr><td>'+d.split('-').reverse().join('/')+'</td><td>'+fmtBRL(r.entrada)+'</td><td class="text-red">'+fmtBRL(r.premios)+'</td><td style="color:#e67e00;">'+fmtBRL(r.comissao)+'</td><td>—</td><td style="font-weight:700;color:'+(liq>=0?'#2E7D32':'#e53935')+'">'+fmtBRL(liq)+'</td></tr>';
+    }).join('') +
+    '<tr style="background:#f0f0f0;font-weight:700;"><td>TOTAL</td><td>'+fmtBRL(totE)+'</td><td>'+fmtBRL(totP)+'</td><td>'+fmtBRL(totC)+'</td><td>—</td><td>'+fmtBRL(totE-totP-totC)+'</td></tr>';
+  }).catch(function(e){ tbody.innerHTML='<tr><td colspan="6" class="text-red">'+e.message+'</td></tr>'; });
+}
+
+/* ==============================================================
+   p-fechamento
+   ============================================================== */
+function initFechamento() {
+  document.getElementById('fech-de').value = today();
+  document.getElementById('fech-ate').value = today();
+}
+function loadFechamento() {
+  var de = document.getElementById('fech-de').value;
+  var ate = document.getElementById('fech-ate').value;
+  var vend = document.getElementById('fech-vendedor').value;
+  var content = document.getElementById('fech-content');
+  if (!vend) { content.innerHTML='<p style="color:#aaa;">Selecione o vendedor</p>'; return; }
+  content.innerHTML = '<p style="color:#aaa;">Calculando...</p>';
+
+  var v = _vendedores.find(function(x){return String(x.id)===vend;});
+  var nome = v ? (v.name||v.phone||vend) : vend;
+
+  var params = ['user='+vend,'limit=500'];
+  if (de) params.push('date_from='+de);
+  if (ate) params.push('date_to='+ate);
+
+  fetchAllBets(params).then(function(bets){
+    var t = calcTotals(bets, getCommissionRate(v));
+    var hoje = new Date().toLocaleDateString('pt-BR');
+    var periodoStr = de&&ate ? de.split('-').reverse().join('/')+' a '+ate.split('-').reverse().join('/') : 'Período selecionado';
+
+    // Group by sorteio
+    var drawMap = {};
+    bets.forEach(function(b){
+      if ('cancelled'===b.status) return;
+      var dId = b.draw||b.draw_id||'?';
+      if (!drawMap[dId]) drawMap[dId]={name:'Sorteio '+dId,apostas:0,entrada:0,premios:0};
+      drawMap[dId].apostas++;
+      drawMap[dId].entrada += parseFloat(b.total_amount||b.amount||0);
+      if ('won'===b.status) drawMap[dId].premios += parseFloat(b.prize_amount||0);
+    });
+
+    var liq = t.total;
+    content.innerHTML = '<div style="font-family:monospace;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:20px;max-width:500px;">' +
+      '<div style="text-align:center;margin-bottom:16px;"><b style="font-size:16px;">FECHAMENTO — '+nome+'</b><br><span style="font-size:12px;color:#888;">'+periodoStr+' · Gerado: '+hoje+'</span></div>' +
+      '<table style="width:100%;border-collapse:collapse;margin-bottom:14px;">' +
+      '<tr style="border-bottom:2px solid #333;"><td style="padding:4px;font-size:13px;"><b>Entrada</b></td><td style="text-align:right;font-weight:700;">'+fmtBRL(t.entrada)+'</td></tr>' +
+      '<tr style="border-bottom:1px solid #eee;"><td style="padding:4px;font-size:13px;">Prêmios Pagos</td><td style="text-align:right;color:#e53935;">−'+fmtBRL(t.pago)+'</td></tr>' +
+      '<tr style="border-bottom:1px solid #eee;"><td style="padding:4px;font-size:13px;">Comissão</td><td style="text-align:right;color:#e67e00;">−'+fmtBRL(t.comissao)+'</td></tr>' +
+      '<tr style="border-top:2px solid #333;background:#f5f5f5;"><td style="padding:6px;font-size:15px;font-weight:700;">LÍQUIDO</td><td style="text-align:right;font-weight:700;font-size:15px;color:'+(liq>=0?'#2E7D32':'#e53935')+';">'+fmtBRL(liq)+'</td></tr>' +
+      '</table>' +
+      '<div style="font-size:12px;color:#888;border-top:1px solid #eee;padding-top:10px;margin-top:6px;">'+
+      Object.values(drawMap).map(function(d){ return d.name+': '+d.apostas+' apostas · '+fmtBRL(d.entrada); }).join('<br>')+
+      '</div></div>';
+  }).catch(function(e){ content.innerHTML='<p style="color:#e53935;">'+e.message+'</p>'; });
+}
+
+/* ==============================================================
+   p-parametros
+   ============================================================== */
+var _parAtalhos = ['Milhar','Centena','Grupo','Dezena','Seninha','Quina','PT','Duque G','Terno G'];
+function initParametros() {
+  // Load from system_config
+  fetch(SB_URL+'/rest/v1/system_config?limit=100',{headers:_sbH()}).then(_sbResp).then(function(rows){
+    (rows||[]).forEach(function(r){
+      var el = document.getElementById('par-'+r.key.replace(/_/g,'-'));
+      if (el) el.value = r.value;
+    });
+  }).catch(function(){});
+
+  // Build atalhos
+  var wrap = document.getElementById('par-atalhos');
+  wrap.innerHTML = _parAtalhos.map(function(a,i){
+    return '<div style="display:flex;align-items:center;gap:6px;">' +
+      '<label style="font-size:12px;color:#888;min-width:80px;">Atalho '+(i+1)+':</label>' +
+      '<input type="text" id="par-atalho-'+i+'" value="'+a+'" style="flex:1;border:1px solid #ccc;border-radius:4px;padding:5px 8px;font-size:13px;">' +
+      '</div>';
+  }).join('');
+}
+function saveParametros() {
+  var msg = document.getElementById('par-msg');
+  msg.style.color='#888'; msg.textContent='Salvando...';
+
+  var configs = [
+    {key:'nome_banca', val:document.getElementById('par-nome').value},
+    {key:'msg_rodape', val:document.getElementById('par-rodape').value},
+    {key:'limite_pos', val:document.getElementById('par-limite-pos').value},
+    {key:'limite_diario', val:document.getElementById('par-limite-diario').value},
+    {key:'usa_seninha', val:document.getElementById('par-seninha').value},
+    {key:'limite_cons', val:document.getElementById('par-limite-cons').value},
+    {key:'consulta_premiada', val:document.getElementById('par-cons-prem').value},
+    {key:'validade_poule', val:document.getElementById('par-validade').value},
+    {key:'msg_consulta_prem', val:document.getElementById('par-msg-cons').value}
+  ];
+  // Add atalhos
+  _parAtalhos.forEach(function(a,i){
+    var el=document.getElementById('par-atalho-'+i);
+    if(el) configs.push({key:'atalho_'+i,val:el.value});
+  });
+
+  var p = configs.map(function(c){
+    return fetch(SB_URL+'/rest/v1/system_config?key=eq.'+c.key,{method:'PATCH',
+      headers:_sbH({Prefer:'return=minimal'}),
+      body:JSON.stringify({value:c.val,updated_at:new Date().toISOString()})
+    }).then(function(r){
+      // If no row updated, insert
+      if(r.status===200||r.status===204) return;
+      return fetch(SB_URL+'/rest/v1/system_config',{method:'POST',headers:_sbH({Prefer:'return=minimal'}),body:JSON.stringify({key:c.key,value:c.val})});
+    });
+  });
+
+  Promise.all(p).then(function(){
+    msg.style.color='#2E7D32'; msg.textContent='✓ Parâmetros salvos!';
+  }).catch(function(e){ msg.style.color='#e53935'; msg.textContent='✗ '+e.message; });
+}
+
+/* ==============================================================
+   PRINT HELPER
+   ============================================================== */
+function printSection(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var w = window.open('','_blank','width=700,height=900');
+  w.document.write('<html><head><title>Imprimir</title><style>body{font-family:monospace;padding:20px;}table{width:100%;border-collapse:collapse;}th,td{border:1px solid #ccc;padding:6px;font-size:12px;}</style></head><body>'+el.innerHTML+'</body></html>');
+  w.document.close();
+  w.print();
+}
+
 </script>
 </body>
 </html>
