@@ -2526,8 +2526,7 @@ function onExtracaoResultadoChange() {
   fp.style.display = 'block';
   buildResultadoForm();
   var res = opt.dataset.result || '';
-  var lines = res.trim().split('
-').filter(Boolean);
+  var lines = res.trim().split('\n').filter(Boolean);
   for (var i = 1; i <= 10; i++) {
     var el = document.getElementById('rn-'+i);
     if (el) { el.value = lines[i-1] ? lines[i-1].trim().replace(/\D/g,'').padStart(4,'0') : ''; onResNumInput(i); }
@@ -2588,8 +2587,7 @@ function loadResLog() {
       tb.innerHTML=rows.map(function(s){
         var dt=s.updated_at?new Date(s.updated_at).toLocaleString('pt-BR'):'--';
         var op='INSERT-RESULTADO='+s.id;
-        var nums=(s.result||'').trim().split('
-').filter(Boolean).map(function(x){return x.trim();});
+        var nums=(s.result||'').trim().split('\n').filter(Boolean).map(function(x){return x.trim();});
         var gruposArr=nums.map(function(m){var dez=parseInt((m+'').slice(-2))||0;return dez===0?25:Math.ceil(dez/4);});
         var info=nums.join('|')+(gruposArr.length?' X '+gruposArr.join('|'):'');
         return '<tr style="font-size:11px;border-bottom:1px solid #eee;"><td style="padding:4px 8px;">'+dt+'</td><td style="padding:4px 8px;font-weight:600;">'+op+'</td><td style="padding:4px 8px;font-family:monospace;font-size:10px;word-break:break-all;">'+info+'</td><td style="padding:4px 8px;">'+u+'</td></tr>';
@@ -2605,8 +2603,7 @@ function salvarResultadoEstruturado() {
     var v = el ? el.value.replace(/[^0-9]/g,'').padStart(4,'0') : '0000';
     nums.push(v);
   }
-  var resultStr = nums.join('
-');
+  var resultStr = nums.join('\n');
   var msg = document.getElementById('res-msg');
   msg.style.color = '#888'; msg.textContent = 'Salvando...';
   _rpc('salvar_resultado', {p_id: +sid, p_result: resultStr}).then(function(){
