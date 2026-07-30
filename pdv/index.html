@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.9 · TESTE</div>
+    <div class="login-version">versão 7.10 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.9 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.10 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -3447,10 +3447,52 @@ function _imprimirTelaGenerica(hideIds, getTextFn) {
 }
 
 // ── Bilhete individual de resultado ──────────────────────────────────────────
+function mostrarSimulacaoResultado(texto) {
+  var anterior = document.getElementById('simulacao-resultado');
+  if (anterior) anterior.remove();
+
+  var fundo = document.createElement('div');
+  fundo.id = 'simulacao-resultado';
+  fundo.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.72);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto';
+  var painel = document.createElement('div');
+  painel.style.cssText = 'width:330px;max-width:94vw;background:#eee;border-radius:12px;padding:12px;box-shadow:0 8px 30px rgba(0,0,0,.4)';
+  var titulo = document.createElement('div');
+  titulo.textContent = 'SIMULAÇÃO DO BILHETE';
+  titulo.style.cssText = 'font-weight:800;text-align:center;color:#333;font-size:15px;padding:4px 0 10px';
+  var papel = document.createElement('pre');
+  papel.textContent = texto;
+  papel.style.cssText = 'box-sizing:border-box;width:100%;margin:0;background:#fff;color:#111;padding:13px 10px 22px;font:700 13px/1.32 monospace;white-space:pre;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.18)';
+  var aviso = document.createElement('div');
+  aviso.textContent = 'Prévia na largura da impressora térmica';
+  aviso.style.cssText = 'font-size:11px;color:#666;text-align:center;padding:9px 0 7px';
+  var fechar = document.createElement('button');
+  fechar.textContent = 'Fechar';
+  fechar.style.cssText = 'width:100%;border:0;border-radius:8px;background:#2E7D32;color:#fff;font-weight:700;font-size:15px;padding:11px';
+  fechar.onclick = function() { fundo.remove(); };
+  painel.appendChild(titulo);
+  painel.appendChild(papel);
+  painel.appendChild(aviso);
+  painel.appendChild(fechar);
+  fundo.appendChild(painel);
+  fundo.onclick = function(e) { if (e.target === fundo) fundo.remove(); };
+  document.body.appendChild(fundo);
+}
+
+function quebrarTextoTermico(texto, largura) {
+  var palavras = String(texto || '').trim().split(/\s+/);
+  var linhas = [], atual = '';
+  palavras.forEach(function(palavra) {
+    if (!atual) atual = palavra;
+    else if ((atual + ' ' + palavra).length <= largura) atual += ' ' + palavra;
+    else { linhas.push(atual); atual = palavra; }
+  });
+  if (atual) linhas.push(atual);
+  return linhas.join('\n');
+}
+
 function imprimirBilheteResultado(idx) {
   var s = _resultadosCache[idx];
   if (!s) return;
-  if (!window.NativePrinter) { alert('Impressora não disponível neste dispositivo.'); return; }
   var SEP  = '================================';
   var W    = 32;
   var data = s.date ? new Date(s.date + 'T12:00:00').toLocaleDateString('pt-BR') : '';
@@ -3462,7 +3504,9 @@ function imprimirBilheteResultado(idx) {
   t += centrar('MONTE DE OURO', W) + '\n';
   t += ' \n';
   t += colunas('Data:', data, W) + '\n';
-  t += 'Extracao: ' + extr + (hora ? ' ' + hora + ' HS' : '') + '\n';
+  t += 'Extracao:\n';
+  t += quebrarTextoTermico(extr, W) + '\n';
+  if (hora) t += colunas('Horario:', hora + ' HS', W) + '\n';
   t += ' \n';
 
   // resultado pode ser multi-linha (formato: "01  4946  12 - ELEFANTE\n...")
@@ -3480,12 +3524,17 @@ function imprimirBilheteResultado(idx) {
   t += centrar('Impresso: ' + agora, W) + '\n';
   t += '\n';
 
+  if (!window.NativePrinter) {
+    mostrarSimulacaoResultado(t);
+    return;
+  }
+
   try {
     var raw = window.NativePrinter.printText(t);
     var r   = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    if (!r || !r.ok) alert('Falha ao imprimir. Verifique a impressora.');
+    if (!r || !r.ok) mostrarSimulacaoResultado(t);
   } catch(e) {
-    try { window.NativePrinter.printScreen(); } catch(e2) {}
+    mostrarSimulacaoResultado(t);
   }
 }
 
