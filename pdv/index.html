@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.11 · TESTE</div>
+    <div class="login-version">versão 7.12 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.11 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.12 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1437,6 +1437,19 @@ function auditNumero(valor) {
   return n.toFixed(2).replace('.', ',');
 }
 
+function auditMoedaTabela(valor) {
+  return Number(valor || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function auditColuna(valor, largura) {
+  var texto = String(valor == null ? '' : valor);
+  while (texto.length < largura) texto += ' ';
+  return texto;
+}
+
 function montarBilheteSangriaAuditoria() {
   if (!_audit160 || !_audit160.cases || !_audit160.cases.length) return '';
   var W = 32;
@@ -1450,22 +1463,25 @@ function montarBilheteSangriaAuditoria() {
   texto += 'Extracao:\n' + quebrarTextoTermico(_audit160.draw.title, W) + '\n';
   texto += 'Casos: 160 (40 x MM/MD/DM/DD)\n';
   texto += SEP + '\n';
-  texto += 'E=ENT P=POS A=API C=COT\n';
-  texto += 'R=PREM ST=STATUS\n';
-  texto += SEP + '\n';
-  _audit160.cases.forEach(function(caso) {
-    var modalidade = String(caso.bet_type || '').replace(/_/g, '-');
-    if (modalidade.length > 21) modalidade = modalidade.substring(0, 21);
-    var saida = Number(caso.expected_total || 0);
-    var premio = saida * Number(caso.quotation || 0);
-    texto += String(caso.index).padStart(3, '0') + ' ' + modalidade + ' ' + caso.mode + '\n';
-    texto += 'E' + auditNumero(caso.base_value) +
-      ' P' + auditNumero(saida) +
-      ' A' + auditNumero(saida) + '\n';
-    texto += 'C' + auditNumero(caso.quotation) +
-      ' R' + auditNumero(premio) +
-      ' ST:' + (enviado ? 'ENV' : 'PREV') + '\n';
-  });
+  for (var inicio = 0; inicio < _audit160.cases.length; inicio += 4) {
+    var grupo = _audit160.cases.slice(inicio, inicio + 4);
+    var primeiro = grupo[0];
+    texto += primeiro.modality_label + '\n';
+    texto += String(primeiro.numbers || '').replace(/,/g, ' ') + '\n';
+    texto += 'ENT |CT|POS   |API   |COT      |PREM     |ST\n';
+    grupo.forEach(function(caso) {
+      var saida = Number(caso.expected_total || 0);
+      var premio = saida * Number(caso.quotation || 0);
+      texto += auditColuna(auditMoedaTabela(caso.base_value), 4) + '|' +
+        auditColuna(caso.mode, 2) + '|' +
+        auditColuna(auditMoedaTabela(saida), 6) + '|' +
+        auditColuna(auditMoedaTabela(saida), 6) + '|' +
+        auditColuna(auditMoedaTabela(caso.quotation), 9) + '|' +
+        auditColuna(auditMoedaTabela(premio), 9) + '|' +
+        'OK\n';
+    });
+    texto += '\n';
+  }
   texto += SEP + '\n';
   texto += colunas('Total API:', 'R$ ' + auditNumero(enviado ? _audit160.total_amount : _audit160.cases.reduce(function(s, c) {
     return s + Number(c.expected_total || 0);
@@ -1478,7 +1494,7 @@ function montarBilheteSangriaAuditoria() {
 function simularSangriaAuditoria() {
   var texto = montarBilheteSangriaAuditoria();
   if (!texto) { alert('Prepare os 160 casos antes de simular.'); return; }
-  mostrarSimulacaoResultado(texto);
+  mostrarSimulacaoResultado(texto, true);
 }
 
 function imprimirSangriaAuditoria() {
@@ -1488,15 +1504,15 @@ function imprimirSangriaAuditoria() {
     return;
   }
   if (!window.NativePrinter) {
-    mostrarSimulacaoResultado(texto);
+    mostrarSimulacaoResultado(texto, true);
     return;
   }
   try {
     var raw = window.NativePrinter.printText(texto);
     var resposta = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    if (!resposta || !resposta.ok) mostrarSimulacaoResultado(texto);
+    if (!resposta || !resposta.ok) mostrarSimulacaoResultado(texto, true);
   } catch(e) {
-    mostrarSimulacaoResultado(texto);
+    mostrarSimulacaoResultado(texto, true);
   }
 }
 
@@ -3530,7 +3546,7 @@ function _imprimirTelaGenerica(hideIds, getTextFn) {
 }
 
 // ── Bilhete individual de resultado ──────────────────────────────────────────
-function mostrarSimulacaoResultado(texto) {
+function mostrarSimulacaoResultado(texto, compacto) {
   var anterior = document.getElementById('simulacao-resultado');
   if (anterior) anterior.remove();
 
@@ -3544,7 +3560,7 @@ function mostrarSimulacaoResultado(texto) {
   titulo.style.cssText = 'font-weight:800;text-align:center;color:#333;font-size:15px;padding:4px 0 10px';
   var papel = document.createElement('pre');
   papel.textContent = texto;
-  papel.style.cssText = 'box-sizing:border-box;width:100%;margin:0;background:#fff;color:#111;padding:13px 10px 22px;font:700 13px/1.32 monospace;white-space:pre;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.18)';
+  papel.style.cssText = 'box-sizing:border-box;width:100%;margin:0;background:#fff;color:#111;padding:13px 10px 22px;font:700 ' + (compacto ? '8px/1.3' : '13px/1.32') + ' monospace;white-space:pre;overflow:hidden;box-shadow:0 2px 7px rgba(0,0,0,.18)';
   var aviso = document.createElement('div');
   aviso.textContent = 'Prévia na largura da impressora térmica';
   aviso.style.cssText = 'font-size:11px;color:#666;text-align:center;padding:9px 0 7px';
