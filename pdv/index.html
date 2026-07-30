@@ -574,7 +574,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.10 · TESTE</div>
+    <div class="login-version">versão 7.11 · TESTE</div>
   </div>
 </div>
 
@@ -602,7 +602,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.10 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.11 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -621,7 +621,9 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <div id="audit-status" style="white-space:pre-wrap;font-family:monospace;background:#ECEFF1;border-radius:8px;padding:12px;margin-top:12px;min-height:150px;font-size:12px;line-height:1.45">Aguardando preparação.</div>
     <button id="audit-prepare" onclick="prepararSangriaAuditoria()" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:8px;background:#1565C0;color:white;font-size:16px;font-weight:700">PREPARAR 160 CASOS</button>
+    <button id="audit-preview" onclick="simularSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:14px;border:0;border-radius:8px;background:#6A1B9A;color:white;font-size:15px;font-weight:700;opacity:.45">SIMULAR BILHETE DA SANGRIA</button>
     <button id="audit-send" onclick="enviarSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:16px;border:0;border-radius:8px;background:#B71C1C;color:white;font-size:16px;font-weight:700;opacity:.45">ENVIAR BILHETE DE AUDITORIA</button>
+    <button id="audit-print" onclick="imprimirSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:14px;border:0;border-radius:8px;background:#2E7D32;color:white;font-size:15px;font-weight:700;opacity:.45">IMPRIMIR SANGRIA NO POS</button>
   </div>
 </div>
 
@@ -1197,9 +1199,15 @@ function abrirSangriaAuditoria() {
   _audit160 = null;
   var status = document.getElementById('audit-status');
   var send = document.getElementById('audit-send');
+  var preview = document.getElementById('audit-preview');
+  var print = document.getElementById('audit-print');
   status.textContent = 'Aguardando preparação.\n\nRequer sorteio PENDING com título iniciado por AUDITORIA POS 160.';
   send.disabled = true;
   send.style.opacity = '.45';
+  preview.disabled = true;
+  preview.style.opacity = '.45';
+  print.disabled = true;
+  print.style.opacity = '.45';
   go('s-audit');
 }
 
@@ -1278,6 +1286,7 @@ function prepararSangriaAuditoria() {
   var status = document.getElementById('audit-status');
   var prepare = document.getElementById('audit-prepare');
   var send = document.getElementById('audit-send');
+  var preview = document.getElementById('audit-preview');
   prepare.disabled = true;
   status.textContent = 'Consultando sorteio e modalidades no host...';
   Promise.all([apiPublic('/draws'), apiPublic('/modality-settings')]).then(function(all) {
@@ -1364,6 +1373,8 @@ function prepararSangriaAuditoria() {
       'Toque ENVIAR somente para executar a sangria.';
     send.disabled = false;
     send.style.opacity = '1';
+    preview.disabled = false;
+    preview.style.opacity = '1';
   }).catch(function(error) {
     _audit160 = null;
     status.textContent = 'BLOQUEADO\n' + error.message;
@@ -1408,13 +1419,85 @@ function enviarSangriaAuditoria() {
       '\nSUCESSO\nBilhete: ' + _audit160.ticket_id +
       '\nCasos: 160\nRegistros enviados: ' + _audit160.bets.length +
       '\nTotal API: R$ ' + _audit160.total_amount.toFixed(2);
+    var print = document.getElementById('audit-print');
+    print.disabled = false;
+    print.style.opacity = '1';
     refreshMe();
+    setTimeout(imprimirSangriaAuditoria, 250);
   }).catch(function(error) {
     status.textContent += '\nFALHA\n' + error.message +
       '\nNÃO REENVIAR sem conferir o banco.';
     send.disabled = false;
     send.style.opacity = '1';
   });
+}
+
+function auditNumero(valor) {
+  var n = Number(valor || 0);
+  return n.toFixed(2).replace('.', ',');
+}
+
+function montarBilheteSangriaAuditoria() {
+  if (!_audit160 || !_audit160.cases || !_audit160.cases.length) return '';
+  var W = 32;
+  var SEP = '================================';
+  var enviado = !!_audit160.ticket_id;
+  var texto = '\n' + centrar('MONTE DE OURO', W) + '\n';
+  texto += centrar('SANGRIA DE AUDITORIA', W) + '\n';
+  texto += SEP + '\n';
+  texto += 'Audit: ' + _audit160.audit_id + '\n';
+  if (enviado) texto += 'Bilhete: ' + _audit160.ticket_id + '\n';
+  texto += 'Extracao:\n' + quebrarTextoTermico(_audit160.draw.title, W) + '\n';
+  texto += 'Casos: 160 (40 x MM/MD/DM/DD)\n';
+  texto += SEP + '\n';
+  texto += 'E=ENT P=POS A=API C=COT\n';
+  texto += 'R=PREM ST=STATUS\n';
+  texto += SEP + '\n';
+  _audit160.cases.forEach(function(caso) {
+    var modalidade = String(caso.bet_type || '').replace(/_/g, '-');
+    if (modalidade.length > 21) modalidade = modalidade.substring(0, 21);
+    var saida = Number(caso.expected_total || 0);
+    var premio = saida * Number(caso.quotation || 0);
+    texto += String(caso.index).padStart(3, '0') + ' ' + modalidade + ' ' + caso.mode + '\n';
+    texto += 'E' + auditNumero(caso.base_value) +
+      ' P' + auditNumero(saida) +
+      ' A' + auditNumero(saida) + '\n';
+    texto += 'C' + auditNumero(caso.quotation) +
+      ' R' + auditNumero(premio) +
+      ' ST:' + (enviado ? 'ENV' : 'PREV') + '\n';
+  });
+  texto += SEP + '\n';
+  texto += colunas('Total API:', 'R$ ' + auditNumero(enviado ? _audit160.total_amount : _audit160.cases.reduce(function(s, c) {
+    return s + Number(c.expected_total || 0);
+  }, 0)), W) + '\n';
+  texto += centrar(enviado ? 'SANGRIA ENVIADA AO HOST' : 'SIMULACAO - NAO ENVIADA', W) + '\n';
+  texto += '\n\n';
+  return texto;
+}
+
+function simularSangriaAuditoria() {
+  var texto = montarBilheteSangriaAuditoria();
+  if (!texto) { alert('Prepare os 160 casos antes de simular.'); return; }
+  mostrarSimulacaoResultado(texto);
+}
+
+function imprimirSangriaAuditoria() {
+  var texto = montarBilheteSangriaAuditoria();
+  if (!texto || !_audit160.ticket_id) {
+    alert('Envie a sangria ao host antes de imprimir.');
+    return;
+  }
+  if (!window.NativePrinter) {
+    mostrarSimulacaoResultado(texto);
+    return;
+  }
+  try {
+    var raw = window.NativePrinter.printText(texto);
+    var resposta = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    if (!resposta || !resposta.ok) mostrarSimulacaoResultado(texto);
+  } catch(e) {
+    mostrarSimulacaoResultado(texto);
+  }
 }
 
 // ─── Sorteios ────────────────────────────────────────────────────────────────
