@@ -1038,6 +1038,7 @@ function loadDraws() {
   el.innerHTML = '<div class="msg-load">Carregando sorteios...</div>';
   apiPublic('/draws').then(function(data) {
     var lista   = toArray(data);
+    var agora   = new Date();
     // Supabase: status=open; compatível com status=pending também
     var abertos = lista.filter(function(d) { return d.status === 'open' || d.status === 'pending'; });
     el.innerHTML = '';
@@ -1048,6 +1049,14 @@ function loadDraws() {
       return;
     }
     abertos.forEach(function(draw) {
+      // ── Trava de horário ──────────────────────────────────────────────────
+      var fechado   = false;
+      var msRestante = null;
+      if (draw.fecha_as) {
+        var fechaTs = new Date(draw.fecha_as);
+        msRestante  = fechaTs - agora;
+        fechado     = msRestante <= 0;
+      }
       // Normaliza título: usa extração + hora, ou title, ou gera da data
       var extNome = (draw.extracoes && draw.extracoes.name) || null;
       var horaStr = draw.hora ? draw.hora.slice(0,5) : (draw.draw_time ? draw.draw_time.substring(11,16) : '');
@@ -1056,13 +1065,29 @@ function loadDraws() {
         draw.title = (extNome || 'Sorteio') + ' ' + parts[2] + '/' + parts[1] + '/' + parts[0];
       }
       var displayTitle = extNome || draw.title || 'Sorteio';
+
+      // Badge de status de horário
+      var badgeHtml = '';
+      if (fechado) {
+        badgeHtml = '<span style="background:#e53935;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">FECHADO</span>';
+      } else if (msRestante !== null && msRestante < 10 * 60 * 1000) {
+        var minRest = Math.ceil(msRestante / 60000);
+        badgeHtml = '<span style="background:#FF8F00;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;vertical-align:middle;">fecha em ' + minRest + 'min</span>';
+      }
+
       var btn  = document.createElement('button');
-      btn.className = 'btn-ext';
-      btn.innerHTML = '<span>' + displayTitle + '</span><span style="font-size:14px;opacity:.85">' + horaStr + '</span>';
-      btn.onclick = function() {
-        st.draw = draw; st.grupos = []; st.nums = ''; st.val = ''; st.entrada = null;
-        loadMods(); go('s-tipo');
-      };
+      btn.className = 'btn-ext' + (fechado ? ' btn-ext-fechado' : '');
+      btn.style.opacity = fechado ? '0.55' : '';
+      btn.innerHTML = '<span>' + displayTitle + badgeHtml + '</span><span style="font-size:14px;opacity:.85">' + horaStr + '</span>';
+      if (fechado) {
+        btn.disabled = true;
+        btn.title = 'Apostas encerradas para este sorteio';
+      } else {
+        btn.onclick = function() {
+          st.draw = draw; st.grupos = []; st.nums = ''; st.val = ''; st.entrada = null;
+          loadMods(); go('s-tipo');
+        };
+      }
       el.appendChild(btn);
     });
   }).catch(function(e) {
@@ -1138,7 +1163,11 @@ function loadMods() {
 function factorFromBetType(bt) {
   if (!bt) return 1;
   var b = bt.toUpperCase().replace(/-/g,'_');
-  // Milhar e Centena cobre 2 posições (milhar + centena) → F=2
+  // Combinada e invertida → fator calculado dinamicamente em calcFatorInvertida
+  if (b.indexOf('COMBINAD') >= 0 || b.indexOf('INVERTID') >= 0) return 1;
+  // Passe → apenas cotação maior, sem divisão extra
+  if (b.indexOf('PASSE') >= 0) return 1;
+  // Milhar e Centena cobre 2 posições → F=2
   if (b.indexOf('MILHAR') >= 0 && b.indexOf('CENTENA') >= 0) return 2;
   // Cercado cobre 3 posições → F=3
   if (b.indexOf('CERCADO') >= 0) return 3;
@@ -1464,7 +1493,7 @@ function calcPermutacoes(numStr) {
 function calcFatorInvertida(entrada, mod, baseF) {
   if (!mod) return baseF;
   var bt  = (mod.bet_type || mod.codigo || '').toLowerCase();
-  var isInv = bt.indexOf('invertid') >= 0;
+  var isInv = bt.indexOf('invertid') >= 0 || bt.indexOf('combinad') >= 0;
   if (!isInv) return baseF;
   var nums = entrada ? entrada.split(',') : [];
   if (nums.length === 0) return baseF;
@@ -1912,6 +1941,16 @@ function cancelar() {
 function finBilhete() {
   if (!st.apostas.length) return;
   if (st._enviando) return; // guard: evita duplo-envio por clique duplo
+
+  // ── Trava de horário: verifica se algum sorteio já fechou ─────────────────
+  var _agora = new Date();
+  var _fechados = st.apostas.filter(function(a) {
+    return a.draw && a.draw.fecha_as && new Date(a.draw.fecha_as) <= _agora;
+  });
+  if (_fechados.length > 0) {
+    alert('⏰ Apostas encerradas!\n\nO horário de fechamento do sorteio já passou.\nNenhuma aposta foi enviada.');
+    return;
+  }
 
   // Validação prévia de saldo
   var custoRealTotal = totalCustoReal(st.apostas);
