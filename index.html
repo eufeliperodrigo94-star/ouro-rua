@@ -2611,18 +2611,7 @@ function salvarResultadoEstruturado() {
     loadResLog();
   }).catch(function(e){ msg.style.color='#e53935'; msg.textContent='Erro: '+e.message; });
 }
-  var nums = [];
-  for (var i = 1; i <= 10; i++) {
-    var v = document.getElementById('rn-'+i).value.replace(/\D/g,'').padStart(4,'0');
-    nums.push(v);
-  }
-  var resultStr = nums.join('\n');
-  var msg = document.getElementById('res-msg');
-  msg.style.color = '#888'; msg.textContent = 'Salvando...';
-  api('POST','/api/draws/'+sid+'/result/',{result:resultStr}).then(function(){
-    msg.style.color = '#2E7D32'; msg.textContent = '✓ Resultado salvo com sucesso!';
-  }).catch(function(e){ msg.style.color='#e53935'; msg.textContent='✗ '+e.message; });
-}
+
 
 /* ==============================================================
    p-mapa — MAPA DE APOSTAS
