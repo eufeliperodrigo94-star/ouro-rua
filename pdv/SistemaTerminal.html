@@ -567,14 +567,14 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     <input id="inp-phone" class="login-inp" type="tel" value="11999990002" placeholder="Ex: 83999990001" inputmode="tel" autocomplete="off">
     <div class="login-label">Senha</div>
     <div class="login-pass-wrap">
-      <input id="inp-pass" class="login-inp" type="password" value="adm123456" placeholder="••••••••" autocomplete="off">
+      <input id="inp-pass" class="login-inp" type="password" value="" placeholder="••••••••" autocomplete="off">
       <button id="btn-pass-toggle" class="login-pass-toggle" type="button" onclick="toggleLoginPassword()" aria-label="Mostrar senha" title="Mostrar senha">
         <svg id="ico-pass-eye" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
       </button>
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.4 · TESTE</div>
+    <div class="login-version">versão 7.5 · TESTE</div>
   </div>
 </div>
 
@@ -601,7 +601,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.4 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.5 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1078,7 +1078,7 @@ function apiPublic(path) {
 // ─── Estado ───────────────────────────────────────────────────────────────────
 var st = {
   user: null, draw: null, mod: null,
-  grupos: [], nums: '', nList: [], val: '', modoPalpite: 'd', modoRegra: 'd', entrada: null,
+  grupos: [], nums: '', nList: [], val: '', modoPalpite: 'm', modoRegra: 'm', entrada: null,
   apostas: []
 };
 
@@ -1896,7 +1896,7 @@ function nOk() {
 
 // ─── Teclado Valor ───────────────────────────────────────────────────────────
 function setupVal() {
-  st.val = ''; st.modoPalpite = 'd'; st.modoRegra = 'd';
+  st.val = ''; st.modoPalpite = 'm'; st.modoRegra = 'm';
   document.getElementById('v-title').textContent = modLabel(st.mod || 'Valor');
   var mx = (st.draw && st.draw.max_value_per_number) || 500;
   document.getElementById('v-mm').textContent = 'Máx/nº: R$ ' + Number(mx).toFixed(2);
