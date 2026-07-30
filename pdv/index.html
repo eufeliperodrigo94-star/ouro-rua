@@ -19,13 +19,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 /* ══════════ HEADERS ══════════ */
 .hdr-blue {
   background: #1B4332; color: #FFF;
-  padding: 10px 12px;
+  padding: 12px 14px;
   display: -webkit-flex; display: flex;
   -webkit-align-items: center; align-items: center;
-  min-height: 72px; -webkit-flex-shrink: 0; flex-shrink: 0;
+  min-height: 92px; -webkit-flex-shrink: 0; flex-shrink: 0;
 }
 .hdr-blue .logo {
-  width: 64px; height: 50px; background: #D4A017; border-radius: 4px;
+  width: 64px; height: 64px; background: #D4A017; border-radius: 50%;
   display: -webkit-flex; display: flex;
   -webkit-align-items: center; align-items: center;
   -webkit-justify-content: center; justify-content: center;
@@ -33,9 +33,13 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   text-align: center; line-height: 1.3; padding: 4px;
   -webkit-flex-shrink: 0; flex-shrink: 0; margin-right: 12px;
 }
-.hdr-blue .info { display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column; }
-.hdr-blue .info .name { font-size: 14px; font-weight: 700; }
-.hdr-blue .info span  { font-size: 12px; color: #A5D6A7; margin-top: 2px; }
+.hdr-blue .info {
+  min-width: 0; -webkit-flex: 1; flex: 1;
+  display: -webkit-flex; display: flex; -webkit-flex-direction: column; flex-direction: column;
+  -webkit-justify-content: center; justify-content: center; line-height: 1.25;
+}
+.hdr-blue .info .name { font-size: 16px; font-weight: 700; color: #FFF; white-space: normal; overflow-wrap: anywhere; }
+.hdr-blue .info span  { font-size: 13px; color: #C8E6C9; margin-top: 3px; white-space: nowrap; }
 
 .hdr-green {
   background: #1B4332; color: #FFF;
@@ -161,7 +165,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   padding: 8px 4px 4px; letter-spacing: .5px; text-transform: uppercase;
   border-bottom: 2px solid #C8E6C9; margin-bottom: 6px;
 }
-.msg-load { text-align: center; color: #888; padding: 24px; font-size: 14px; }
+.msg-load { text-align: center; color: #607D8B; padding: 28px 18px; font-size: 13px; }
+.brand-loading { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:130px;color:#607D8B;font-size:13px; }
+.brand-loading img { width:58px;height:58px;border-radius:50%;object-fit:cover;box-shadow:0 2px 8px rgba(0,0,0,.18);animation:logo-pulse 1.15s ease-in-out infinite; }
+.brand-loading .load-ring { width:26px;height:26px;border:3px solid #C8E6C9;border-top-color:#D4A017;border-radius:50%;animation:load-spin .8s linear infinite; }
+@keyframes load-spin { to { transform:rotate(360deg); } }
+@keyframes logo-pulse { 0%,100% { transform:scale(.94);opacity:.75 } 50% { transform:scale(1);opacity:1 } }
 .msg-err  { text-align: center; color: #C62828; padding: 20px; font-size: 14px; line-height: 1.6; }
 .tipo-search-wrap {
   padding: 10px 10px 2px; background: #F4F7F4;
@@ -574,7 +583,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
     </div>
     <button class="btn-login" id="btn-login" onclick="doLogin()">ENTRAR</button>
     <div class="login-err" id="login-err"></div>
-    <div class="login-version">versão 7.16 · TESTE</div>
+    <div class="login-version">versão 7.17 · TESTE</div>
   </div>
 </div>
 
@@ -603,7 +612,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#3949AB" onclick="abrirExtracoes()"><span class="mn-ico">🗓️</span>Extrações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.16 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.17 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
@@ -1104,6 +1113,13 @@ var st = {
   grupos: [], nums: '', nList: [], val: '', modoPalpite: 'm', modoRegra: 'm', entrada: null,
   apostas: []
 };
+var _consultaAutomaticaTimer = setInterval(function() {
+  var ativa = document.querySelector('.sc.on');
+  if (!ativa) return;
+  if (ativa.id === 's-resultados') carregarResultados(true);
+  else if (ativa.id === 's-caixa') carregarCaixa(true);
+  else if (ativa.id === 's-cotacoes') carregarCotacoes(true);
+}, 30000);
 
 // ─── Navegação ────────────────────────────────────────────────────────────────
 function go(id) {
@@ -1531,7 +1547,7 @@ function imprimirSangriaAuditoria() {
 // ─── Sorteios ────────────────────────────────────────────────────────────────
 function loadDraws() {
   var el = document.getElementById('list-ext');
-  el.innerHTML = '<div class="msg-load">Carregando sorteios...</div>';
+  el.innerHTML = loadingMonteDeOuro('Consultando sorteios...');
   apiPublic('/draws').then(function(data) {
     var lista   = toArray(data);
     // Supabase: status=open; compatível com status=pending também
@@ -1578,7 +1594,7 @@ function loadMods() {
   if (search) search.value = '';
   var empty = document.getElementById('tipo-empty');
   if (empty) empty.style.display = 'none';
-  el.innerHTML = '<div class="msg-load">Carregando modalidades...</div>';
+  el.innerHTML = loadingMonteDeOuro('Consultando modalidades...');
   document.getElementById('tipo-hdr').textContent = (st.draw && st.draw.title) || 'Tipo de Jogo';
 
   // Rota pública — chamada sem token para evitar rejeição por token inválido
@@ -3242,9 +3258,16 @@ function escaparHtml(valor) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 }
+function loadingMonteDeOuro(texto) {
+  var logo = document.querySelector('#s-main .hdr-blue img');
+  var src = logo ? logo.src : '';
+  return '<div class="brand-loading">' +
+    (src ? '<img src="' + src + '" alt="Monte de Ouro">' : '') +
+    '<div class="load-ring"></div><span>' + escaparHtml(texto || 'Atualizando...') + '</span></div>';
+}
 function carregarExtracoes(silencioso) {
   var el = document.getElementById('list-extracoes');
-  if (!silencioso) el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Consultando o servidor Monte de Ouro...</div>';
+  if (!silencioso) el.innerHTML = loadingMonteDeOuro('Consultando extrações...');
   apiPublic('/draws').then(function(data) {
     var lista = toArray(data).filter(function(draw) {
       return String(draw.title || '').toUpperCase().indexOf('AUDITORIA') !== 0;
@@ -3325,9 +3348,9 @@ function normalizarResultadoSorteio(s) {
   }
   return s;
 }
-function carregarResultados() {
+function carregarResultados(silencioso) {
   var el = document.getElementById('list-resultados');
-  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
+  if (!silencioso) el.innerHTML = loadingMonteDeOuro('Consultando resultados...');
   api('/draws/results').then(function(lista) {
     lista = toArray(lista).map(normalizarResultadoSorteio);
     _resultadosCache = lista;
@@ -3486,9 +3509,9 @@ function setCaixaTab(tab) {
   tResumo.style.borderBottomColor = tab === 'resumo' ? '#2E7D32' : 'transparent';
   carregarCaixa();
 }
-function carregarCaixa() {
+function carregarCaixa(silencioso) {
   var el = document.getElementById('caixa-content');
-  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
+  if (!silencioso) el.innerHTML = loadingMonteDeOuro('Atualizando caixa...');
   var rota = _caixaTab === 'hoje' ? '/caixa/hoje' : '/caixa/geral';
   api(rota).then(function(lista) {
     _caixaCache = toArray(lista);
@@ -3573,9 +3596,9 @@ function abrirCotacoes() {
   go('s-cotacoes');
   carregarCotacoes();
 }
-function carregarCotacoes() {
+function carregarCotacoes(silencioso) {
   var el = document.getElementById('list-cotacoes');
-  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
+  if (!silencioso) el.innerHTML = loadingMonteDeOuro('Consultando cotações...');
   var regionId = st.user && st.user.region_id;
   var regionalPromise = regionId ? apiPublic('/regions/quotations/' + regionId) : Promise.resolve([]);
   Promise.all([apiPublic('/modality-settings'), regionalPromise]).then(function(all) {
@@ -3955,7 +3978,6 @@ function imprimirCotacoes() {
     <span>Resultados</span>
     <div style="display:flex;gap:4px">
       <button id="res-btn-print" onclick="imprimirResultados()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">🖨</button>
-      <button id="res-btn-ref" onclick="carregarResultados()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
     </div>
   </div>
   <div class="scroll-y lst-pad" id="list-resultados">
@@ -4000,7 +4022,6 @@ function imprimirCotacoes() {
     <span>Caixa</span>
     <div style="display:flex;gap:4px">
       <button id="cx-btn-print" onclick="imprimirCaixa()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">🖨</button>
-      <button id="cx-btn-ref" onclick="carregarCaixa()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
     </div>
   </div>
   <div style="display:flex;border-bottom:1px solid #e0e0e0">
@@ -4050,7 +4071,6 @@ function imprimirCotacoes() {
     <span>Cotações</span>
     <div style="display:flex;gap:4px">
       <button id="cot-btn-print" onclick="imprimirCotacoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">🖨</button>
-      <button id="cot-btn-ref" onclick="carregarCotacoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
     </div>
   </div>
   <div class="scroll-y lst-pad" id="list-cotacoes">
