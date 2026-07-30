@@ -3056,6 +3056,8 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
   // Código do bilhete para leitura / QR
   if (ticketCode) {
     t += SEP + '\n';
+    // O bridge Xcheng identifica "NSU:" e imprime um CODE128 nativo.
+    t += 'NSU: ' + String(ticketCode) + '\n';
     t += centrar('COD. BILHETE', W) + '\n';
     t += centrar(String(ticketCode), W) + '\n';
     t += SEP + '\n';
