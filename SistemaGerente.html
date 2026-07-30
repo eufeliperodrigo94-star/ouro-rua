@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Painel do Gerente — Monte de Ouro</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f4f6f8;color:#333;}
+/* LOGIN */
+#s-login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(135deg,#1a1a2e,#16213e);}
+.login-box{background:#fff;border-radius:16px;padding:40px 36px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.login-logo{text-align:center;margin-bottom:24px;}
+.login-logo img{width:70px;height:70px;border-radius:50%;}
+.login-logo h2{color:#1a1a2e;font-size:18px;margin-top:8px;}
+.login-logo p{color:#888;font-size:12px;margin-top:2px;}
+.login-box input{width:100%;border:1px solid #ddd;border-radius:8px;padding:11px 14px;font-size:14px;margin-bottom:12px;outline:none;transition:border .2s;}
+.login-box input:focus{border-color:#2196F3;}
+.btn-login{width:100%;background:#2196F3;color:#fff;border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:600;cursor:pointer;}
+.btn-login:hover{background:#1976D2;}
+#lg-err{color:#e53935;font-size:13px;margin-top:8px;text-align:center;min-height:18px;}
+/* APP */
+#app{display:none;}
+#app.on{display:flex;min-height:100vh;}
+.sidebar{width:180px;background:#1a1a2e;display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;overflow-y:auto;}
+.sidebar-logo{padding:16px 10px;text-align:center;border-bottom:1px solid #2a2a4e;}
+.sidebar-logo img{width:50px;height:50px;border-radius:50%;display:block;margin:0 auto 6px;}
+.sidebar-logo div{color:#2196F3;font-size:10px;font-weight:700;letter-spacing:.5px;}
+.sidebar-badge{background:#2196F3;color:#fff;font-size:9px;padding:2px 6px;border-radius:10px;margin-top:4px;display:inline-block;}
+nav{flex:1;padding:8px 0;}
+.nav-item{padding:11px 16px;color:#aaa;cursor:pointer;font-size:13px;transition:all .15s;border-left:3px solid transparent;}
+.nav-item:hover{color:#fff;background:#2a2a4e;}
+.nav-item.active{color:#fff;background:#2a2a4e;border-left-color:#2196F3;}
+.content-wrap{margin-left:180px;flex:1;display:flex;flex-direction:column;}
+.top-bar{background:#fff;padding:10px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e0e0e0;font-size:13px;color:#555;}
+.top-bar strong{color:#2196F3;}
+/* PAGES */
+.page{display:none;padding:24px;max-width:1100px;}
+.page.on{display:block;}
+.page-header{font-size:20px;font-weight:700;color:#1a1a2e;margin-bottom:20px;padding-bottom:12px;border-bottom:2px solid #e0e0e0;}
+/* COMPONENTS */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
+.card{background:#fff;border-radius:10px;padding:16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.06);border:1px solid #e8e8e8;}
+.card-label{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;}
+.card-val{font-size:22px;font-weight:700;color:#333;}
+.tbl-wrap{background:#fff;border-radius:10px;border:1px solid #e0e0e0;overflow:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th{background:#f8f9fa;padding:10px 12px;text-align:left;font-weight:600;color:#555;border-bottom:2px solid #e0e0e0;white-space:nowrap;}
+td{padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:#fafafa;}
+.filter-bar{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;}
+.filter-bar input,.filter-bar select{border:1px solid #ddd;border-radius:6px;padding:7px 10px;font-size:13px;background:#fff;}
+.form-wrap{background:#fff;border-radius:10px;border:1px solid #e0e0e0;padding:20px;max-width:480px;}
+.form-row{margin-bottom:14px;}
+.form-row label{display:block;font-size:12px;color:#666;margin-bottom:4px;font-weight:600;}
+.form-row input,.form-row select,.form-row textarea{width:100%;border:1px solid #ddd;border-radius:6px;padding:8px 10px;font-size:13px;}
+.form-actions{display:flex;gap:8px;margin-top:16px;}
+.btn-blue{background:#2196F3;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-blue:hover{background:#1976D2;}
+.btn-green{background:#388E3C;color:#fff;border:none;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;font-weight:600;}
+.btn-green:hover{background:#2E7D32;}
+.btn-outline{background:#fff;color:#555;border:1px solid #ddd;border-radius:6px;padding:8px 16px;cursor:pointer;font-size:13px;}
+.btn-sm{background:#2196F3;color:#fff;border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:600;}
+.badge-ativo{background:#e8f5e9;color:#2E7D32;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;}
+.badge-inativo{background:#fce4ec;color:#c62828;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600;}
+.loading{color:#aaa;font-style:italic;padding:20px;text-align:center;}
+.text-green{color:#2E7D32;font-weight:700;}
+.text-red{color:#e53935;}
+.text-blue{color:#1565C0;}
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.modal-overlay.on{display:flex;}
+.modal{background:#fff;border-radius:12px;padding:24px;width:90%;max-width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2);}
+.modal h3{margin-bottom:16px;font-size:17px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+/* BARS */
+.dash-bar-wrap{display:flex;align-items:flex-end;gap:6px;height:110px;padding:0 8px;}
+.dash-bar{display:flex;flex-direction:column;align-items:center;flex:1;}
+.dash-bar-fill{width:100%;border-radius:3px 3px 0 0;min-height:2px;}
+.dash-bar-lbl{font-size:9px;color:#888;margin-top:3px;white-space:nowrap;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="s-login">
+  <div class="login-box">
+    <div class="login-logo">
+      <img src="data:image/png;base64,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"
+           alt="logo" style="width:60px;height:60px;border-radius:50%;display:block;margin:0 auto 6px;background:#1a1a2e;">
+      <h2>Monte de Ouro</h2>
+      <p>Painel do Gerente</p>
+    </div>
+    <input type="tel" id="lg-phone" placeholder="Telefone" autocomplete="off">
+    <input type="password" id="lg-pass" placeholder="Senha">
+    <button class="btn-login" onclick="doLogin()">Entrar</button>
+    <div id="lg-err"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <img src="data:image/png;base64,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"
+           alt="" style="width:44px;height:44px;border-radius:50%;display:block;margin:0 auto 4px;background:#2a2a4e;">
+      <div>GERENTE</div>
+      <div class="sidebar-badge" id="ger-nome-badge">—</div>
+    </div>
+    <nav id="nav"></nav>
+  </div>
+  <div class="content-wrap">
+    <div class="top-bar">
+      <span>Bem-vindo, <strong id="ger-nome-top">—</strong></span>
+      <span style="cursor:pointer;color:#e53935;font-weight:600;" onclick="doLogout()">Sair</span>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="p-dashboard">
+      <div class="page-header">Dashboard
+        <button class="btn-blue" onclick="loadDashboard()" style="float:right;font-size:12px;padding:4px 10px;margin-top:-2px;">⟳ Atualizar</button>
+      </div>
+      <div class="card-grid">
+        <div class="card"><div class="card-label">Vendas hoje</div><div class="card-val" id="dc-vendas">—</div></div>
+        <div class="card"><div class="card-label">Prêmios pagos</div><div class="card-val text-red" id="dc-premios">—</div></div>
+        <div class="card"><div class="card-label">Lucro</div><div class="card-val" id="dc-lucro">—</div></div>
+        <div class="card"><div class="card-label">Bilhetes</div><div class="card-val" id="dc-bilhetes">—</div></div>
+        <div class="card"><div class="card-label">Cambistas ativos</div><div class="card-val" id="dc-cambistas-ativos">—</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;color:#555;font-size:13px;">👤 Por Cambista — hoje</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>Cambista</th><th>Vendas</th><th>Prêmios</th><th>Líquido</th></tr></thead>
+            <tbody id="dash-por-cambista"><tr><td colspan="4" class="loading">carregando...</td></tr></tbody>
+          </table></div>
+        </div>
+        <div>
+          <div style="font-weight:600;margin-bottom:8px;color:#555;font-size:13px;">🔢 Top 10 números hoje</div>
+          <div class="tbl-wrap"><table>
+            <thead><tr><th>#</th><th>Número</th><th>Apostado</th></tr></thead>
+            <tbody id="dash-top-nums"><tr><td colspan="3" class="loading">carregando...</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:600;margin-bottom:8px;color:#555;font-size:13px;">📈 Últimos 7 dias</div>
+        <div id="dash-chart" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;min-height:130px;"></div>
+      </div>
+    </div>
+
+    <!-- CAMBISTAS -->
+    <div class="page" id="p-cambistas">
+      <div class="page-header">Meus Cambistas</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Nome</th><th>Telefone</th><th>Saldo</th><th>Status</th><th>Ações</th></tr></thead>
+          <tbody id="camb-tbody"><tr><td colspan="5" class="loading">carregando...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SALDO -->
+    <div class="page" id="p-saldo">
+      <div class="page-header">Adicionar Saldo</div>
+      <div class="form-wrap">
+        <div class="form-row">
+          <label>Cambista:</label>
+          <select id="sal-cambista"><option value="">Selecione...</option></select>
+        </div>
+        <div class="form-row">
+          <label>Saldo atual:</label>
+          <div id="sal-atual" style="font-size:18px;font-weight:700;color:#2196F3;padding:4px 0;">—</div>
+        </div>
+        <div class="form-row">
+          <label>Valor a adicionar (R$):</label>
+          <input type="number" id="sal-valor" step="0.01" min="0" value="0">
+        </div>
+        <div class="form-actions">
+          <button class="btn-green" onclick="addSaldo()">Adicionar Saldo</button>
+        </div>
+        <div id="sal-msg" style="margin-top:10px;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- CAIXA -->
+    <div class="page" id="p-caixa">
+      <div class="page-header">Caixa</div>
+      <div class="filter-bar">
+        <input type="date" id="cx-de">
+        <input type="date" id="cx-ate">
+        <select id="cx-cambista"><option value="">Todos cambistas</option></select>
+        <button class="btn-blue" onclick="loadCaixa()">Buscar</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
+        <div class="card"><div class="card-label">Entrada</div><div class="card-val" id="cx-entrada">—</div></div>
+        <div class="card"><div class="card-label">Prêmios</div><div class="card-val text-red" id="cx-premios">—</div></div>
+        <div class="card"><div class="card-label">Líquido</div><div class="card-val" id="cx-liquido">—</div></div>
+        <div class="card"><div class="card-label">Cancelados</div><div class="card-val" id="cx-cancel">—</div></div>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Cambista</th><th>Apostado</th><th>Prêmios</th><th>Qtd</th><th>Líquido</th></tr></thead>
+        <tbody id="cx-tbody"><tr><td colspan="5" class="loading">selecione o período</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- APOSTAS -->
+    <div class="page" id="p-apostas">
+      <div class="page-header">Apostas</div>
+      <div class="filter-bar">
+        <input type="date" id="ap-data">
+        <select id="ap-cambista"><option value="">Todos cambistas</option></select>
+        <select id="ap-status">
+          <option value="">Todos status</option>
+          <option value="pending">Pendente</option>
+          <option value="won">Ganhou</option>
+          <option value="lost">Perdeu</option>
+          <option value="cancelled">Cancelado</option>
+        </select>
+        <button class="btn-blue" onclick="loadApostas()">Buscar</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>ID</th><th>Cambista</th><th>Modalidade</th><th>Números</th><th>Valor</th><th>Status</th><th>Data</th></tr></thead>
+        <tbody id="ap-tbody"><tr><td colspan="7" class="loading">selecione filtros</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- PRESTAR CONTAS -->
+    <div class="page" id="p-prestacao">
+      <div class="page-header">Prestar Contas</div>
+      <div class="filter-bar">
+        <input type="date" id="pc-de">
+        <input type="date" id="pc-ate">
+        <button class="btn-blue" onclick="loadPrestacao()">Calcular</button>
+      </div>
+      <div class="tbl-wrap"><table>
+        <thead><tr><th>Cambista</th><th>Entrada</th><th>Prêmios</th><th>Líquido</th><th>Ação</th></tr></thead>
+        <tbody id="pc-tbody"><tr><td colspan="5" class="loading">selecione o período</td></tr></tbody>
+      </table></div>
+    </div>
+
+    <!-- BILHETES -->
+    <div class="page" id="p-bilhetes">
+      <div class="page-header">Consultar Bilhete</div>
+      <div style="display:flex;gap:8px;max-width:400px;margin-bottom:16px;">
+        <input type="text" id="bil-codigo" placeholder="Código do bilhete" style="flex:1;border:1px solid #ddd;border-radius:6px;padding:9px 12px;font-size:14px;" onkeydown="if(event.key==='Enter')buscarBilhete()">
+        <button class="btn-blue" onclick="buscarBilhete()">Buscar</button>
+      </div>
+      <div id="bil-err" style="color:#e53935;font-size:13px;margin-bottom:8px;display:none;"></div>
+      <div id="bil-resultado" style="display:none;background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:20px;max-width:480px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h3 style="font-size:16px;">Bilhete</h3>
+          <div id="bil-status-badge"></div>
+        </div>
+        <table style="width:100%;font-size:13px;">
+          <tr><td style="color:#888;padding:4px 0;width:120px;">Código</td><td id="bil-code" style="font-family:monospace;font-weight:600;"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Cambista</td><td id="bil-vendedor"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Modalidade</td><td id="bil-modalidade"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Números</td><td id="bil-numeros" style="font-family:monospace;"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Valor</td><td id="bil-valor"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Prêmio</td><td id="bil-premio"></td></tr>
+          <tr><td style="color:#888;padding:4px 0;">Data</td><td id="bil-data"></td></tr>
+        </table>
+        <div id="bil-btn-area" style="margin-top:16px;"></div>
+        <div id="bil-msg" style="margin-top:8px;font-size:13px;text-align:center;"></div>
+      </div>
+    </div>
+
+  </div><!-- content-wrap -->
+</div><!-- app -->
+
+<script>
+var SB_URL="https://kopdmeuihtkmpisaedxo.supabase.co";
+var SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE";
+
+var st={gerente:null,cambistas:[],cambistasIds:[]};
+
+var MENU=[
+  {id:"p-dashboard",label:"Dashboard",load:loadDashboard},
+  {id:"p-cambistas",label:"Meus Cambistas",load:loadMeusCambistas},
+  {id:"p-saldo",label:"Adicionar Saldo",load:initSaldo},
+  {id:"p-caixa",label:"Caixa",load:initCaixa},
+  {id:"p-apostas",label:"Apostas",load:initApostas},
+  {id:"p-prestacao",label:"Prestar Contas",load:initPrestacao},
+  {id:"p-bilhetes",label:"Bilhetes",load:initBilhetes}
+];
+
+function _sbH(extra){var h={"Content-Type":"application/json","Accept":"application/json","apikey":SB_KEY};extra&&Object.keys(extra).forEach(function(k){h[k]=extra[k];});return h;}
+function _sbResp(r){return 204===r.status?{}:r.json().then(function(d){if(!r.ok)throw new Error(d&&(d.message||d.hint||d.details||d.error)||"Erro "+r.status);return d;});}
+function _rpc(fn,args){return fetch(SB_URL+"/rest/v1/rpc/"+fn,{method:"POST",headers:_sbH(),body:JSON.stringify(args||{})}).then(_sbResp);}
+function fmtBRL(v){return"R$ "+Number(v||0).toFixed(2).replace(".",",").replace(/\B(?=(\d{3})+(?!\d))/g,".");}
+function fmtDt(v){return v?new Date(v).toLocaleString("pt-BR"):"—";}
+function today(){return(new Date).toISOString().split("T")[0];}
+
+function buildNav(){
+  var nav=document.getElementById("nav");
+  nav.innerHTML="";
+  MENU.forEach(function(m){
+    var el=document.createElement("div");
+    el.className="nav-item";
+    el.id="nav-"+m.id;
+    el.textContent=m.label;
+    el.onclick=function(){showPage(m.id);m.load&&m.load();};
+    nav.appendChild(el);
+  });
+  var sair=document.createElement("div");
+  sair.className="nav-item";
+  sair.textContent="Sair";
+  sair.style.cssText="margin-top:auto;color:#e53935;border-top:1px solid #2a2a4e;";
+  sair.onclick=doLogout;
+  nav.appendChild(sair);
+}
+
+function showPage(id){
+  document.querySelectorAll(".page").forEach(function(p){p.classList.remove("on");});
+  document.querySelectorAll(".nav-item").forEach(function(n){n.classList.remove("active");});
+  var p=document.getElementById(id);if(p)p.classList.add("on");
+  var n=document.getElementById("nav-"+id);if(n)n.classList.add("active");
+}
+
+// ─── AUTH ─────────────────────────────────────────────
+function doLogin(){
+  var phone=document.getElementById("lg-phone").value.trim();
+  var pass=document.getElementById("lg-pass").value;
+  var err=document.getElementById("lg-err");
+  err.textContent="";
+  if(!phone||!pass){err.textContent="Preencha telefone e senha";return;}
+  err.textContent="Verificando...";
+  _rpc("vendedor_login",{p_phone:phone,p_password:pass})
+    .then(function(u){
+      if(!u||!u.id){throw new Error("Credenciais inválidas");}
+      if(u.role!=="gerente"){throw new Error("Acesso restrito a gerentes.");}
+      st.gerente=u;
+      localStorage.setItem("ger_user",JSON.stringify(u));
+      iniciarSessao();
+    })
+    .catch(function(e){err.textContent=e.message||"Credenciais inválidas";});
+}
+
+function iniciarSessao(){
+  var nome=st.gerente.name||st.gerente.phone||"Gerente";
+  document.getElementById("ger-nome-badge").textContent=nome;
+  document.getElementById("ger-nome-top").textContent=nome;
+  document.getElementById("s-login").style.display="none";
+  document.getElementById("app").classList.add("on");
+  buildNav();
+  // Carrega cambistas do gerente
+  carregarCambistas().then(function(){
+    showPage("p-dashboard");
+    loadDashboard();
+  });
+}
+
+function doLogout(){
+  st.gerente=null;st.cambistas=[];st.cambistasIds=[];
+  localStorage.removeItem("ger_user");
+  document.getElementById("app").classList.remove("on");
+  document.getElementById("s-login").style.display="flex";
+  document.getElementById("nav").innerHTML="";
+  document.getElementById("lg-pass").value="";
+}
+
+// ─── CAMBISTAS ────────────────────────────────────────
+function carregarCambistas(){
+  return fetch(SB_URL+"/rest/v1/vendedores?gerente_id=eq."+st.gerente.id+"&order=name.asc&limit=200",{headers:_sbH()})
+    .then(_sbResp)
+    .then(function(rows){
+      st.cambistas=Array.isArray(rows)?rows:[];
+      st.cambistasIds=st.cambistas.map(function(c){return c.id;});
+      populateCambistaSelects();
+    });
+}
+
+function populateCambistaSelects(){
+  ["cx-cambista","ap-cambista","sal-cambista"].forEach(function(id){
+    var el=document.getElementById(id);if(!el)return;
+    var first=el.options[0]?el.options[0].outerHTML:"";
+    el.innerHTML=first;
+    st.cambistas.forEach(function(c){
+      var o=document.createElement("option");
+      o.value=c.id;
+      o.textContent=c.name||c.phone||c.id;
+      el.appendChild(o);
+    });
+  });
+  var salSel=document.getElementById("sal-cambista");
+  if(salSel&&!salSel._wired){
+    salSel._wired=true;
+    salSel.addEventListener("change",function(){
+      var c=st.cambistas.find(function(x){return String(x.id)===salSel.value;});
+      document.getElementById("sal-atual").textContent=c?fmtBRL(c.balance||0):"—";
+    });
+  }
+}
+
+function loadMeusCambistas(){
+  var tb=document.getElementById("camb-tbody");
+  tb.innerHTML='<tr><td colspan="5" class="loading">carregando...</td></tr>';
+  carregarCambistas().then(function(){
+    if(!st.cambistas.length){
+      tb.innerHTML='<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Nenhum cambista vinculado</td></tr>';
+      return;
+    }
+    tb.innerHTML=st.cambistas.map(function(c){
+      var ativo=c.is_active!==false;
+      return "<tr><td>"+(c.name||c.phone||c.id)+"</td><td style='font-family:monospace;'>"+c.phone+"</td>"
+        +"<td style='font-weight:700;color:#2196F3;'>"+fmtBRL(c.balance||0)+"</td>"
+        +"<td>"+(ativo?'<span class="badge-ativo">Ativo</span>':'<span class="badge-inativo">Inativo</span>')+"</td>"
+        +"<td><button class='btn-sm' onclick='irParaSaldo("+c.id+")'>+ Saldo</button></td></tr>";
+    }).join("");
+  });
+}
+
+function irParaSaldo(cambId){
+  showPage("p-saldo");
+  initSaldo();
+  setTimeout(function(){
+    var sel=document.getElementById("sal-cambista");
+    sel.value=cambId;
+    sel.dispatchEvent(new Event("change"));
+  },50);
+}
+
+// ─── SALDO ────────────────────────────────────────────
+function initSaldo(){
+  populateCambistaSelects();
+  document.getElementById("sal-valor").value="0";
+  document.getElementById("sal-msg").textContent="";
+  document.getElementById("sal-atual").textContent="—";
+}
+
+function addSaldo(){
+  var cambId=document.getElementById("sal-cambista").value;
+  var valor=parseFloat(document.getElementById("sal-valor").value)||0;
+  var msg=document.getElementById("sal-msg");
+  if(!cambId){msg.textContent="Selecione o cambista";msg.style.color="#e53935";return;}
+  if(valor<=0){msg.textContent="Informe um valor positivo";msg.style.color="#e53935";return;}
+  _rpc("add_balance",{p_user_id:+cambId,p_amount:valor})
+    .then(function(){
+      msg.textContent="✓ Saldo adicionado com sucesso!";msg.style.color="#2E7D32";
+      var c=st.cambistas.find(function(x){return String(x.id)===cambId;});
+      if(c){c.balance=(c.balance||0)+valor;document.getElementById("sal-atual").textContent=fmtBRL(c.balance);}
+      document.getElementById("sal-valor").value="0";
+    })
+    .catch(function(e){msg.textContent="✗ "+e.message;msg.style.color="#e53935";});
+}
+
+// ─── CAIXA ────────────────────────────────────────────
+function initCaixa(){
+  document.getElementById("cx-de").value=today();
+  document.getElementById("cx-ate").value=today();
+  populateCambistaSelects();
+  loadCaixa();
+}
+
+function loadCaixa(){
+  if(!st.cambistasIds.length)return;
+  var de=document.getElementById("cx-de").value;
+  var ate=document.getElementById("cx-ate").value;
+  var cambId=document.getElementById("cx-cambista").value;
+  var tb=document.getElementById("cx-tbody");
+  tb.innerHTML='<tr><td colspan="5" class="loading">buscando...</td></tr>';
+
+  var ids=cambId?[+cambId]:st.cambistasIds;
+  var url=SB_URL+"/rest/v1/apostas?user_id=in.("+ids.join(",")+")"
+    +(de?"&created_at=gte."+de+"T00:00:00":"")
+    +(ate?"&created_at=lte."+ate+"T23:59:59":"")
+    +"&select=total_amount,prize_amount,status,user_id,user_phone&limit=2000";
+
+  fetch(url,{headers:_sbH()}).then(_sbResp).then(function(bets){
+    bets=Array.isArray(bets)?bets:[];
+    var totalE=0,totalP=0,totalC=0;
+    var byCamb={};
+    bets.forEach(function(b){
+      var amt=parseFloat(b.total_amount||0);
+      var pr=parseFloat(b.prize_amount||0);
+      if(b.status==="cancelled"){totalC+=amt;return;}
+      totalE+=amt;totalP+=pr;
+      var key=b.user_id||b.user_phone||"?";
+      if(!byCamb[key])byCamb[key]={nome:"?",entrada:0,premios:0,qtd:0};
+      var c=st.cambistas.find(function(x){return x.id===b.user_id;});
+      if(c)byCamb[key].nome=c.name||c.phone||c.id;
+      byCamb[key].entrada+=amt;byCamb[key].premios+=pr;byCamb[key].qtd++;
+    });
+    document.getElementById("cx-entrada").textContent=fmtBRL(totalE);
+    document.getElementById("cx-premios").textContent=fmtBRL(totalP);
+    var liq=totalE-totalP;
+    var elL=document.getElementById("cx-liquido");
+    elL.textContent=fmtBRL(liq);elL.style.color=liq>=0?"#2E7D32":"#e53935";
+    document.getElementById("cx-cancel").textContent=fmtBRL(totalC);
+    var rows=Object.values(byCamb);
+    tb.innerHTML=rows.length
+      ?rows.map(function(r){var l=r.entrada-r.premios;return"<tr><td>"+r.nome+"</td><td>"+fmtBRL(r.entrada)+"</td>"
+        +"<td class='text-red'>"+fmtBRL(r.premios)+"</td><td>"+r.qtd+"</td>"
+        +"<td style='font-weight:700;color:"+(l>=0?"#333":"#e53935")+"'>"+fmtBRL(l)+"</td></tr>";}).join("")
+      :'<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Sem apostas no período</td></tr>';
+  }).catch(function(e){tb.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+'</td></tr>';});
+}
+
+// ─── APOSTAS ──────────────────────────────────────────
+function initApostas(){
+  document.getElementById("ap-data").value=today();
+  populateCambistaSelects();
+  loadApostas();
+}
+
+function loadApostas(){
+  if(!st.cambistasIds.length)return;
+  var data=document.getElementById("ap-data").value;
+  var cambId=document.getElementById("ap-cambista").value;
+  var status=document.getElementById("ap-status").value;
+  var tb=document.getElementById("ap-tbody");
+  tb.innerHTML='<tr><td colspan="7" class="loading">buscando...</td></tr>';
+
+  var ids=cambId?[+cambId]:st.cambistasIds;
+  var url=SB_URL+"/rest/v1/apostas?user_id=in.("+ids.join(",")+")"
+    +(data?"&created_at=gte."+data+"T00:00:00&created_at=lte."+data+"T23:59:59":"")
+    +(status?"&status=eq."+status:"")
+    +"&order=created_at.desc&limit=300";
+
+  fetch(url,{headers:_sbH()}).then(_sbResp).then(function(bets){
+    bets=Array.isArray(bets)?bets:[];
+    tb.innerHTML=bets.length
+      ?bets.map(function(b){
+          var c=st.cambistas.find(function(x){return x.id===b.user_id;});
+          var nome=c?c.name||c.phone:b.user_phone||"?";
+          var nums=b.numbers;
+          if(typeof nums==="string"){try{nums=JSON.parse(nums);}catch(e){}}
+          var ns=Array.isArray(nums)?nums.join(" · "):(nums||"—");
+          return "<tr><td>"+b.id+"</td><td>"+nome+"</td>"
+            +"<td style='font-size:12px;'>"+( b.bet_type||"—")+"</td>"
+            +"<td style='font-family:monospace;font-size:11px;max-width:120px;word-break:break-all;'>"+ns+"</td>"
+            +"<td>"+fmtBRL(b.total_amount||0)+"</td>"
+            +"<td>"+statusBadge(b.status)+"</td>"
+            +"<td style='font-size:11px;color:#888;'>"+fmtDt(b.created_at)+"</td></tr>";
+        }).join("")
+      :'<tr><td colspan="7" style="padding:20px;text-align:center;color:#aaa">Nenhuma aposta</td></tr>';
+  }).catch(function(e){tb.innerHTML='<tr><td colspan="7" class="text-red">'+e.message+'</td></tr>';});
+}
+
+function statusBadge(s){
+  return s==="pending"?'<span class="badge-ativo">Pendente</span>'
+    :s==="won"?'<span style="color:#2E7D32;font-weight:700;">Ganhou</span>'
+    :s==="lost"?'<span style="color:#aaa;font-size:12px;">Perdeu</span>'
+    :s==="cancelled"?'<span class="badge-inativo">Cancelado</span>'
+    :(s||"—");
+}
+
+// ─── PRESTAR CONTAS ───────────────────────────────────
+function initPrestacao(){
+  document.getElementById("pc-de").value=today();
+  document.getElementById("pc-ate").value=today();
+}
+
+function loadPrestacao(){
+  if(!st.cambistasIds.length)return;
+  var de=document.getElementById("pc-de").value;
+  var ate=document.getElementById("pc-ate").value;
+  var tb=document.getElementById("pc-tbody");
+  tb.innerHTML='<tr><td colspan="5" class="loading">calculando...</td></tr>';
+
+  var ids=st.cambistasIds;
+  var url=SB_URL+"/rest/v1/apostas?user_id=in.("+ids.join(",")+")"
+    +(de?"&created_at=gte."+de+"T00:00:00":"")
+    +(ate?"&created_at=lte."+ate+"T23:59:59":"")
+    +"&select=total_amount,prize_amount,status,user_id&limit=5000";
+
+  fetch(url,{headers:_sbH()}).then(_sbResp).then(function(bets){
+    bets=Array.isArray(bets)?bets:[];
+    var byCamb={};
+    st.cambistas.forEach(function(c){byCamb[c.id]={nome:c.name||c.phone||c.id,entrada:0,premios:0};});
+    bets.forEach(function(b){
+      if(!byCamb[b.user_id]||b.status==="cancelled")return;
+      byCamb[b.user_id].entrada+=parseFloat(b.total_amount||0);
+      byCamb[b.user_id].premios+=parseFloat(b.prize_amount||0);
+    });
+    var rows=Object.values(byCamb);
+    tb.innerHTML=rows.length
+      ?rows.map(function(r){
+          var liq=r.entrada-r.premios;
+          return "<tr><td>"+r.nome+"</td><td>"+fmtBRL(r.entrada)+"</td>"
+            +"<td class='text-red'>"+fmtBRL(r.premios)+"</td>"
+            +"<td style='font-weight:700;color:"+(liq>=0?"#333":"#e53935")+"'>"+fmtBRL(liq)+"</td>"
+            +"<td><button class='btn-sm' onclick=\"confirmarPrestacao('"+r.nome+"',"+liq.toFixed(2)+")\" style='background:#388E3C;'>Prestar</button></td></tr>";
+        }).join("")
+      :'<tr><td colspan="5" style="padding:20px;text-align:center;color:#aaa">Sem dados</td></tr>';
+  }).catch(function(e){tb.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+'</td></tr>';});
+}
+
+function confirmarPrestacao(nome,total){
+  if(confirm("Prestar contas com "+nome+"?\nValor líquido: "+fmtBRL(total))){
+    alert("Conta prestada com "+nome+"! Valor: "+fmtBRL(total));
+  }
+}
+
+// ─── BILHETES ─────────────────────────────────────────
+function initBilhetes(){
+  document.getElementById("bil-codigo").value="";
+  document.getElementById("bil-resultado").style.display="none";
+  document.getElementById("bil-err").style.display="none";
+  document.getElementById("bil-codigo").focus();
+}
+
+function buscarBilhete(){
+  var code=document.getElementById("bil-codigo").value.trim().toUpperCase();
+  var err=document.getElementById("bil-err");
+  var res=document.getElementById("bil-resultado");
+  err.style.display="none";res.style.display="none";
+  if(!code){err.textContent="Informe o código.";err.style.display="block";return;}
+  fetch(SB_URL+"/rest/v1/apostas?ticket_code=eq."+encodeURIComponent(code)+"&select=*,vendedores(name,phone)&limit=1",{headers:_sbH()})
+    .then(_sbResp)
+    .then(function(rows){
+      rows=Array.isArray(rows)?rows:[];
+      if(!rows.length){err.textContent="Bilhete não encontrado: "+code;err.style.display="block";return;}
+      var b=rows[0];
+      // Verifica se pertence a um cambista deste gerente
+      if(st.cambistasIds.length&&!st.cambistasIds.includes(b.user_id)){
+        err.textContent="Este bilhete não pertence aos seus cambistas.";err.style.display="block";return;
+      }
+      renderBilhete(b);
+    })
+    .catch(function(e){err.textContent=e.message;err.style.display="block";});
+}
+
+function renderBilhete(b){
+  var n=b.status||"open";
+  var badgeColors={open:"#1565C0",won:"#2E7D32",paid:"#555",cancelled:"#e53935",lost:"#888"};
+  var badgeLabels={open:"Aberta",won:"Ganhadora ✓",paid:"Paga ✓",cancelled:"Cancelada",lost:"Não ganhou"};
+  document.getElementById("bil-status-badge").innerHTML='<span style="background:'+(badgeColors[n]||"#888")+';color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">'+(badgeLabels[n]||n)+"</span>";
+  document.getElementById("bil-code").textContent=b.ticket_code||"—";
+  var vend=b.vendedores;
+  document.getElementById("bil-vendedor").textContent=vend?vend.name||vend.phone:b.user_phone||"—";
+  document.getElementById("bil-modalidade").textContent=b.bet_type||"—";
+  var nums=b.numbers;
+  if(typeof nums==="string"){try{nums=JSON.parse(nums);}catch(e){}}
+  document.getElementById("bil-numeros").textContent=Array.isArray(nums)?nums.join(" · "):(nums||"—");
+  document.getElementById("bil-valor").textContent=fmtBRL(b.total_amount||b.amount||0);
+  document.getElementById("bil-premio").textContent=fmtBRL(b.prize_amount||0);
+  document.getElementById("bil-data").textContent=fmtDt(b.created_at);
+  var area=document.getElementById("bil-btn-area");
+  document.getElementById("bil-msg").textContent="";
+  area.innerHTML=n==="won"
+    ?'<button class="btn-green" onclick="darBaixa(\''+b.ticket_code+'\')" style="width:100%;padding:12px;font-size:14px;">✓ Dar Baixa — Pagar '+fmtBRL(b.prize_amount||0)+"</button>"
+    :n==="paid"?'<p style="text-align:center;color:#555;font-size:13px;">Já pago.</p>'
+    :n==="cancelled"?'<p style="text-align:center;color:#e53935;font-size:13px;">Bilhete cancelado.</p>'
+    :'<p style="text-align:center;color:#888;font-size:13px;">Aguardando resultado.</p>';
+  document.getElementById("bil-resultado").style.display="block";
+}
+
+function darBaixa(code){
+  var msg=document.getElementById("bil-msg");
+  msg.style.color="#888";msg.textContent="Processando...";
+  _rpc("pagar_premio",{p_ticket_code:code,p_admin_id:null})
+    .then(function(){
+      msg.style.color="#2E7D32";msg.textContent="✓ Pagamento registrado!";
+      document.getElementById("bil-btn-area").innerHTML="";
+      document.getElementById("bil-status-badge").innerHTML='<span style="background:#555;color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;">Paga ✓</span>';
+    })
+    .catch(function(e){msg.style.color="#e53935";msg.textContent="✗ "+e.message;});
+}
+
+// ─── DASHBOARD ────────────────────────────────────────
+function loadDashboard(){
+  if(!st.cambistasIds.length){
+    ["dc-vendas","dc-premios","dc-lucro","dc-bilhetes","dc-cambistas-ativos"].forEach(function(id){document.getElementById(id).textContent="0";});
+    return;
+  }
+  var hoje=today();
+  var url=SB_URL+"/rest/v1/apostas?user_id=in.("+st.cambistasIds.join(",")+")"
+    +"&created_at=gte."+hoje+"T00:00:00&created_at=lte."+hoje+"T23:59:59"
+    +"&select=total_amount,prize_amount,status,user_id,user_phone,bet_type,numbers&limit=2000";
+
+  fetch(url,{headers:_sbH()}).then(_sbResp).then(function(bets){
+    bets=Array.isArray(bets)?bets:[];
+    var totalE=0,totalP=0,bilhetes=0;
+    var ativos={},numeros={},byCamb={};
+    bets.forEach(function(b){
+      if(b.status==="cancelled")return;
+      var amt=parseFloat(b.total_amount||0);
+      var pr=parseFloat(b.prize_amount||0);
+      bilhetes++;totalE+=amt;totalP+=pr;
+      ativos[b.user_id]=1;
+      var key=b.user_id;
+      if(!byCamb[key]){var c=st.cambistas.find(function(x){return x.id===b.user_id;});byCamb[key]={nome:c?c.name||c.phone||c.id:"?",entrada:0,premios:0};}
+      byCamb[key].entrada+=amt;byCamb[key].premios+=pr;
+      var nums=b.numbers;if(typeof nums==="string"){try{nums=JSON.parse(nums);}catch(e){nums=[nums];}}
+      if(!Array.isArray(nums))nums=[];
+      nums.forEach(function(n){var k=(n||"").toString().trim();if(!k)return;if(!numeros[k])numeros[k]=0;numeros[k]+=amt;});
+    });
+    var lucro=totalE-totalP;
+    document.getElementById("dc-vendas").textContent=fmtBRL(totalE);
+    document.getElementById("dc-premios").textContent=fmtBRL(totalP);
+    var elL=document.getElementById("dc-lucro");elL.textContent=fmtBRL(lucro);elL.style.color=lucro>=0?"#2E7D32":"#e53935";
+    document.getElementById("dc-bilhetes").textContent=bilhetes;
+    document.getElementById("dc-cambistas-ativos").textContent=Object.keys(ativos).length;
+    var cRows=Object.values(byCamb).sort(function(a,b){return b.entrada-a.entrada;});
+    document.getElementById("dash-por-cambista").innerHTML=cRows.length
+      ?cRows.map(function(r){var l=r.entrada-r.premios;return"<tr><td>"+r.nome+"</td><td>"+fmtBRL(r.entrada)+"</td><td class='text-red'>"+fmtBRL(r.premios)+"</td><td style='font-weight:700;color:"+(l>=0?"#333":"#e53935")+"'>"+fmtBRL(l)+"</td></tr>";}).join("")
+      :'<tr><td colspan="4" style="padding:20px;text-align:center;color:#aaa">Sem dados</td></tr>';
+    var topN=Object.keys(numeros).sort(function(a,b){return numeros[b]-numeros[a];}).slice(0,10);
+    document.getElementById("dash-top-nums").innerHTML=topN.length
+      ?topN.map(function(n,i){return"<tr><td style='color:#888;font-size:12px;'>"+(i+1)+"</td><td style='font-family:monospace;font-weight:600;'>"+n+"</td><td>"+fmtBRL(numeros[n])+"</td></tr>";}).join("")
+      :'<tr><td colspan="3" style="padding:20px;text-align:center;color:#aaa">—</td></tr>';
+  });
+  _loadChart7Dias();
+}
+
+function _loadChart7Dias(){
+  if(!st.cambistasIds.length)return;
+  var dias=[],hoje=new Date();
+  for(var i=6;i>=0;i--){var d=new Date(hoje);d.setDate(d.getDate()-i);dias.push(d.toISOString().split("T")[0]);}
+  var url=SB_URL+"/rest/v1/apostas?user_id=in.("+st.cambistasIds.join(",")+")"
+    +"&created_at=gte."+dias[0]+"T00:00:00&created_at=lte."+dias[dias.length-1]+"T23:59:59"
+    +"&select=created_at,total_amount,prize_amount,status&limit=5000";
+  fetch(url,{headers:_sbH()}).then(_sbResp).then(function(bets){
+    bets=Array.isArray(bets)?bets:[];
+    var byDay={};dias.forEach(function(d){byDay[d]={e:0,p:0};});
+    bets.forEach(function(b){var d=(b.created_at||"").split("T")[0];if(!byDay[d]||b.status==="cancelled")return;byDay[d].e+=parseFloat(b.total_amount||0);byDay[d].p+=parseFloat(b.prize_amount||0);});
+    var maxV=Math.max(1,Math.max.apply(null,dias.map(function(d){return byDay[d].e;})));
+    document.getElementById("dash-chart").innerHTML='<div class="dash-bar-wrap">'+
+      dias.map(function(d){var e=byDay[d].e,p=byDay[d].p;var hE=Math.max(2,Math.round(e/maxV*90)),hP=Math.max(2,Math.round(p/maxV*90));var lbl=d.slice(5).replace("-","/");
+        return'<div class="dash-bar"><div style="display:flex;gap:2px;align-items:flex-end;height:100px;"><div class="dash-bar-fill" style="background:#2196F3;height:'+hE+'px;width:14px;" title="'+fmtBRL(e)+'"></div><div class="dash-bar-fill" style="background:#e53935;height:'+hP+'px;width:14px;" title="'+fmtBRL(p)+'"></div></div><div class="dash-bar-lbl">'+lbl+'</div></div>';
+      }).join("")+'</div>'
+      +'<div style="display:flex;gap:16px;margin-top:8px;font-size:11px;color:#666;">'
+      +'<span><span style="display:inline-block;width:12px;height:12px;background:#2196F3;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Vendas</span>'
+      +'<span><span style="display:inline-block;width:12px;height:12px;background:#e53935;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Prêmios</span></div>';
+  }).catch(function(){});
+}
+
+// ─── INIT ─────────────────────────────────────────────
+["lg-phone","lg-pass"].forEach(function(id){
+  document.getElementById(id).addEventListener("keydown",function(e){if(e.key==="Enter")doLogin();});
+});
+
+// Auto-login se sessão salva
+(function(){
+  var saved=localStorage.getItem("ger_user");
+  if(saved){try{st.gerente=JSON.parse(saved);}catch(e){return;}
+    if(st.gerente&&st.gerente.id&&st.gerente.role==="gerente")iniciarSessao();}
+})();
+</script>
+</body>
+</html>
