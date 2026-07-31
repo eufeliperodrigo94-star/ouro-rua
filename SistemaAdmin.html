@@ -2800,6 +2800,7 @@ function salvarResultadoEstruturado() {
 function initMapa() {
   document.getElementById('mapa-de').value = today();
   document.getElementById('mapa-ate').value = today();
+  loadMapa();
   // Populate sorteios select
   var sel = document.getElementById('mapa-sorteio');
   sel.innerHTML = '<option value="">Todos os Sorteios</option>';
@@ -2941,6 +2942,7 @@ function initGeralFinal() {
   document.getElementById('gf-de').value = today();
   document.getElementById('gf-ate').value = today();
   populateGeralSelects();
+  loadGeralFinal();
 }
 function populateGeralSelects() {
   ['gf-vendedor','gc-vendedor','col-vendedor','fech-vendedor','gfd-vendedor','gcom-vendedor'].forEach(function(id){
@@ -3007,6 +3009,7 @@ function loadGeralFinal() {
 function initGeralCaixa() {
   document.getElementById('gc-de').value = today();
   document.getElementById('gc-ate').value = today();
+  loadGeralCaixa();
 }
 function loadGeralCaixa() {
   var de = document.getElementById('gc-de').value;
@@ -3068,6 +3071,7 @@ function loadGeralCaixa() {
 function initGeralExtracao() {
   document.getElementById('ge-de').value = today();
   document.getElementById('ge-ate').value = today();
+  loadGeralExtracao();
 }
 function loadGeralExtracao() {
   var de = document.getElementById('ge-de').value;
@@ -3687,6 +3691,7 @@ function initGeralFinalDia() {
   document.getElementById('gfd-de').value = d7.toISOString().split('T')[0];
   document.getElementById('gfd-ate').value = hoje;
   populateGeralSelects();
+  loadGeralFinalDia();
 }
 function loadGeralFinalDia() {
   var de = document.getElementById('gfd-de').value;
@@ -3738,6 +3743,7 @@ function initGeralComissao() {
   document.getElementById('gcom-de').value = today();
   document.getElementById('gcom-ate').value = today();
   populateGeralSelects();
+  loadGeralComissao();
 }
 function loadGeralComissao() {
   var de = document.getElementById('gcom-de').value;
