@@ -4172,8 +4172,18 @@ function processarResultado() {
   var sid = document.getElementById('res-extracao').value;
   if (!sid) { alert('Selecione a extracao'); return; }
   var msg = document.getElementById('res-msg');
-  msg.style.color = '#888'; msg.textContent = 'Processando...';
-  _rpc('processar_resultado', {p_sorteio_id: +sid}).then(function(r){
+  msg.style.color = '#888'; msg.textContent = 'Resetando apostas...';
+  // Passo 1: resetar todas as apostas não-canceladas do sorteio para pending/0
+  fetch(SB_URL + '/rest/v1/apostas?draw_id=eq.' + sid + '&status=in.(pending,won,lost)', {
+    method: 'PATCH',
+    headers: Object.assign({'Content-Type':'application/json','Prefer':'return=minimal'}, _sbH()),
+    body: JSON.stringify({status: 'pending', prize_amount: 0})
+  }).then(function(r) {
+    if (!r.ok) return r.text().then(function(t){ throw new Error('Reset falhou: ' + t); });
+    msg.textContent = 'Processando...';
+    // Passo 2: rodar a RPC que avalia ganhadores
+    return _rpc('processar_resultado', {p_sorteio_id: +sid});
+  }).then(function(r){
     var res = r && typeof r === 'object' ? r : {};
     msg.style.color = '#1565C0';
     msg.textContent = 'Processado: '+(res.ganhou||0)+' ganhadores / '+(res.perdeu||0)+' perdedores';
