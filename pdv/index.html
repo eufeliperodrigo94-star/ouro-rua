@@ -1320,7 +1320,7 @@ function prepararSangriaAuditoria() {
   var preview = document.getElementById('audit-preview');
   prepare.disabled = true;
   status.textContent = 'Consultando sorteio e modalidades no host...';
-  Promise.all([apiPublic('/draws'), apiPublic('/modality-settings')]).then(function(all) {
+  Promise.all([api('/draws?pos_audit_160=1'), apiPublic('/modality-settings')]).then(function(all) {
     var draws = toArray(all[0]).filter(function(draw) {
       return String(draw.status || '').toLowerCase() === 'pending' &&
         String(draw.title || '').toUpperCase().indexOf('AUDITORIA POS 160') === 0;
