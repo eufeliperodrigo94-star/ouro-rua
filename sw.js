@@ -1,18 +1,22 @@
-/* Service Worker — PDV Monte de Ouro — cache-first + stale-while-revalidate */
-var CACHE = 'pdv-v3';
-var APP   = '/ouro-rua/SistemaTerminal.html';
+var CACHE = 'pdv-v4';
+var FILES = [
+  '/ouro-rua/SistemaTerminal.html',
+  '/ouro-rua/engine.min.js',
+  '/ouro-rua/logo-login.png',
+  '/ouro-rua/logo-main.png',
+  '/ouro-rua/logo-ticket.png',
+  '/ouro-rua/logo-print.png'
+];
 
 self.addEventListener('install', function(e) {
-  e.waitUntil(caches.open(CACHE).then(function(c) { return c.add(APP); }));
+  e.waitUntil(caches.open(CACHE).then(function(c) { return c.addAll(FILES); }));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', function(e) {
   e.waitUntil(
     caches.keys().then(function(keys) {
-      return Promise.all(
-        keys.filter(function(k) { return k !== CACHE; }).map(function(k) { return caches.delete(k); })
-      );
+      return Promise.all(keys.filter(function(k) { return k !== CACHE; }).map(function(k) { return caches.delete(k); }));
     })
   );
   self.clients.claim();
@@ -20,31 +24,19 @@ self.addEventListener('activate', function(e) {
 
 self.addEventListener('fetch', function(e) {
   var url = e.request.url;
-  if (url.includes('supabase.co') || url.includes('qrserver.com') || e.request.method !== 'GET') return;
-
-  if (url.includes('SistemaTerminal.html') || url.endsWith('/ouro-rua/') || url.endsWith('/ouro-rua')) {
-    e.respondWith(
-      caches.open(CACHE).then(function(cache) {
-        return cache.match(e.request).then(function(cached) {
-          var fresh = fetch(e.request).then(function(resp) {
-            if (resp && resp.ok) cache.put(e.request, resp.clone());
-            return resp;
-          }).catch(function() { return cached; });
-          return cached || fresh;
-        });
-      })
-    );
+  if (url.includes('supabase.co') || url.includes('api.qrserver.com')) {
+    e.respondWith(fetch(e.request));
     return;
   }
-
-  if (url.includes('github.io')) {
-    e.respondWith(
-      caches.match(e.request).then(function(cached) {
-        return cached || fetch(e.request).then(function(resp) {
-          if (resp && resp.ok) caches.open(CACHE).then(function(c) { c.put(e.request, resp.clone()); });
-          return resp;
-        });
-      })
-    );
-  }
+  e.respondWith(
+    caches.match(e.request).then(function(cached) {
+      var network = fetch(e.request).then(function(res) {
+        if (res.ok) {
+          caches.open(CACHE).then(function(c) { c.put(e.request, res.clone()); });
+        }
+        return res;
+      });
+      return cached || network;
+    })
+  );
 });
