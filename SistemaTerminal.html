@@ -3249,7 +3249,7 @@ function carregarCotacoes() {
     if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Sem cotações disponíveis.</div>'; return; }
     var html2 = '';
     lista.forEach(function(c) {
-      var mult = c.multiplier != null ? Number(c.multiplier).toLocaleString('pt-BR') + 'x' : '–';
+      var mult = (c.cotacao != null && Number(c.cotacao) > 0) ? Number(c.cotacao).toLocaleString('pt-BR') + 'x' : (c.multiplier != null ? Number(c.multiplier).toLocaleString('pt-BR') + 'x' : '–');
       var cm   = c.charge_multiplier != null && c.charge_multiplier > 1 ? ' · 1 a ' + c.charge_multiplier + 'P' : '';
       html2 += '<div style="background:#fff;border-radius:8px;padding:12px 14px;margin-bottom:8px;box-shadow:0 1px 2px rgba(0,0,0,.08);display:flex;justify-content:space-between;align-items:center">' +
         '<div>' +
