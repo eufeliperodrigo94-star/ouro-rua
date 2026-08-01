@@ -627,63 +627,56 @@
 
 <!-- ═══ DESCARREGO ═══ -->
 <div class="page" id="p-descarrego">
-  <div class="page-header">Descarrego — Limites de Exposição</div>
+  <div class="page-header">Descarrego — Limites por Vendedor</div>
 
-  <!-- Sub-tabs -->
-  <div style="display:flex;gap:8px;margin-bottom:14px;">
-    <button class="btn-blue" onclick="showDescTab('limites')">⚙ Limites</button>
-    <button class="btn-blue" onclick="showDescTab('exposicao')">📊 Exposição</button>
-    <button class="btn-blue" onclick="showDescTab('historico')">📋 Histórico</button>
-  </div>
-
-  <!-- Tab Limites -->
-  <div id="desc-tab-limites">
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Modalidade</th><th>Prêmio</th><th>Limite (R$)</th><th>Ativo</th><th>Ação</th>
-        </tr></thead>
-        <tbody id="desc-limites-body"><tr><td colspan="5" class="loading">carregando...</td></tr></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Tab Exposição -->
-  <div id="desc-tab-exposicao" style="display:none;">
-    <div class="filter-bar">
-      <select id="desc-sorteio-sel" style="min-width:200px;">
-        <option value="">Selecione o Sorteio</option>
+  <!-- Formulário adicionar -->
+  <div class="tbl-wrap" style="margin-bottom:12px;">
+    <div class="tbl-toolbar" style="background:#f8f8f8;padding:10px 12px;gap:6px;flex-wrap:wrap;">
+      <span style="font-size:13px;font-weight:600;color:#333;margin-right:4px;">Novo Limite:</span>
+      <input id="dl-vendedor" placeholder="Vendedor" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:180px;outline:none;">
+      <select id="dl-extracao" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
+        <option value="TODAS">TODAS</option>
       </select>
-      <button class="btn-blue" onclick="loadExposicao()">Buscar</button>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Modalidade</th><th>Prêmio</th><th>Número</th>
-          <th>Exposição (R$)</th><th>Limite (R$)</th><th>Disponível (R$)</th>
-        </tr></thead>
-        <tbody id="desc-exposicao-body"><tr><td colspan="6" class="loading">selecione um sorteio</td></tr></tbody>
-      </table>
+      <select id="dl-modalidade" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
+        <option value="">Modalidade</option>
+        <option>Grupo</option>
+        <option>Dezena</option>
+        <option>Centena</option>
+        <option>Milhar</option>
+        <option>Terno de Grupo</option>
+        <option>Terno de Dezena</option>
+        <option>Duque de Grupo</option>
+        <option>Duque de Dezena</option>
+        <option>Passe</option>
+        <option>Cercado</option>
+        <option>Combinado</option>
+      </select>
+      <input id="dl-valor" type="number" step="0.01" min="0" placeholder="Valor R$" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:110px;outline:none;">
+      <button class="btn-green" onclick="adicionarDescargaLimite()" style="height:32px;padding:0 16px;">+ Adicionar</button>
+      <span id="dl-msg" style="font-size:12px;"></span>
     </div>
   </div>
 
-  <!-- Tab Histórico de descarregos -->
-  <div id="desc-tab-historico" style="display:none;">
-    <div class="filter-bar">
-      <select id="desc-hist-sorteio" style="min-width:200px;">
-        <option value="">Selecione o Sorteio</option>
-      </select>
-      <button class="btn-blue" onclick="loadHistoricoDescarrego()">Buscar</button>
-    </div>
-    <div class="tbl-wrap">
-      <table>
-        <thead><tr>
-          <th>Modalidade</th><th>Prêmio</th><th>Número</th>
-          <th>Apostado</th><th>Retido</th><th>Descarregado</th><th>Limite</th><th>Data</th>
-        </tr></thead>
-        <tbody id="desc-hist-body"><tr><td colspan="8" class="loading">selecione um sorteio</td></tr></tbody>
-      </table>
-    </div>
+  <!-- Filtro -->
+  <div class="filter-bar" style="margin-bottom:8px;">
+    <input id="dl-filtro" type="text" placeholder="Filtrar por vendedor..." style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:220px;outline:none;" oninput="filtrarDescargaLimites()">
+    <button class="btn-blue" onclick="loadDescargaLimites()">↺ Atualizar</button>
+  </div>
+
+  <!-- Tabela no padrão JBet -->
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="text-align:left;padding-left:12px;">Vendedor</th>
+        <th>Extração</th>
+        <th>Modalidade</th>
+        <th>Valor (R$)</th>
+        <th>Usuário</th>
+        <th>Data</th>
+        <th>Ação</th>
+      </tr></thead>
+      <tbody id="dl-body"><tr><td colspan="7" class="loading">carregando...</td></tr></tbody>
+    </table>
   </div>
 </div>
 
@@ -1666,8 +1659,124 @@ function showDescTab(tab) {
 }
 
 function loadDescarregoPage() {
-  loadLimitesDescarrego();
-  loadSorteiosDescSel();
+  loadDescargaLimites();
+  loadExtracoesDlSel();
+}
+
+/* ── DESCARREGO (novo padrão JBet) ── */
+var _dlAllRows = [];
+
+function loadExtracoesDlSel() {
+  var sel = document.getElementById('dl-extracao');
+  if (!sel) return;
+  fetch(SB_URL + '/rest/v1/extracoes?select=id,nome&order=nome.asc', { headers: _sbH() })
+    .then(_sbResp)
+    .then(function(rows) {
+      var opts = '<option value="TODAS">TODAS</option>';
+      rows.forEach(function(r) {
+        opts += '<option value="' + r.nome + '">' + r.nome + '</option>';
+      });
+      sel.innerHTML = opts;
+    })
+    .catch(function() {}); // silent fail — keeps "TODAS" default
+}
+
+function loadDescargaLimites() {
+  var tb = document.getElementById('dl-body');
+  if (!tb) return;
+  tb.innerHTML = '<tr><td colspan="7" class="loading">carregando...</td></tr>';
+  fetch(SB_URL + '/rest/v1/descarga_limites?order=vendedor.asc,created_at.desc&select=*', { headers: _sbH() })
+    .then(_sbResp)
+    .then(function(rows) {
+      _dlAllRows = rows;
+      _renderDlRows(rows);
+    })
+    .catch(function(e) {
+      tb.innerHTML = '<tr><td colspan="7" style="color:red;">' + e.message + '</td></tr>';
+    });
+}
+
+function _renderDlRows(rows) {
+  var tb = document.getElementById('dl-body');
+  if (!rows.length) {
+    tb.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">Nenhum limite cadastrado.</td></tr>';
+    return;
+  }
+  tb.innerHTML = rows.map(function(r) {
+    var dt = r.created_at ? new Date(r.created_at).toLocaleString('pt-BR') : '';
+    return '<tr>' +
+      '<td style="padding-left:12px;">' + (r.vendedor || '') + '</td>' +
+      '<td style="text-align:center;">' + (r.extracao || 'TODAS') + '</td>' +
+      '<td style="text-align:center;">' + (r.modalidade || '') + '</td>' +
+      '<td style="text-align:right;padding-right:12px;">R$ ' + Number(r.valor || 0).toFixed(2) + '</td>' +
+      '<td style="text-align:center;">' + (r.usuario || '') + '</td>' +
+      '<td style="text-align:center;">' + dt + '</td>' +
+      '<td style="text-align:center;">' +
+        '<button class="btn-red" style="font-size:11px;padding:2px 8px;" ' +
+        'onclick="excluirDescargaLimite(' + r.id + ')">Excluir</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function filtrarDescargaLimites() {
+  var q = (document.getElementById('dl-filtro').value || '').toLowerCase().trim();
+  if (!q) { _renderDlRows(_dlAllRows); return; }
+  _renderDlRows(_dlAllRows.filter(function(r) {
+    return (r.vendedor || '').toLowerCase().indexOf(q) !== -1;
+  }));
+}
+
+function adicionarDescargaLimite() {
+  var vendedor   = (document.getElementById('dl-vendedor').value || '').trim();
+  var extracao   = document.getElementById('dl-extracao').value || 'TODAS';
+  var modalidade = document.getElementById('dl-modalidade').value || '';
+  var valor      = parseFloat(document.getElementById('dl-valor').value || '0');
+  var msg        = document.getElementById('dl-msg');
+
+  if (!vendedor)   { msg.style.color='red'; msg.textContent='Informe o vendedor.'; return; }
+  if (!modalidade) { msg.style.color='red'; msg.textContent='Selecione a modalidade.'; return; }
+  if (!valor || valor <= 0) { msg.style.color='red'; msg.textContent='Informe um valor válido.'; return; }
+
+  msg.style.color='#555'; msg.textContent='Salvando...';
+
+  var payload = {
+    vendedor:   vendedor,
+    extracao:   extracao,
+    modalidade: modalidade,
+    valor:      valor,
+    usuario:    (_session && _session.username) ? _session.username : ''
+  };
+
+  fetch(SB_URL + '/rest/v1/descarga_limites', {
+    method: 'POST',
+    headers: Object.assign({ 'Content-Type': 'application/json', 'Prefer': 'return=minimal' }, _sbH()),
+    body: JSON.stringify(payload)
+  }).then(function(r) {
+    if (r.ok) {
+      msg.style.color='green'; msg.textContent='Adicionado!';
+      document.getElementById('dl-vendedor').value = '';
+      document.getElementById('dl-valor').value = '';
+      document.getElementById('dl-filtro').value = '';
+      setTimeout(function(){ msg.textContent=''; }, 2500);
+      loadDescargaLimites();
+    } else {
+      return r.text().then(function(t) { throw new Error(t); });
+    }
+  }).catch(function(e) {
+    msg.style.color='red'; msg.textContent='Erro: ' + e.message;
+  });
+}
+
+function excluirDescargaLimite(id) {
+  if (!confirm('Excluir este limite?')) return;
+  fetch(SB_URL + '/rest/v1/descarga_limites?id=eq.' + id, {
+    method: 'DELETE',
+    headers: Object.assign({ 'Prefer': 'return=minimal' }, _sbH())
+  }).then(function(r) {
+    if (r.ok) { loadDescargaLimites(); }
+    else { alert('Erro ao excluir.'); }
+  });
 }
 
 function loadLimitesDescarrego() {
