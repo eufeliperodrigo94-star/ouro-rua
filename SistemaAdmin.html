@@ -994,6 +994,90 @@
 </div>
 
 <!-- ============================================================ -->
+<!-- p-risco — MOTOR DE RISCO / DESCARREGO AUTOMÁTICO           -->
+<!-- ============================================================ -->
+<div class="page" id="p-risco">
+  <div class="page-header">Motor de Risco</div>
+
+  <!-- Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:2px solid #e0e0e0;">
+    <button id="risk-btn-config"    onclick="setRiskTab('config')"    style="padding:7px 18px;border:none;border-bottom:3px solid #1565c0;background:none;font-size:13px;font-weight:600;color:#1565c0;cursor:pointer;">Configuração</button>
+    <button id="risk-btn-exposicao" onclick="setRiskTab('exposicao')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Exposição</button>
+    <button id="risk-btn-descarrego" onclick="setRiskTab('descarrego')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Descarregos</button>
+  </div>
+
+  <!-- ── TAB: Configuração ── -->
+  <div id="risk-tab-config">
+    <p style="font-size:12px;color:#666;margin-bottom:10px;">
+      Defina o <strong>Limite de Prêmio (R$)</strong> que a banca deseja assumir por número em cada modalidade.<br>
+      <code>Limite de Venda = Limite Prêmio ÷ Cotação</code> — apostas acima desse valor geram descarrego automático.
+    </p>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="text-align:left;padding-left:12px;">Modalidade</th>
+          <th>Cotação</th>
+          <th>Limite Prêmio (R$)</th>
+          <th>Limite Venda (R$)</th>
+          <th>Ativo</th>
+          <th>Ação</th>
+        </tr></thead>
+        <tbody id="risk-config-body"><tr><td colspan="6" class="loading">carregando...</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TAB: Exposição em Tempo Real ── -->
+  <div id="risk-tab-exposicao" style="display:none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <select id="risk-sorteio-sel" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:240px;outline:none;">
+        <option value="">Selecione o Sorteio</option>
+      </select>
+      <button class="btn-blue" onclick="loadRiskExposicao()">↺ Atualizar</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Modalidade</th>
+          <th>Número</th>
+          <th>Vendido (R$)</th>
+          <th>Prêmio Exposto (R$)</th>
+          <th>Limite Venda (R$)</th>
+          <th>Limite Prêmio (R$)</th>
+          <th>Status</th>
+        </tr></thead>
+        <tbody id="risk-exposicao-body"><tr><td colspan="7" class="loading">Selecione um sorteio.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── TAB: Descarregos ── -->
+  <div id="risk-tab-descarrego" style="display:none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <select id="risk-disch-sorteio" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:240px;outline:none;">
+        <option value="">Selecione o Sorteio</option>
+      </select>
+      <button class="btn-blue" onclick="loadRiskDescarregos()">↺ Atualizar</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Aposta</th>
+          <th>Modalidade</th>
+          <th>Número</th>
+          <th>Vl. Descarregado (R$)</th>
+          <th>Prêmio Descarg. (R$)</th>
+          <th>Destino</th>
+          <th>Status</th>
+          <th>Data</th>
+        </tr></thead>
+        <tbody id="risk-disch-body"><tr><td colspan="8" class="loading">Selecione um sorteio.</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ -->
 <!-- p-coletas — COLETAS POR VENDEDOR -->
 <!-- ============================================================ -->
 <div class="page" id="p-coletas">
@@ -1491,6 +1575,7 @@ var SB_URL="https://kopdmeuihtkmpisaedxo.supabase.co",SB_KEY="eyJhbGciOiJIUzI1Ni
 {id:"p-extracoes",label:"Extrações",load:loadExtracoesPage,r:['admin']},
 {id:"p-sorteios",label:"Sorteios",load:loadSorteiosPage,r:['admin','gerente']},
 {id:"p-descarrego",label:"Descarrego",load:loadDescarregoPage,r:['admin','gerente']},
+{id:"p-risco",label:"Motor de Risco",load:initRiscoPage,r:['admin']},
 {id:"p-importar-descarrego",label:"Importar Descarrego",load:initImportarDescarrego,r:['admin']},
 {id:"p-coletas",label:"Coletas",load:initColetas,r:['admin','gerente']},
 {id:"p-terminais-a",label:"Terminais",load:initTerminais,r:['admin']},
@@ -4269,6 +4354,164 @@ function loadGeralComissao() {
     }).catch(function(e){ tbody.innerHTML='<tr><td colspan="5" class="text-red">'+e.message+'</td></tr>'; });
   };
 })();
+
+/* ==============================================================
+   p-risco — MOTOR DE RISCO
+   ============================================================== */
+
+function setRiskTab(tab) {
+  ['config','exposicao','descarrego'].forEach(function(t) {
+    var panel = document.getElementById('risk-tab-' + t);
+    var btn   = document.getElementById('risk-btn-' + t);
+    if (panel) panel.style.display = (t === tab) ? '' : 'none';
+    if (btn) {
+      btn.style.borderBottom = (t === tab) ? '3px solid #1565c0' : '3px solid transparent';
+      btn.style.color        = (t === tab) ? '#1565c0' : '#666';
+      btn.style.fontWeight   = (t === tab) ? '600' : '400';
+    }
+  });
+}
+
+function initRiscoPage() {
+  setRiskTab('config');
+  loadRiskConfig();
+  loadRiskSorteiosSel();
+}
+
+/* ── Configuração de limites ── */
+function loadRiskConfig() {
+  var tb = document.getElementById('risk-config-body');
+  if (!tb) return;
+  tb.innerHTML = '<tr><td colspan="6" class="loading">carregando...</td></tr>';
+  fetch(SB_URL + '/rest/v1/modality_settings?select=id,nome,codigo,cotacao,limite_pagamento,ativo&order=ordem_exibicao.asc', { headers: _sbH() })
+    .then(_sbResp)
+    .then(function(rows) {
+      if (!rows.length) { tb.innerHTML = '<tr><td colspan="6">Nenhuma modalidade.</td></tr>'; return; }
+      tb.innerHTML = rows.map(function(r) {
+        var lv = (r.cotacao > 0 && r.limite_pagamento > 0)
+          ? (r.limite_pagamento / r.cotacao).toFixed(2)
+          : '—';
+        return '<tr>' +
+          '<td style="padding-left:12px;font-weight:500;">' + r.nome + '</td>' +
+          '<td style="text-align:right;padding-right:8px;">' + Number(r.cotacao).toLocaleString('pt-BR') + 'x</td>' +
+          '<td style="text-align:center;">' +
+            '<input type="number" step="0.01" min="0" value="' + (r.limite_pagamento || '') + '" ' +
+            'id="rk-lp-' + r.id + '" placeholder="sem limite" ' +
+            'style="width:120px;border:1px solid #ccc;border-radius:3px;padding:3px 6px;text-align:right;">' +
+          '</td>' +
+          '<td style="text-align:center;color:#1565c0;font-weight:600;" id="rk-lv-' + r.id + '">' + lv + '</td>' +
+          '<td style="text-align:center;">' +
+            '<span style="color:' + (r.ativo ? '#2e7d32' : '#c62828') + ';">' +
+            (r.ativo ? '✓ Ativo' : '✗ Inativo') + '</span>' +
+          '</td>' +
+          '<td style="text-align:center;">' +
+            '<button class="btn-blue" style="font-size:11px;padding:2px 10px;" ' +
+            'onclick="salvarRiskLimite(' + r.id + ',' + r.cotacao + ')">Salvar</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+    })
+    .catch(function(e) { tb.innerHTML = '<tr><td colspan="6" style="color:red;">' + e.message + '</td></tr>'; });
+}
+
+function salvarRiskLimite(id, cotacao) {
+  var inp = document.getElementById('rk-lp-' + id);
+  var val = parseFloat(inp.value) || 0;
+  fetch(SB_URL + '/rest/v1/modality_settings?id=eq.' + id, {
+    method: 'PATCH',
+    headers: Object.assign({ 'Content-Type':'application/json', 'Prefer':'return=minimal' }, _sbH()),
+    body: JSON.stringify({ limite_pagamento: val > 0 ? val : null })
+  }).then(function(r) {
+    if (r.ok) {
+      var lv = document.getElementById('rk-lv-' + id);
+      if (lv) lv.textContent = (val > 0 && cotacao > 0) ? (val / cotacao).toFixed(2) : '—';
+      inp.style.borderColor = '#4caf50';
+      setTimeout(function(){ inp.style.borderColor = '#ccc'; }, 1500);
+    } else { alert('Erro ao salvar.'); }
+  });
+}
+
+/* ── Sorteios selector (compartilhado entre tabs) ── */
+function loadRiskSorteiosSel() {
+  fetch(SB_URL + '/rest/v1/sorteios?select=id,title,date,hora&order=date.desc,hora.asc&limit=30', { headers: _sbH() })
+    .then(_sbResp)
+    .then(function(rows) {
+      var opts = '<option value="">Selecione o Sorteio</option>' +
+        rows.map(function(s) {
+          return '<option value="' + s.id + '">' + (s.title||s.id) + ' — ' + (s.date||'') +
+            (s.hora ? ' ' + s.hora.slice(0,5) : '') + '</option>';
+        }).join('');
+      ['risk-sorteio-sel','risk-disch-sorteio'].forEach(function(sid) {
+        var el = document.getElementById(sid);
+        if (el) el.innerHTML = opts;
+      });
+    });
+}
+
+/* ── Exposição em Tempo Real ── */
+function loadRiskExposicao() {
+  var sid = document.getElementById('risk-sorteio-sel').value;
+  var tb  = document.getElementById('risk-exposicao-body');
+  if (!sid) { tb.innerHTML = '<tr><td colspan="7">Selecione um sorteio.</td></tr>'; return; }
+  tb.innerHTML = '<tr><td colspan="7" class="loading">carregando...</td></tr>';
+
+  Promise.all([
+    fetch(SB_URL + '/rest/v1/risk_exposure?sorteio_id=eq.' + sid +
+          '&order=modalidade.asc,valor_vendido.desc&limit=500', { headers: _sbH() }).then(_sbResp),
+    fetch(SB_URL + '/rest/v1/modality_settings?select=codigo,cotacao,limite_pagamento&ativo=eq.true', { headers: _sbH() }).then(_sbResp)
+  ]).then(function(res) {
+    var rows    = res[0];
+    var limMap  = {};
+    res[1].forEach(function(m) { limMap[m.codigo] = m; });
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="7" style="color:#999;text-align:center;">Nenhuma exposição registrada.</td></tr>'; return; }
+    tb.innerHTML = rows.map(function(r) {
+      var cfg    = limMap[r.modalidade] || {};
+      var limVnd = (cfg.cotacao > 0 && cfg.limite_pagamento > 0) ? cfg.limite_pagamento / cfg.cotacao : 0;
+      var limPag = cfg.limite_pagamento || 0;
+      var pct    = limVnd > 0 ? (r.valor_vendido / limVnd * 100) : 0;
+      var cor    = pct >= 100 ? '#c62828' : pct >= 80 ? '#e65100' : '#2e7d32';
+      var status = limVnd <= 0 ? '—' : pct >= 100 ? '🔴 No limite' : pct >= 80 ? '🟠 Crítico' : '🟢 OK';
+      return '<tr>' +
+        '<td style="padding-left:8px;">' + r.modalidade + '</td>' +
+        '<td style="text-align:center;font-family:monospace;font-weight:600;">' + r.chave + '</td>' +
+        '<td style="text-align:right;color:' + cor + ';font-weight:700;">R$ ' + Number(r.valor_vendido).toFixed(2) + '</td>' +
+        '<td style="text-align:right;">R$ ' + Number(r.premio_exposto).toFixed(2) + '</td>' +
+        '<td style="text-align:right;">' + (limVnd > 0 ? 'R$ ' + limVnd.toFixed(2) : '—') + '</td>' +
+        '<td style="text-align:right;">' + (limPag > 0 ? 'R$ ' + Number(limPag).toFixed(2) : '—') + '</td>' +
+        '<td style="text-align:center;">' + status + '</td>' +
+      '</tr>';
+    }).join('');
+  }).catch(function(e) { tb.innerHTML = '<tr><td colspan="7" style="color:red;">' + e.message + '</td></tr>'; });
+}
+
+/* ── Histórico de Descarregos ── */
+function loadRiskDescarregos() {
+  var sid = document.getElementById('risk-disch-sorteio').value;
+  var tb  = document.getElementById('risk-disch-body');
+  if (!sid) { tb.innerHTML = '<tr><td colspan="8">Selecione um sorteio.</td></tr>'; return; }
+  tb.innerHTML = '<tr><td colspan="8" class="loading">carregando...</td></tr>';
+  fetch(SB_URL + '/rest/v1/risk_discharge?sorteio_id=eq.' + sid +
+        '&order=created_at.desc&limit=500', { headers: _sbH() })
+    .then(_sbResp)
+    .then(function(rows) {
+      if (!rows.length) { tb.innerHTML = '<tr><td colspan="8" style="color:#999;text-align:center;">Nenhum descarrego gerado.</td></tr>'; return; }
+      tb.innerHTML = rows.map(function(r) {
+        var dt = r.created_at ? new Date(r.created_at).toLocaleString('pt-BR') : '';
+        var sc = r.status === 'PENDENTE' ? 'color:#e65100' : 'color:#2e7d32';
+        return '<tr>' +
+          '<td style="text-align:center;">' + (r.aposta_id || '—') + '</td>' +
+          '<td>' + (r.modalidade || '') + '</td>' +
+          '<td style="text-align:center;font-family:monospace;font-weight:600;">' + (r.chave || '') + '</td>' +
+          '<td style="text-align:right;font-weight:700;">R$ ' + Number(r.valor_descarregado||0).toFixed(2) + '</td>' +
+          '<td style="text-align:right;">R$ ' + Number(r.premio_descarregado||0).toFixed(2) + '</td>' +
+          '<td style="text-align:center;">' + (r.banca_destino||'EXTERNO') + '</td>' +
+          '<td style="text-align:center;' + sc + ';font-weight:600;">' + (r.status||'') + '</td>' +
+          '<td style="text-align:center;">' + dt + '</td>' +
+        '</tr>';
+      }).join('');
+    })
+    .catch(function(e) { tb.innerHTML = '<tr><td colspan="8" style="color:red;">' + e.message + '</td></tr>'; });
+}
 
 /* ==============================================================
    p-importar-descarrego — IMPORTAR DESCARREGO
