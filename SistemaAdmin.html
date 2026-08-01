@@ -4383,7 +4383,7 @@ function loadRiskConfig() {
   var tb = document.getElementById('risk-config-body');
   if (!tb) return;
   tb.innerHTML = '<tr><td colspan="6" class="loading">carregando...</td></tr>';
-  fetch(SB_URL + '/rest/v1/modality_settings?select=id,nome,codigo,cotacao,limite_pagamento,ativo&order=ordem_exibicao.asc', { headers: _sbH() })
+  fetch(SB_URL + '/rest/v1/modalidades?select=id,nome,codigo,cotacao,limite_pagamento,ativo&order=ordem_exibicao.asc', { headers: _sbH() })
     .then(_sbResp)
     .then(function(rows) {
       if (!rows.length) { tb.innerHTML = '<tr><td colspan="6">Nenhuma modalidade.</td></tr>'; return; }
@@ -4417,7 +4417,7 @@ function loadRiskConfig() {
 function salvarRiskLimite(id, cotacao) {
   var inp = document.getElementById('rk-lp-' + id);
   var val = parseFloat(inp.value) || 0;
-  fetch(SB_URL + '/rest/v1/modality_settings?id=eq.' + id, {
+  fetch(SB_URL + '/rest/v1/modalidades?id=eq.' + id, {
     method: 'PATCH',
     headers: Object.assign({ 'Content-Type':'application/json', 'Prefer':'return=minimal' }, _sbH()),
     body: JSON.stringify({ limite_pagamento: val > 0 ? val : null })
@@ -4458,7 +4458,7 @@ function loadRiskExposicao() {
   Promise.all([
     fetch(SB_URL + '/rest/v1/risk_exposure?sorteio_id=eq.' + sid +
           '&order=modalidade.asc,valor_vendido.desc&limit=500', { headers: _sbH() }).then(_sbResp),
-    fetch(SB_URL + '/rest/v1/modality_settings?select=codigo,cotacao,limite_pagamento&ativo=eq.true', { headers: _sbH() }).then(_sbResp)
+    fetch(SB_URL + '/rest/v1/modalidades?select=codigo,cotacao,limite_pagamento&ativo=eq.true', { headers: _sbH() }).then(_sbResp)
   ]).then(function(res) {
     var rows    = res[0];
     var limMap  = {};
