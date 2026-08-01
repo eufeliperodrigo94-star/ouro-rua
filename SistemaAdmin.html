@@ -627,57 +627,104 @@
 
 <!-- ═══ DESCARREGO ═══ -->
 <div class="page" id="p-descarrego">
-  <div class="page-header">Descarrego — Limites por Vendedor</div>
+  <div class="page-header">Descarrego</div>
 
-  <!-- Formulário adicionar -->
-  <div class="tbl-wrap" style="margin-bottom:12px;">
-    <div class="tbl-toolbar" style="background:#f8f8f8;padding:10px 12px;gap:6px;flex-wrap:wrap;">
-      <span style="font-size:13px;font-weight:600;color:#333;margin-right:4px;">Novo Limite:</span>
-      <input id="dl-vendedor" placeholder="Vendedor" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:180px;outline:none;">
-      <select id="dl-extracao" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
-        <option value="TODAS">TODAS</option>
-      </select>
-      <select id="dl-modalidade" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
-        <option value="">Modalidade</option>
-        <option>Grupo</option>
-        <option>Dezena</option>
-        <option>Centena</option>
-        <option>Milhar</option>
-        <option>Terno de Grupo</option>
-        <option>Terno de Dezena</option>
-        <option>Duque de Grupo</option>
-        <option>Duque de Dezena</option>
-        <option>Passe</option>
-        <option>Cercado</option>
-        <option>Combinado</option>
-      </select>
-      <input id="dl-valor" type="number" step="0.01" min="0" placeholder="Valor R$" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:110px;outline:none;">
-      <button class="btn-green" onclick="adicionarDescargaLimite()" style="height:32px;padding:0 16px;">+ Adicionar</button>
-      <span id="dl-msg" style="font-size:12px;"></span>
+  <!-- Tabs -->
+  <div style="display:flex;gap:4px;margin-bottom:12px;border-bottom:2px solid #e0e0e0;padding-bottom:0;">
+    <button id="desc-btn-limites"   onclick="setDescTab('limites')"   style="padding:7px 18px;border:none;border-bottom:3px solid #1565c0;background:none;font-size:13px;font-weight:600;color:#1565c0;cursor:pointer;">Limites por Vendedor</button>
+    <button id="desc-btn-exposicao" onclick="setDescTab('exposicao')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Exposição</button>
+    <button id="desc-btn-historico" onclick="setDescTab('historico')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Histórico</button>
+  </div>
+
+  <!-- ── TAB: Limites por Vendedor ── -->
+  <div id="desc-tab-limites">
+    <!-- Formulário adicionar -->
+    <div class="tbl-wrap" style="margin-bottom:12px;">
+      <div class="tbl-toolbar" style="background:#f8f8f8;padding:10px 12px;gap:6px;flex-wrap:wrap;">
+        <span style="font-size:13px;font-weight:600;color:#333;margin-right:4px;">Novo Limite:</span>
+        <input id="dl-vendedor" placeholder="Vendedor" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:180px;outline:none;">
+        <select id="dl-extracao" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
+          <option value="TODAS">TODAS</option>
+        </select>
+        <select id="dl-modalidade" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:160px;outline:none;">
+          <option value="">Modalidade</option>
+          <option>Grupo</option>
+          <option>Dezena</option>
+          <option>Centena</option>
+          <option>Milhar</option>
+          <option>Terno de Grupo</option>
+          <option>Terno de Dezena</option>
+          <option>Duque de Grupo</option>
+          <option>Duque de Dezena</option>
+          <option>Passe</option>
+          <option>Cercado</option>
+          <option>Combinado</option>
+        </select>
+        <input id="dl-valor" type="number" step="0.01" min="0" placeholder="Valor R$" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:110px;outline:none;">
+        <button class="btn-green" onclick="adicionarDescargaLimite()" style="height:32px;padding:0 16px;">+ Adicionar</button>
+        <span id="dl-msg" style="font-size:12px;"></span>
+      </div>
+    </div>
+    <!-- Filtro -->
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <input id="dl-filtro" type="text" placeholder="Filtrar por vendedor..." style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:220px;outline:none;" oninput="filtrarDescargaLimites()">
+      <button class="btn-blue" onclick="loadDescargaLimites()">↺ Atualizar</button>
+    </div>
+    <!-- Tabela -->
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="text-align:left;padding-left:12px;">Vendedor</th>
+          <th>Extração</th>
+          <th>Modalidade</th>
+          <th>Valor (R$)</th>
+          <th>Usuário</th>
+          <th>Data</th>
+          <th>Ação</th>
+        </tr></thead>
+        <tbody id="dl-body"><tr><td colspan="7" class="loading">carregando...</td></tr></tbody>
+      </table>
     </div>
   </div>
 
-  <!-- Filtro -->
-  <div class="filter-bar" style="margin-bottom:8px;">
-    <input id="dl-filtro" type="text" placeholder="Filtrar por vendedor..." style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;width:220px;outline:none;" oninput="filtrarDescargaLimites()">
-    <button class="btn-blue" onclick="loadDescargaLimites()">↺ Atualizar</button>
+  <!-- ── TAB: Exposição ── -->
+  <div id="desc-tab-exposicao" style="display:none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <select id="desc-sorteio-sel" onchange="loadExposicao()" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:240px;outline:none;">
+        <option value="">Selecione o Sorteio</option>
+      </select>
+      <button class="btn-blue" onclick="loadExposicao()">↺ Atualizar</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Modalidade</th><th>Prêmio</th><th>Número</th>
+          <th>Exposição</th><th>Limite</th><th>Disponível</th>
+        </tr></thead>
+        <tbody id="desc-exposicao-body"><tr><td colspan="6" class="loading">Selecione um sorteio.</td></tr></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- Tabela no padrão JBet -->
-  <div class="tbl-wrap">
-    <table>
-      <thead><tr>
-        <th style="text-align:left;padding-left:12px;">Vendedor</th>
-        <th>Extração</th>
-        <th>Modalidade</th>
-        <th>Valor (R$)</th>
-        <th>Usuário</th>
-        <th>Data</th>
-        <th>Ação</th>
-      </tr></thead>
-      <tbody id="dl-body"><tr><td colspan="7" class="loading">carregando...</td></tr></tbody>
-    </table>
+  <!-- ── TAB: Histórico ── -->
+  <div id="desc-tab-historico" style="display:none;">
+    <div class="filter-bar" style="margin-bottom:8px;">
+      <select id="desc-hist-sorteio" onchange="loadHistoricoDescarrego()" style="height:32px;border:1px solid #ccc;border-radius:3px;padding:0 8px;font-size:13px;min-width:240px;outline:none;">
+        <option value="">Selecione o Sorteio</option>
+      </select>
+      <button class="btn-blue" onclick="loadHistoricoDescarrego()">↺ Atualizar</button>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>Modalidade</th><th>Número</th><th>Prêmio</th>
+          <th>Exposição</th><th>Limite</th><th>Descarga</th><th>Vendedor</th><th>Data</th>
+        </tr></thead>
+        <tbody id="desc-hist-body"><tr><td colspan="8" class="loading">Selecione um sorteio.</td></tr></tbody>
+      </table>
+    </div>
   </div>
+
 </div>
 
 <!-- ============================================================ -->
@@ -1658,9 +1705,24 @@ function showDescTab(tab) {
   });
 }
 
+function setDescTab(tab) {
+  ['limites','exposicao','historico'].forEach(function(t) {
+    var panel = document.getElementById('desc-tab-' + t);
+    var btn   = document.getElementById('desc-btn-' + t);
+    if (panel) panel.style.display = (t === tab) ? '' : 'none';
+    if (btn) {
+      btn.style.borderBottom = (t === tab) ? '3px solid #1565c0' : '3px solid transparent';
+      btn.style.color        = (t === tab) ? '#1565c0' : '#666';
+      btn.style.fontWeight   = (t === tab) ? '600' : '400';
+    }
+  });
+}
+
 function loadDescarregoPage() {
+  setDescTab('limites');
   loadDescargaLimites();
   loadExtracoesDlSel();
+  loadSorteiosDescSel();
 }
 
 /* ── DESCARREGO (novo padrão JBet) ── */
