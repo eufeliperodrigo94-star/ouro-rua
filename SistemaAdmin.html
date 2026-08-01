@@ -1928,7 +1928,7 @@ function saveModalidade(i){
   var limite=parseFloat(document.getElementById('mod-lim-'+i).value)||0;
   var p1=fetch(SB_URL+'/rest/v1/modality_settings?id=eq.'+m.id,{
     method:'PATCH',headers:_sbH({'Prefer':'return=minimal'}),
-    body:JSON.stringify({label:label||m.bet_type,cotacao:cotacao,limite_exposicao:limite})
+    body:JSON.stringify({label:label||m.bet_type,cotacao:cotacao,multiplier:cotacao,limite_exposicao:limite})
   });
   // Sincroniza com tabela modalidades (usada pelo terminal)
   var p2=fetch(SB_URL+'/rest/v1/modalidades?codigo=eq.'+encodeURIComponent(m.bet_type.toLowerCase()),{
