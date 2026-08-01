@@ -1858,16 +1858,23 @@ function saveModalidade(i){
   var label=document.getElementById('mod-lbl-'+i).value.trim();
   var cotacao=parseFloat(document.getElementById('mod-cot-'+i).value)||0;
   var limite=parseFloat(document.getElementById('mod-lim-'+i).value)||0;
-  fetch(SB_URL+'/rest/v1/modality_settings?id=eq.'+m.id,{
+  var p1=fetch(SB_URL+'/rest/v1/modality_settings?id=eq.'+m.id,{
     method:'PATCH',headers:_sbH({'Prefer':'return=minimal'}),
     body:JSON.stringify({label:label||m.bet_type,cotacao:cotacao,limite_exposicao:limite})
-  }).then(function(r){
-    if(r.ok||r.status===204){
-      var msg=document.getElementById('mod-msg');
+  });
+  // Sincroniza com tabela modalidades (usada pelo terminal)
+  var p2=fetch(SB_URL+'/rest/v1/modalidades?codigo=eq.'+encodeURIComponent(m.bet_type.toLowerCase()),{
+    method:'PATCH',headers:_sbH({'Prefer':'return=minimal'}),
+    body:JSON.stringify({cotacao:cotacao,nome:label||m.bet_type})
+  });
+  Promise.all([p1,p2]).then(function(rs){
+    var ok=rs.every(function(r){return r.ok||r.status===204;});
+    var msg=document.getElementById('mod-msg');
+    if(ok){
       msg.textContent='✓ '+m.bet_type+' salvo!';msg.style.color='#4CAF50';
       _modalidades[i].label=label;_modalidades[i].cotacao=cotacao;_modalidades[i].limite_exposicao=limite;
       setTimeout(function(){msg.textContent='';},3000);
-    }else return r.json().then(function(d){throw new Error(d.message||d.hint||'Erro '+r.status);});
+    }else{msg.textContent='✗ Erro ao salvar';msg.style.color='#e53935';}
   }).catch(function(e){
     var msg=document.getElementById('mod-msg');msg.textContent='✗ '+e.message;msg.style.color='#e53935';
   });
@@ -1876,10 +1883,16 @@ function saveModalidade(i){
 function toggleModalidade(i){
   var m=_modalidades[i];if(!m)return;
   var novoStatus=m.is_active===false;
-  fetch(SB_URL+'/rest/v1/modality_settings?id=eq.'+m.id,{
+  var p1=fetch(SB_URL+'/rest/v1/modality_settings?id=eq.'+m.id,{
     method:'PATCH',headers:_sbH({'Prefer':'return=minimal'}),
     body:JSON.stringify({is_active:novoStatus})
-  }).then(function(r){if(r.ok||r.status===204)loadModalidades();}).catch(function(e){alert(e.message);});
+  });
+  // Sincroniza com tabela modalidades (usada pelo terminal)
+  var p2=fetch(SB_URL+'/rest/v1/modalidades?codigo=eq.'+encodeURIComponent(m.bet_type.toLowerCase()),{
+    method:'PATCH',headers:_sbH({'Prefer':'return=minimal'}),
+    body:JSON.stringify({ativo:novoStatus})
+  });
+  Promise.all([p1,p2]).then(function(){loadModalidades();}).catch(function(e){alert(e.message);});
 }
 
 function showModalNovaModalidade(){
