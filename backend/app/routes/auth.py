@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from jose import jwt
 from passlib.context import CryptContext
-from app.db import supabase
+from app.db import get_supabase
 from app.auth import get_current_user
 
 router = APIRouter()
@@ -16,7 +16,7 @@ class LoginRequest(BaseModel):
 
 @router.post("/login")
 async def login(body: LoginRequest):
-    res = supabase.table("vendedores") \
+    res = get_supabase().table("vendedores") \
         .select("id, name, phone, role, password_hash, is_active, commission_rate, cidade_id, gerente_id") \
         .eq("phone", body.phone).limit(1).execute()
 

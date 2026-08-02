@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional, List
-from app.db import supabase
+from app.db import get_supabase
 from app.auth import get_current_user
 
 router = APIRouter()
@@ -14,7 +14,7 @@ async def list_apostas(
     limit: int = 200,
     user=Depends(get_current_user)
 ):
-    q = supabase.table("apostas").select("*") \
+    q = get_supabase().table("apostas").select("*") \
         .order("created_at", desc=True).limit(limit)
     if draw_id:     q = q.eq("draw_id", draw_id)
     if user_id:     q = q.eq("user_id", user_id)
@@ -45,24 +45,24 @@ async def batch_apostas(apostas: List[dict], user=Depends(get_current_user)):
             "ticket_code":  a.get("ticket_code"),
         })
 
-    res = supabase.table("apostas").insert(rows) \
+    res = get_supabase().table("apostas").insert(rows) \
         .execute()
     inserted = res.data or []
     return {"inserted": len(inserted), "apostas": inserted}
 
 @router.get("/{aposta_id}")
 async def get_aposta(aposta_id: int, user=Depends(get_current_user)):
-    res = supabase.table("apostas").select("*").eq("id", aposta_id).single().execute()
+    res = get_supabase().table("apostas").select("*").eq("id", aposta_id).single().execute()
     if not res.data:
         raise HTTPException(status_code=404, detail="Aposta não encontrada")
     return res.data
 
 @router.patch("/{aposta_id}")
 async def update_aposta(aposta_id: int, body: dict, user=Depends(get_current_user)):
-    res = supabase.table("apostas").update(body).eq("id", aposta_id).execute()
+    res = get_supabase().table("apostas").update(body).eq("id", aposta_id).execute()
     return res.data[0] if res.data else {}
 
 @router.delete("/{aposta_id}")
 async def cancel_aposta(aposta_id: int, user=Depends(get_current_user)):
-    supabase.table("apostas").update({"status": "cancelled"}).eq("id", aposta_id).execute()
+    get_supabase().table("apostas").update({"status": "cancelled"}).eq("id", aposta_id).execute()
     return {"ok": True}

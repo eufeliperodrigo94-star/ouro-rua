@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 from typing import Optional
 from datetime import date
-from app.db import supabase
+from app.db import get_supabase
 from app.auth import get_current_user
 
 router = APIRouter()
@@ -13,7 +13,7 @@ async def relatorio_geral(
     data_fim: Optional[str] = None,
     user=Depends(get_current_user)
 ):
-    q = supabase.table("apostas").select("amount, prize_amount, status, bet_type, user_id, draw_id") \
+    q = get_supabase().table("apostas").select("amount, prize_amount, status, bet_type, user_id, draw_id") \
         .neq("status", "cancelled")
     if draw_id:     q = q.eq("draw_id", draw_id)
     if data_inicio: q = q.gte("created_at", data_inicio)
@@ -42,7 +42,7 @@ async def relatorio_ranking(
     data_fim: Optional[str] = None,
     user=Depends(get_current_user)
 ):
-    q = supabase.table("apostas").select("amount, prize_amount, user_id") \
+    q = get_supabase().table("apostas").select("amount, prize_amount, user_id") \
         .neq("status", "cancelled")
     if draw_id:     q = q.eq("draw_id", draw_id)
     if data_inicio: q = q.gte("created_at", data_inicio)
@@ -66,8 +66,8 @@ async def relatorio_ranking(
 
 @router.get("/risco")
 async def relatorio_risco(draw_id: Optional[int] = None, user=Depends(get_current_user)):
-    q1 = supabase.table("risk_exposure").select("*").order("valor_vendido", desc=True)
-    q2 = supabase.table("risk_discharge").select("*").order("created_at", desc=True).limit(50)
+    q1 = get_supabase().table("risk_exposure").select("*").order("valor_vendido", desc=True)
+    q2 = get_supabase().table("risk_discharge").select("*").order("created_at", desc=True).limit(50)
     if draw_id:
         q1 = q1.eq("draw_id", draw_id)
         q2 = q2.eq("draw_id", draw_id)
@@ -78,7 +78,7 @@ async def relatorio_caixa(data: Optional[str] = None, user=Depends(get_current_u
     hoje = data or date.today().isoformat()
     inicio = hoje + "T00:00:00"
     fim    = hoje + "T23:59:59"
-    res = supabase.table("apostas").select("amount, prize_amount, status") \
+    res = get_supabase().table("apostas").select("amount, prize_amount, status") \
         .neq("status", "cancelled").gte("created_at", inicio).lte("created_at", fim).execute()
     rows = res.data or []
     total_bruto   = sum(float(a["amount"]) for a in rows)

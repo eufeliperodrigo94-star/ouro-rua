@@ -4,7 +4,6 @@ load_dotenv()
 from datetime import datetime
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.db import init_db
 from app.routes import auth, sorteios, apostas, modalidades, modality_settings, vendedores, relatorios, cidades, extracoes
 
 app = FastAPI(title="Ouro Rua API", version="2.0.0")
@@ -16,10 +15,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.on_event("startup")
-async def startup():
-    init_db()
 
 @app.get("/")
 async def root():
