@@ -823,7 +823,36 @@ function gerarTicketCode() {
   return 'SO-' + ts + '-' + rnd;
 }
 
-// ─── Compatibilidade: api() e apiPublic() redirecionam para Supabase ──────────
+// ─── API: chamadas reais ao backend VPS ──────────────────────────────────────
+var API_URL = 'https://ouro-rua-api.azfexe.easypanel.host';
+
+function _apiToken() {
+  return localStorage.getItem('jwt_token') || '';
+}
+
+function _apiFetch(path, opts) {
+  opts = opts || {};
+  var token = _apiToken();
+  var headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_URL + path, {
+    method: opts.method || 'GET',
+    headers: headers,
+    body: opts.body || undefined
+  }).then(function(r) {
+    if (r.status === 401) {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user');
+      go('s-login');
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+    return r.json();
+  }).then(function(d) {
+    if (d && d.error) throw new Error(d.error);
+    return d;
+  });
+}
+
 function api(path, opts) {
   opts = opts || {};
   var method = opts.method || 'GET';
@@ -831,44 +860,40 @@ function api(path, opts) {
 
   // Login
   if (path === '/login') {
-    return sbRpc('vendedor_login', { p_phone: body.phone, p_password: body.password })
-      .then(function(u) {
-        if (!u || !u.id) throw new Error('Credenciais inválidas');
-        return { token: 'sb_ok', user: u };
+    return _apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(body) })
+      .then(function(data) {
+        localStorage.setItem('jwt_token', data.token);
+        return data;
       });
   }
   // Perfil
   if (path === '/me') {
-    var uid = st.user && st.user.id;
-    if (!uid) return Promise.resolve(null);
-    return sbGet('vendedores', 'id=eq.' + uid + '&select=*').then(function(r) {
-      return Array.isArray(r) ? r[0] : r;
-    });
+    return _apiFetch('/auth/me').then(function(d) { return d.user || d; });
   }
-  // Sorteios
+  // Sorteios abertos
   if (path === '/draws') {
-    return sbGet('sorteios', 'select=*,extracoes(name)&status=eq.open&order=date.desc,hora.asc&limit=20');
+    return _apiFetch('/sorteios?status=open&limit=20');
   }
-  // Modalidades
+  // Modalidades ativas
   if (path === '/modality-settings') {
-    return sbGet('modality_settings', 'is_active=eq.true&order=id.asc');
+    return _apiFetch('/modality-settings');
   }
-  // Histórico
+  // Histórico de apostas
   if (path === '/bets/my-bets') {
-    var uid2 = st.user && st.user.id;
-    return sbGet('apostas', 'user_id=eq.' + uid2 + '&order=created_at.desc&limit=15');
+    var uid = st.user && st.user.id;
+    return _apiFetch('/apostas?user_id=' + uid + '&limit=15');
   }
-  // Batch de apostas → INSERT em lote no Supabase
+  // Batch de apostas (insere via backend, descarrego via Supabase direto)
   if (path === '/bets/batch') {
-    var payload  = body;
+    var payload    = body;
     var ticketCode = gerarTicketCode();
-    var userId   = st.user ? st.user.id : null;
-    var userPhone= st.user ? st.user.phone : null;
-    var rows     = (payload.bets || []).map(function(b) {
+    var userId     = st.user ? st.user.id : null;
+    var userPhone  = st.user ? st.user.phone : null;
+    var rows = (payload.bets || []).map(function(b) {
       return {
         user_id:      userId,
         user_phone:   userPhone,
-        draw_id:      b.draw_id || null,
+        draw_id:      b.draw_id   || null,
         bet_type:     b.bet_type,
         numbers:      typeof b.numbers === 'string' ? b.numbers : String(b.numbers || ''),
         amount:       b.amount,
@@ -878,69 +903,70 @@ function api(path, opts) {
         ticket_code:  ticketCode
       };
     });
-    return sbPost('apostas', rows).then(function(apostasRes) {
-      var total = (payload.bets || []).reduce(function(s, b) { return s + b.amount; }, 0);
-      // ── Descarrego assíncrono: confirma bilhete IMEDIATAMENTE, descarrego roda em background ──
-      var inserted = Array.isArray(apostasRes) ? apostasRes : [];
-      setTimeout(function() {
-        rows.forEach(function(row, idx) {
-          var ap = inserted[idx];
-          if (!ap || !ap.id) return;
-          var bt = (row.bet_type || '').toLowerCase();
-          var modalidade = bt.replace(/_\d+(?:_\d+)?$/, '') || bt;
-          var pm = bt.match(/_(\d+)(?:_(\d+))?$/);
-          var premios = [];
-          if (pm) {
-            var ps = parseInt(pm[1]), pe = pm[2] ? parseInt(pm[2]) : ps;
-            for (var i = ps; i <= pe; i++) premios.push(i);
-          } else { premios = [1]; }
-          sbRpc('aplicar_descarrego', {
-            p_sorteio_id:  Number(row.draw_id),
-            p_aposta_id:   Number(ap.id),
-            p_modalidade:  modalidade,
-            p_numero:      String(row.numbers || ''),
-            p_premios:     premios,
-            p_valor_total: Number(row.amount)
-          }).catch(function(e) { console.warn('[descarrego bg]', e && e.message); });
-        });
-      }, 0); // fire-and-forget: não bloqueia resposta ao terminal
-      // Retorna confirmação imediata
-      return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
-    });
+    return _apiFetch('/apostas/batch', { method: 'POST', body: JSON.stringify(rows) })
+      .then(function(res) {
+        var inserted = (res && res.apostas) ? res.apostas : [];
+        var total    = rows.reduce(function(s, r) { return s + Number(r.amount); }, 0);
+        // Descarrego assíncrono via Supabase (fire-and-forget)
+        setTimeout(function() {
+          rows.forEach(function(row, idx) {
+            var ap = inserted[idx];
+            if (!ap || !ap.id) return;
+            var bt = (row.bet_type || '').toLowerCase();
+            var modalidade = bt.replace(/_\d+(?:_\d+)?$/, '') || bt;
+            var pm = bt.match(/_(\d+)(?:_(\d+))?$/);
+            var premios = [];
+            if (pm) {
+              var ps = parseInt(pm[1]), pe = pm[2] ? parseInt(pm[2]) : ps;
+              for (var i = ps; i <= pe; i++) premios.push(i);
+            } else { premios = [1]; }
+            sbRpc('aplicar_descarrego', {
+              p_sorteio_id:  Number(row.draw_id),
+              p_aposta_id:   Number(ap.id),
+              p_modalidade:  modalidade,
+              p_numero:      String(row.numbers || ''),
+              p_premios:     premios,
+              p_valor_total: Number(row.amount)
+            }).catch(function(e) { console.warn('[descarrego bg]', e && e.message); });
+          });
+        }, 0);
+        return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
+      });
   }
-  // Cotações
+  // Cotações (mantém Supabase)
   if (path.indexOf('/regions/quotations') === 0) {
     return sbGet('commission_settings', 'limit=1');
   }
   // Resultados publicados
   if (path === '/draws/results') {
-    return sbGet('sorteios', 'select=id,title,date,hora,result,status,extracao_id,extracoes(name)&status=eq.closed&order=date.desc,hora.desc&limit=30');
+    return _apiFetch('/sorteios?status=closed&limit=30');
   }
   // Caixa – apostas do vendedor hoje
   if (path === '/caixa/hoje') {
     var uid3 = st.user && st.user.id;
-    var hoje = new Date(); hoje.setHours(0,0,0,0);
-    var isoHoje = hoje.toISOString().split('T')[0];
-    return sbGet('apostas', 'user_id=eq.' + uid3 + '&created_at=gte.' + isoHoje + 'T00:00:00&order=created_at.desc&limit=500');
+    return _apiFetch('/apostas?user_id=' + uid3 + '&limit=500');
   }
   // Caixa – todas as apostas do vendedor
   if (path === '/caixa/geral') {
     var uid4 = st.user && st.user.id;
-    return sbGet('apostas', 'user_id=eq.' + uid4 + '&order=created_at.desc&limit=200');
+    return _apiFetch('/apostas?user_id=' + uid4 + '&limit=200');
   }
   // Buscar bilhete por código
   if (path.indexOf('/bets/ticket/') === 0) {
     var code = path.replace('/bets/ticket/', '');
-    return sbGet('apostas', 'ticket_code=eq.' + encodeURIComponent(code) + '&order=id.asc');
+    return _apiFetch('/apostas?ticket_code=' + encodeURIComponent(code));
   }
   // Trocar senha
   if (path === '/change-password') {
     var uid5 = st.user && st.user.id;
-    return sbRpc('trocar_senha_vendedor', { p_id: uid5, p_senha_atual: body.senha_atual, p_nova_senha: body.nova_senha });
+    return _apiFetch('/vendedores/' + uid5 + '/change-password', {
+      method: 'POST', body: JSON.stringify(body)
+    });
   }
   // Fallback
   return Promise.reject(new Error('Rota não mapeada: ' + path));
 }
+
 
 function apiPublic(path) { return api(path, {}); }
 
@@ -1010,6 +1036,7 @@ function doLogin() {
 
 function logout() {
   localStorage.removeItem('user');
+  localStorage.removeItem('jwt_token');
   st.user = null; st.apostas = [];
   go('s-login');
 }
