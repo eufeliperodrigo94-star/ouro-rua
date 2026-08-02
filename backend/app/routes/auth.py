@@ -3,12 +3,11 @@ from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel
 from jose import jwt
-from passlib.context import CryptContext
 from app.db import get_supabase
 from app.auth import get_current_user
+from app.password import verify_password
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class LoginRequest(BaseModel):
     phone: str
@@ -27,7 +26,7 @@ async def login(body: LoginRequest):
     if not user["is_active"]:
         raise HTTPException(status_code=401, detail="Usuário inativo")
 
-    if not pwd_context.verify(body.password, user["password_hash"]):
+    if not verify_password(body.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Senha incorreta")
 
     payload = {

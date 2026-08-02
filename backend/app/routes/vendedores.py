@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
-from passlib.context import CryptContext
 from app.db import get_supabase
 from app.auth import get_current_user
+from app.password import hash_password, verify_password
 
 router = APIRouter()
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 FIELDS = "id, name, phone, role, is_active, balance, commission_rate, cidade_id, gerente_id, created_at"
 
@@ -29,7 +28,7 @@ async def create_vendedor(body: dict, user=Depends(get_current_user)):
         raise HTTPException(status_code=400, detail="Dados incompletos")
     row = {
         "name": name, "phone": phone,
-        "password_hash": pwd_context.hash(password),
+        "password_hash": hash_password(password),
         "role": body.get("role", "cambista"),
         "commission_rate": body.get("commission_rate"),
         "cidade_id": body.get("cidade_id"),
@@ -43,7 +42,7 @@ async def create_vendedor(body: dict, user=Depends(get_current_user)):
 async def update_vendedor(vendedor_id: int, body: dict, user=Depends(get_current_user)):
     updates = dict(body)
     if "password" in updates:
-        updates["password_hash"] = pwd_context.hash(updates.pop("password"))
+        updates["password_hash"] = hash_password(updates.pop("password"))
     updates.pop("id", None)
     res = get_supabase().table("vendedores").update(updates).eq("id", vendedor_id).execute()
     return res.data[0] if res.data else {}
@@ -64,7 +63,7 @@ async def change_password(vendedor_id: int, body: dict, user=Depends(get_current
     if not res.data:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")
     if body.get("senha_atual"):
-        if not pwd_context.verify(body["senha_atual"], res.data[0]["password_hash"]):
+        if not verify_password(body["senha_atual"], res.data[0]["password_hash"]):
             raise HTTPException(status_code=401, detail="Senha atual incorreta")
-    get_supabase().table("vendedores").update({"password_hash": pwd_context.hash(nova_senha)}).eq("id", vendedor_id).execute()
+    get_supabase().table("vendedores").update({"password_hash": hash_password(nova_senha)}).eq("id", vendedor_id).execute()
     return {"ok": True}
