@@ -2,8 +2,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from datetime import datetime
-from fastapi import FastAPI
+import traceback
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from app.routes import auth, sorteios, apostas, modalidades, modality_settings, vendedores, relatorios, cidades, extracoes
 
 app = FastAPI(title="Ouro Rua API", version="2.0.0")
@@ -15,6 +17,13 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.exception_handler(Exception)
+async def debug_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"error": str(exc), "type": type(exc).__name__, "traceback": traceback.format_exc()}
+    )
 
 @app.get("/")
 async def root():
