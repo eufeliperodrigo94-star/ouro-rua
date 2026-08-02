@@ -21,6 +21,7 @@ app.use('/auth',        require('./routes/auth'));
 app.use('/sorteios',    require('./routes/sorteios'));
 app.use('/apostas',     require('./routes/apostas'));
 app.use('/modalidades', require('./routes/modalidades'));
+app.use('/modality-settings', require('./routes/modalidadeSettings'));
 app.use('/vendedores',  require('./routes/vendedores'));
 app.use('/relatorios',  require('./routes/relatorios'));
 app.use('/cidades',     require('./routes/cidades'));

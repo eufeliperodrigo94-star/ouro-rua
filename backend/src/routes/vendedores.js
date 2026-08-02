@@ -68,3 +68,30 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 module.exports = router;
+
+// POST /vendedores/:id/change-password
+router.post('/:id/change-password', auth, async (req, res) => {
+  try {
+    const id = parseInt(req.params.id);
+    // Só pode trocar a própria senha (ou admin)
+    if (req.user.role !== 'admin' && req.user.id !== id)
+      return res.status(403).json({ error: 'Sem permissão' });
+
+    const { senha_atual, nova_senha } = req.body;
+    if (!nova_senha) return res.status(400).json({ error: 'Nova senha obrigatória' });
+
+    const { data: users } = await supabase.from('vendedores')
+      .select('password_hash').eq('id', id).limit(1);
+    if (!users || !users.length) return res.status(404).json({ error: 'Usuário não encontrado' });
+
+    if (senha_atual) {
+      const ok = await bcrypt.compare(senha_atual, users[0].password_hash);
+      if (!ok) return res.status(401).json({ error: 'Senha atual incorreta' });
+    }
+
+    const password_hash = await bcrypt.hash(nova_senha, 10);
+    const { error } = await supabase.from('vendedores').update({ password_hash }).eq('id', id);
+    if (error) return res.status(400).json({ error: error.message });
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
