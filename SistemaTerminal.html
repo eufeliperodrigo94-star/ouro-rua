@@ -898,7 +898,7 @@ function api(path, opts) {
         numbers:      typeof b.numbers === 'string' ? b.numbers : String(b.numbers || ''),
         amount:       b.amount,
         total_amount: b.amount,
-        prize_amount: 0,
+        prize_amount: parseFloat((b.amount * (b.multiplier || 0)).toFixed(2)),
         status:       'pending',
         ticket_code:  ticketCode
       };
@@ -2451,7 +2451,7 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
       var tot     = a.modo === 'd' ? v : (v * cnt * nP_a * f);
       if (!mergedMap[bt]) {
         mergedMap[bt] = { plabel: prizeLabel(a), valor: 0, totBet: 0, _cm: cm, _count: cnt, _factor: f, _modo: a.modo,
-                          _pini: ini_a, _psel: fim_a, _entrada: a.entrada, _mod: a.mod };
+                          _pini: ini_a, _psel: fim_a, _entrada: a.entrada, _mod: a.mod, _multiplier: Number(a.mod && (a.mod.multiplier || a.mod.cotacao)) || 0 };
         mergedOrder.push(bt);
       }
       mergedMap[bt].valor  += v;
@@ -2476,6 +2476,11 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
         totalDisp = m.valor;
       }
       t += cmLbl + ' x ' + brNum(unit) + ' = ' + brNum(totalDisp) + '\n';
+      // Prêmio potencial por número
+      var _pMult = Number(m._mod && (m._mod.multiplier || m._mod.cotacao)) || 0;
+      if (_pMult > 0 && unit > 0) {
+        t += 'SE GANHAR: R$' + brNum(unit * _pMult) + '\n';
+      }
     });
 
     t += SEP + '\n';
