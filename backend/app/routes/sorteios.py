@@ -43,7 +43,7 @@ async def update_sorteio(sorteio_id: int, body: dict, user=Depends(get_current_u
 @router.post("/{sorteio_id}/resultado")
 async def processar_resultado(sorteio_id: int, body: dict, user=Depends(get_current_user)):
     resultado = body.get("resultado")
-    get_supabase().table("sorteios").update({"resultado": resultado, "status": "closed"}) \
+    get_supabase().table("sorteios").update({"result": resultado, "status": "closed"}) \
         .eq("id", sorteio_id).execute()
     get_supabase().table("apostas").update({"status": "pending", "prize_amount": 0}) \
         .eq("draw_id", sorteio_id).in_("status", ["pending", "won", "lost"]).execute()
