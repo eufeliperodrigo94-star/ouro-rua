@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from typing import Optional, List
 from app.db import get_supabase
 from app.auth import get_current_user
+from app.routes.risco import check_risco
 
 router = APIRouter()
 
@@ -32,21 +33,29 @@ async def batch_apostas(apostas: List[dict], user=Depends(get_current_user)):
 
     rows = []
     for a in apostas:
+        draw_id      = a.get("draw_id")
+        bet_type     = a.get("bet_type", "")
+        total_amount = float(a.get("total_amount", a.get("amount", 0)) or 0)
+
+        # ── Motor de Risco ──────────────────────────────────────────
+        if draw_id and bet_type:
+            check_risco(draw_id, bet_type, total_amount)
+        # ────────────────────────────────────────────────────────────
+
         rows.append({
             "user_id":      user["id"] if user["role"] == "cambista" else a.get("user_id", user["id"]),
             "user_phone":   a.get("user_phone") or user.get("phone"),
-            "draw_id":      a.get("draw_id"),
-            "bet_type":     a.get("bet_type"),
+            "draw_id":      draw_id,
+            "bet_type":     bet_type,
             "numbers":      a.get("numbers"),
             "amount":       a.get("amount"),
-            "total_amount": a.get("total_amount", a.get("amount")),
+            "total_amount": total_amount,
             "prize_amount": 0,
             "status":       "pending",
             "ticket_code":  a.get("ticket_code"),
         })
 
-    res = get_supabase().table("apostas").insert(rows) \
-        .execute()
+    res = get_supabase().table("apostas").insert(rows).execute()
     inserted = res.data or []
     return {"inserted": len(inserted), "apostas": inserted}
 

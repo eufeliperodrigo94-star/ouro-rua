@@ -6,7 +6,7 @@ import traceback
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from app.routes import auth, sorteios, apostas, modalidades, modality_settings, vendedores, relatorios, cidades, extracoes
+from app.routes import auth, sorteios, apostas, modalidades, modality_settings, vendedores, relatorios, cidades, extracoes, risco
 
 app = FastAPI(title="Ouro Rua API", version="2.0.0")
 
@@ -42,3 +42,4 @@ app.include_router(vendedores.router,        prefix="/vendedores")
 app.include_router(relatorios.router,        prefix="/relatorios")
 app.include_router(cidades.router,           prefix="/cidades")
 app.include_router(extracoes.router,         prefix="/extracoes")
+app.include_router(risco.router,              prefix="/risco", tags=["risco"])
