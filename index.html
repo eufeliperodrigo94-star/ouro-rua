@@ -555,8 +555,8 @@
   </div>
 
   <div>
-    <div style="font-weight:600;margin-bottom:8px;color:#555;font-size:13px;">📈 Últimos 7 dias — Vendas (verde) vs Prêmios (vermelho)</div>
-    <div id="dash-chart" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:16px;min-height:130px;"></div>
+    <div style="font-weight:600;margin-bottom:8px;color:#555;font-size:13px;">📊 Últimos 7 dias — Resumo Financeiro</div>
+    <div id="dash-chart" style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:12px;"></div>
   </div>
 </div>
 
@@ -2238,23 +2238,69 @@ function _loadDash7Dias(){
         byDay[d].e+=parseFloat(b.total_amount||0);
         byDay[d].p+=parseFloat(b.prize_amount||0);
       });
-      var maxV=Math.max(1,Math.max.apply(null,dias.map(function(d){return byDay[d].e;})));
+            // ── Donut chart ──────────────────────────────────────────
+      var totalV=0,totalP=0;
+      dias.forEach(function(d){totalV+=byDay[d].e;totalP+=byDay[d].p;});
+      var lucro=Math.max(0,totalV-totalP);
       var chart=document.getElementById('dash-chart');
-      chart.innerHTML='<div class="dash-bar-wrap">'+
-        dias.map(function(d){
-          var e=byDay[d].e,p=byDay[d].p;
-          var hE=Math.max(2,Math.round(e/maxV*90)),hP=Math.max(2,Math.round(p/maxV*90));
-          var lbl=d.slice(5).replace('-','/');
-          return '<div class="dash-bar"><div style="display:flex;gap:2px;align-items:flex-end;height:100px;">'
-            +'<div class="dash-bar-fill" style="background:#2E7D32;height:'+hE+'px;width:14px;" title="'+fmtBRL(e)+'"></div>'
-            +'<div class="dash-bar-fill" style="background:#e53935;height:'+hP+'px;width:14px;" title="'+fmtBRL(p)+'"></div>'
-            +'</div><div class="dash-bar-lbl">'+lbl+'</div></div>';
-        }).join('')
-      +'</div>'
-      +'<div style="display:flex;gap:16px;margin-top:8px;padding-left:8px;font-size:11px;color:#666;">'
-      +'<span><span style="display:inline-block;width:12px;height:12px;background:#2E7D32;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Vendas</span>'
-      +'<span><span style="display:inline-block;width:12px;height:12px;background:#e53935;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Prêmios</span>'
-      +'</div>';
+
+      // SVG donut
+      var R=54,cx=70,cy=70,stroke=22;
+      var perim=2*Math.PI*R;
+      var pctV=totalV>0?totalV/(totalV||1):0;
+      var pctP=totalV>0?Math.min(totalP/totalV,1):0;
+      var pctL=totalV>0?Math.max(0,lucro/totalV):0;
+      // segments: Vendas(total arc), Premios(red), Lucro(blue)
+      var segP=pctP*perim, segL=pctL*perim, segV=Math.max(0,(1-pctP-pctL))*perim;
+      // offsets (start from top = -25% = -perim*0.25)
+      var off0=perim*0.25;
+      var offP=off0;
+      var offL=offP-segP;
+      var offVr=offL-segL;
+
+      // Bar rows for last 7 days
+      var maxDay=Math.max(1,Math.max.apply(null,dias.map(function(d){return byDay[d].e;})));
+      var barRows=dias.map(function(d){
+        var e=byDay[d].e,p=byDay[d].p;
+        var wE=Math.round(e/maxDay*100),wP=Math.round(p/maxDay*100);
+        var lbl=d.slice(5).replace('-','/');
+        return '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'
+          +'<span style="font-size:10px;color:#888;width:32px;flex-shrink:0;">'+lbl+'</span>'
+          +'<div style="flex:1;height:8px;background:#f0f0f0;border-radius:4px;overflow:hidden;position:relative;">'
+          +'<div style="position:absolute;left:0;top:0;height:100%;width:'+wE+'%;background:#2E7D32;border-radius:4px;"></div>'
+          +'<div style="position:absolute;left:0;top:0;height:100%;width:'+wP+'%;background:#e53935;border-radius:4px;opacity:0.7;"></div>'
+          +'</div>'
+          +'<span style="font-size:10px;color:#555;width:54px;text-align:right;">'+fmtBRL(e)+'</span>'
+          +'</div>';
+      }).join('');
+
+      chart.innerHTML=
+        '<div style="display:flex;gap:16px;align-items:center;">'
+        // Donut SVG
+        +'<svg width="140" height="140" viewBox="0 0 140 140" style="flex-shrink:0;">'
+        +'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#e0e0e0" stroke-width="'+stroke+'"/>'
+        // Prêmios arc (red)
+        +(totalP>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#e53935" stroke-width="'+stroke+'" stroke-dasharray="'+segP+' '+perim+'" stroke-dashoffset="'+offP+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
+        // Lucro arc (blue)
+        +(lucro>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#1565C0" stroke-width="'+stroke+'" stroke-dasharray="'+segL+' '+perim+'" stroke-dashoffset="'+offL+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
+        // Vendas restante arc (green)
+        +(totalV>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#2E7D32" stroke-width="'+stroke+'" stroke-dasharray="'+segVr+' '+perim+'" stroke-dashoffset="'+offVr+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
+        // center text
+        +'<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="10" fill="#888">Vendas</text>'
+        +'<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="13" font-weight="bold" fill="#2E7D32">'+fmtBRL(totalV)+'</text>'
+        +'<text x="'+cx+'" y="'+(cy+20)+'" text-anchor="middle" font-size="9" fill="#aaa">7 dias</text>'
+        +'</svg>'
+        // Right: legend + mini bars
+        +'<div style="flex:1;min-width:0;">'
+        +'<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;">'
+        +'<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#2E7D32;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="font-size:12px;color:#555;">Vendas</span><span style="margin-left:auto;font-weight:700;font-size:12px;color:#2E7D32;">'+fmtBRL(totalV)+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#e53935;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="font-size:12px;color:#555;">Prêmios</span><span style="margin-left:auto;font-weight:700;font-size:12px;color:#e53935;">'+fmtBRL(totalP)+'</span></div>'
+        +'<div style="display:flex;align-items:center;gap:6px;"><span style="width:10px;height:10px;background:#1565C0;border-radius:50%;display:inline-block;flex-shrink:0;"></span><span style="font-size:12px;color:#555;">Lucro</span><span style="margin-left:auto;font-weight:700;font-size:12px;color:#1565C0;">'+fmtBRL(lucro)+'</span></div>'
+        +'</div>'
+        +'<div style="font-size:10px;color:#999;margin-bottom:4px;font-weight:600;">Por dia:</div>'
+        +barRows
+        +'</div>'
+        +'</div>';
     })
     .catch(function(){document.getElementById('dash-chart').innerHTML='<p style="color:#aaa;text-align:center;padding:30px;">Erro ao carregar gráfico</p>';});
 }
