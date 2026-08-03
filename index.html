@@ -1443,7 +1443,7 @@
     </div>
     <div class="form-row">
       <label>Minutos antes do sorteio para fechar:</label>
-      <input type="number" id="par-min-fechamento" min="0" max="60" style="width:100px;">
+      <input type="number" id="par-minutos-fechamento" min="0" max="60" style="width:100px;">
     </div>
     <div class="form-row">
       <label>Limite Venda por Vendedor/Dia (R$):</label>
@@ -4075,17 +4075,36 @@ function loadFechamento() {
    ============================================================== */
 var _parAtalhos = ['Milhar','Centena','Grupo','Dezena','Seninha','Quina','PT','Duque G','Terno G'];
 function initParametros() {
-  // Load from system_config
-  fetch(SB_URL+'/rest/v1/system_config?limit=100',{headers:_sbH()}).then(_sbResp).then(function(rows){
-    (rows||[]).forEach(function(r){
-      var el = document.getElementById('par-'+r.key.replace(/_/g,'-'));
-      if (el) el.value = r.value;
-    });
-  }).catch(function(){});
+  // Mapa direto: key do BD → id do campo HTML
+  var KEY_MAP = {
+    nome_banca:           'par-nome',
+    msg_rodape:           'par-rodape',
+    limite_pos:           'par-limite-pos',
+    limite_diario:        'par-limite-diario',
+    usa_seninha:          'par-seninha',
+    limite_cons:          'par-limite-cons',
+    consulta_premiada:    'par-cons-prem',
+    validade_poule:       'par-validade',
+    msg_consulta_prem:    'par-msg-cons',
+    apostas_ativas:       'par-apostas-ativas',
+    minutos_fechamento:   'par-minutos-fechamento',
+    limite_venda_diario:  'par-limite-venda-diario',
+    limite_premio_auto:   'par-limite-premio-auto',
+    valor_aprovacao_manual:'par-valor-aprovacao-manual',
+    auto_refresh_segundos:'par-auto-refresh-segundos'
+  };
+  fetch(SB_URL+'/rest/v1/system_config?limit=100',{headers:_sbH()})
+    .then(_sbResp).then(function(rows){
+      (rows||[]).forEach(function(r){
+        var elId = KEY_MAP[r.key] || ('par-'+r.key.replace(/_/g,'-'));
+        var el = document.getElementById(elId);
+        if (el) el.value = r.value || '';
+      });
+    }).catch(function(e){ console.warn('initParametros:', e.message); });
 
   // Build atalhos
   var wrap = document.getElementById('par-atalhos');
-  wrap.innerHTML = _parAtalhos.map(function(a,i){
+  if (wrap) wrap.innerHTML = _parAtalhos.map(function(a,i){
     return '<div style="display:flex;align-items:center;gap:6px;">' +
       '<label style="font-size:12px;color:#888;min-width:80px;">Atalho '+(i+1)+':</label>' +
       '<input type="text" id="par-atalho-'+i+'" value="'+a+'" style="flex:1;border:1px solid #ccc;border-radius:4px;padding:5px 8px;font-size:13px;">' +
@@ -4096,42 +4115,39 @@ function saveParametros() {
   var msg = document.getElementById('par-msg');
   msg.style.color='#888'; msg.textContent='Salvando...';
 
+  function g(id){ var el=document.getElementById(id); return el?el.value:''; }
+
   var configs = [
-    {key:'nome_banca', val:document.getElementById('par-nome').value},
-    {key:'msg_rodape', val:document.getElementById('par-rodape').value},
-    {key:'limite_pos', val:document.getElementById('par-limite-pos').value},
-    {key:'limite_diario', val:document.getElementById('par-limite-diario').value},
-    {key:'usa_seninha', val:document.getElementById('par-seninha').value},
-    {key:'limite_cons', val:document.getElementById('par-limite-cons').value},
-    {key:'consulta_premiada', val:document.getElementById('par-cons-prem').value},
-    {key:'validade_poule', val:document.getElementById('par-validade').value},
-    {key:'msg_consulta_prem', val:document.getElementById('par-msg-cons').value},
-    {key:'apostas_ativas', val:document.getElementById('par-apostas-ativas').value},
-    {key:'minutos_fechamento', val:document.getElementById('par-minutos-fechamento').value},
-    {key:'limite_venda_diario', val:document.getElementById('par-limite-venda-diario').value},
-    {key:'limite_premio_auto', val:document.getElementById('par-limite-premio-auto').value},
-    {key:'valor_aprovacao_manual', val:document.getElementById('par-valor-aprovacao-manual').value},
-    {key:'auto_refresh_segundos', val:document.getElementById('par-auto-refresh-segundos').value}
+    {key:'nome_banca',            value: g('par-nome')},
+    {key:'msg_rodape',            value: g('par-rodape')},
+    {key:'limite_pos',            value: g('par-limite-pos')},
+    {key:'limite_diario',         value: g('par-limite-diario')},
+    {key:'usa_seninha',           value: g('par-seninha')},
+    {key:'limite_cons',           value: g('par-limite-cons')},
+    {key:'consulta_premiada',     value: g('par-cons-prem')},
+    {key:'validade_poule',        value: g('par-validade')},
+    {key:'msg_consulta_prem',     value: g('par-msg-cons')},
+    {key:'apostas_ativas',        value: g('par-apostas-ativas')},
+    {key:'minutos_fechamento',    value: g('par-minutos-fechamento')},
+    {key:'limite_venda_diario',   value: g('par-limite-venda-diario')},
+    {key:'limite_premio_auto',    value: g('par-limite-premio-auto')},
+    {key:'valor_aprovacao_manual',value: g('par-valor-aprovacao-manual')},
+    {key:'auto_refresh_segundos', value: g('par-auto-refresh-segundos')}
   ];
-  // Add atalhos
+
   _parAtalhos.forEach(function(a,i){
     var el=document.getElementById('par-atalho-'+i);
-    if(el) configs.push({key:'atalho_'+i,val:el.value});
+    if(el) configs.push({key:'atalho_'+i, value:el.value});
   });
 
-  var p = configs.map(function(c){
-    return fetch(SB_URL+'/rest/v1/system_config?key=eq.'+c.key,{method:'PATCH',
-      headers:_sbH({Prefer:'return=minimal'}),
-      body:JSON.stringify({value:c.val,updated_at:new Date().toISOString()})
-    }).then(function(r){
-      // If no row updated, insert
-      if(r.status===200||r.status===204) return;
-      return fetch(SB_URL+'/rest/v1/system_config',{method:'POST',headers:_sbH({Prefer:'return=minimal'}),body:JSON.stringify({key:c.key,value:c.val})});
-    });
-  });
-
-  Promise.all(p).then(function(){
-    msg.style.color='#2E7D32'; msg.textContent='✓ Parâmetros salvos!';
+  // Upsert em batch via Prefer: resolution=merge-duplicates
+  fetch(SB_URL+'/rest/v1/system_config', {
+    method: 'POST',
+    headers: _sbH({'Prefer':'resolution=merge-duplicates,return=minimal'}),
+    body: JSON.stringify(configs)
+  }).then(function(r){
+    if(r.ok){ msg.style.color='#2E7D32'; msg.textContent='✓ Parâmetros salvos!'; }
+    else r.text().then(function(t){ msg.style.color='#e53935'; msg.textContent='✗ '+t; });
   }).catch(function(e){ msg.style.color='#e53935'; msg.textContent='✗ '+e.message; });
 }
 
