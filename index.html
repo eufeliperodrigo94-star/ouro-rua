@@ -2284,7 +2284,7 @@ function _loadDash7Dias(){
         // Lucro arc (blue)
         +(lucro>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#1565C0" stroke-width="'+stroke+'" stroke-dasharray="'+segL+' '+perim+'" stroke-dashoffset="'+offL+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
         // Vendas restante arc (green)
-        +(totalV>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#2E7D32" stroke-width="'+stroke+'" stroke-dasharray="'+segVr+' '+perim+'" stroke-dashoffset="'+offVr+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
+        +(totalV>0?'<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="#2E7D32" stroke-width="'+stroke+'" stroke-dasharray="'+segV+' '+perim+'" stroke-dashoffset="'+offVr+'" transform="rotate(-90 '+cx+' '+cy+')" stroke-linecap="butt"/>':'')
         // center text
         +'<text x="'+cx+'" y="'+(cy-8)+'" text-anchor="middle" font-size="10" fill="#888">Vendas</text>'
         +'<text x="'+cx+'" y="'+(cy+6)+'" text-anchor="middle" font-size="13" font-weight="bold" fill="#2E7D32">'+fmtBRL(totalV)+'</text>'
