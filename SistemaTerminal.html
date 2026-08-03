@@ -981,8 +981,29 @@ function toArray(data) {
 var st = {
   user: null, draw: null, mod: null,
   grupos: [], nums: '', nList: [], val: '', modo: 'd', entrada: null,
-  apostas: [], premioSel: 1, premioInicio: 1
+  apostas: [], premioSel: 1, premioInicio: 1,
+  _drawsCache: null, _drawsCacheTime: 0,
+  _modsCache: null
 };
+
+// ─── Pré-carregamento paralelo ───────────────────────────────────────────────
+var DRAWS_CACHE_TTL = 120000; // 2 minutos
+
+function prefetchDraws() {
+  return apiPublic('/draws').then(function(data) {
+    st._drawsCache = data;
+    st._drawsCacheTime = Date.now();
+  }).catch(function() {});
+}
+
+function prefetchAll() {
+  // Carrega sorteios e modalidades em paralelo sem bloquear UI
+  prefetchDraws();
+  sbGet('v_modalidades_ativas', 'order=ordem_exibicao').then(function(rows) {
+    var lista = Array.isArray(rows) ? rows : (rows && rows.data ? rows.data : []);
+    if (lista.length) { st._modsCache = lista; ModalidadesEngine.registrarTodas(lista); }
+  }).catch(function() {});
+}
 
 // ─── Navegação ────────────────────────────────────────────────────────────────
 function go(id) {
@@ -1006,7 +1027,7 @@ function pad(n) { return n < 10 ? '0'+n : ''+n; }
   if (user) {
     try {
       st.user = JSON.parse(user);
-      if (st.user && st.user.id) { updateUI(); go('s-main'); }
+      if (st.user && st.user.id) { updateUI(); go('s-main'); prefetchAll(); }
     } catch(e) {}
   }
 })();
@@ -1026,9 +1047,10 @@ function doLogin() {
       localStorage.setItem('user', JSON.stringify(data.user));
       st.user = data.user;
       updateUI();
-      loadModalidades();
       document.getElementById('inp-pass').value = '';
       go('s-main');
+      // Pré-carrega sorteios + modalidades em paralelo (sem bloquear UI)
+      prefetchAll();
     })
     .catch(function(e) { errEl.textContent = e.message; })
     .finally(function() { btn.disabled = false; btn.textContent = 'ENTRAR'; });
@@ -1062,8 +1084,24 @@ function refreshMe() {
 // ─── Sorteios ────────────────────────────────────────────────────────────────
 function loadDraws() {
   var el = document.getElementById('list-ext');
+  var ageCacheMs = Date.now() - st._drawsCacheTime;
+  // Usa cache se fresco (< 2 min) e renderiza instantaneamente
+  if (st._drawsCache && ageCacheMs < DRAWS_CACHE_TTL) {
+    renderDraws(el, st._drawsCache);
+    // Atualiza cache em background silenciosamente
+    if (ageCacheMs > 30000) prefetchDraws();
+    return;
+  }
   el.innerHTML = '<div class="msg-load">Carregando sorteios...</div>';
   apiPublic('/draws').then(function(data) {
+    renderDraws(el, data);
+  }).catch(function(e) {
+    el.innerHTML = '<div class="msg-err">' + e.message +
+      '<br><br><button onclick="loadDraws()" style="padding:8px 20px;background:#1565C0;color:#FFF;border:none;border-radius:6px;font-size:14px">Tentar novamente</button></div>';
+  });
+}
+
+function renderDraws(el, data) {
     var lista   = toArray(data);
     var agora   = new Date();
     // Supabase: status=open; compatível com status=pending também
@@ -1117,10 +1155,6 @@ function loadDraws() {
       }
       el.appendChild(btn);
     });
-  }).catch(function(e) {
-    el.innerHTML = '<div class="msg-err">' + e.message +
-      '<br><br><button onclick="loadDraws()" style="padding:8px 20px;background:#1565C0;color:#FFF;border:none;border-radius:6px;font-size:14px">Tentar novamente</button></div>';
-  });
 }
 
 // ─── Modalidades ─────────────────────────────────────────────────────────────
