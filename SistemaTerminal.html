@@ -474,6 +474,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
 .barcode-hint {
   text-align: center; font-size: 12px; color: #888; margin-bottom: 8px;
 }
+.premio-grp-lbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;padding:0 2px}.premio-grp-sep{width:100%;height:0;flex-basis:100%}.btn-premio.faixa{background:#1B4332!important;border-color:#2E7D32!important;color:#A5D6A7!important}.btn-premio.faixa.on{background:#2E7D32!important;color:#fff!important}
 </style>
 <script>
 /* ── Service Worker: cache-first para carregamento rápido offline ── */
@@ -519,14 +520,9 @@ if ('serviceWorker' in navigator) {
   <div class="scroll-y">
     <button class="btn-vender" onclick="go('s-ext')">🍀  Vender</button>
     <div class="menu-grid">
-      <button class="btn-mn" style="background:#E53935" onclick="go('s-rsm')"><span class="mn-ico">🎫</span>Bilhete</button>
       <button class="btn-mn" style="background:#1E88E5" onclick="abrirResultados()"><span class="mn-ico">📋</span>Resultado</button>
       <button class="btn-mn" style="background:#FB8C00" onclick="abrirRepetir()"><span class="mn-ico">🔁</span>Repetir</button>
       <button class="btn-mn" style="background:#FF6D00" onclick="abrirCaixa()"><span class="mn-ico">💰</span>Caixa</button>
-      <button class="btn-mn" style="background:#8E24AA" onclick="aviso('Impressora')"><span class="mn-ico">🖨️</span>Impressora</button>
-      <button class="btn-mn" style="background:#D81B60" onclick="aviso('Regulamento')"><span class="mn-ico">📜</span>Regulamento</button>
-      <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
-      <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
       <button class="btn-mn" style="background:#1565C0" onclick="abrirConsultaBilhete()"><span class="mn-ico">🔍</span>Consultar</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
@@ -714,7 +710,6 @@ if ('serviceWorker' in navigator) {
   </div>
   <div class="scroll-y" style="padding:12px">
     <div class="barcode-icon">▌▊▌▌▊▌▊▌</div>
-    <div class="barcode-hint">Aponte o leitor ou digite o código do bilhete</div>
     <input type="text" class="bil-cons-inp" id="cons-codigo"
       placeholder="Ex: BIL-00001"
       oninput="this.value=this.value.toUpperCase()"
@@ -771,8 +766,8 @@ if ('serviceWorker' in navigator) {
 
 <script>
 // ─── Config Supabase ──────────────────────────────────────────────────────────
-var SB_URL = 'https://kopdmeuihtkmpisaedxo.supabase.co';
-var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE';
+var SB_URL = ''; // removido — backend agora faz chamadas ao Supabase
+var SB_KEY = ''; // removido — chave não exposta ao browser
 
 // ─── Helpers Supabase (XHR — compatível com WebView antiga) ──────────────────
 function _xhr(method, url, headers, body) {
@@ -818,12 +813,40 @@ function sbPost(table, body) {
 
 // Gera código de bilhete único (ticket_code)
 function gerarTicketCode() {
-  var ts  = Date.now().toString(36).toUpperCase();
-  var rnd = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return 'SO-' + ts + '-' + rnd;
+  // 8 dígitos puramente aleatórios (90 milhões de combinações)
+  return String(Math.floor(10000000 + Math.random() * 90000000));
 }
 
-// ─── Compatibilidade: api() e apiPublic() redirecionam para Supabase ──────────
+// ─── API: chamadas reais ao backend VPS ──────────────────────────────────────
+var API_URL = 'https://ouro-rua-api.azfexe.easypanel.host';
+
+function _apiToken() {
+  return localStorage.getItem('jwt_token') || '';
+}
+
+function _apiFetch(path, opts) {
+  opts = opts || {};
+  var token = _apiToken();
+  var headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  return fetch(API_URL + path, {
+    method: opts.method || 'GET',
+    headers: headers,
+    body: opts.body || undefined
+  }).then(function(r) {
+    if (r.status === 401) {
+      localStorage.removeItem('jwt_token');
+      localStorage.removeItem('user');
+      go('s-login');
+      throw new Error('Sessão expirada. Faça login novamente.');
+    }
+    return r.json();
+  }).then(function(d) {
+    if (d && d.error) throw new Error(d.error);
+    return d;
+  });
+}
+
 function api(path, opts) {
   opts = opts || {};
   var method = opts.method || 'GET';
@@ -831,116 +854,98 @@ function api(path, opts) {
 
   // Login
   if (path === '/login') {
-    return sbRpc('vendedor_login', { p_phone: body.phone, p_password: body.password })
-      .then(function(u) {
-        if (!u || !u.id) throw new Error('Credenciais inválidas');
-        return { token: 'sb_ok', user: u };
+    return _apiFetch('/auth/login', { method: 'POST', body: JSON.stringify(body) })
+      .then(function(data) {
+        localStorage.setItem('jwt_token', data.token);
+        return data;
       });
   }
   // Perfil
   if (path === '/me') {
-    var uid = st.user && st.user.id;
-    if (!uid) return Promise.resolve(null);
-    return sbGet('vendedores', 'id=eq.' + uid + '&select=*').then(function(r) {
-      return Array.isArray(r) ? r[0] : r;
-    });
+    return _apiFetch('/auth/me').then(function(d) { return d.user || d; });
   }
-  // Sorteios
+  // Sorteios abertos
   if (path === '/draws') {
-    return sbGet('sorteios', 'select=*,extracoes(name)&status=eq.open&order=date.desc,hora.asc&limit=20');
+    return _apiFetch('/sorteios?status=open&limit=20');
   }
-  // Modalidades
+  // Modalidades ativas
   if (path === '/modality-settings') {
-    return sbGet('modality_settings', 'is_active=eq.true&order=id.asc');
+    return _apiFetch('/modality-settings');
   }
-  // Histórico
+  // Histórico de apostas
   if (path === '/bets/my-bets') {
-    var uid2 = st.user && st.user.id;
-    return sbGet('apostas', 'user_id=eq.' + uid2 + '&order=created_at.desc&limit=15');
+    var uid = st.user && st.user.id;
+    return _apiFetch('/apostas?user_id=' + uid + '&limit=15');
   }
-  // Batch de apostas → INSERT em lote no Supabase
+  // Batch de apostas (insere via backend, descarrego via Supabase direto)
   if (path === '/bets/batch') {
-    var payload  = body;
+    var payload    = body;
     var ticketCode = gerarTicketCode();
-    var userId   = st.user ? st.user.id : null;
-    var userPhone= st.user ? st.user.phone : null;
-    var rows     = (payload.bets || []).map(function(b) {
+    var userId     = st.user ? st.user.id : null;
+    var userPhone  = st.user ? st.user.phone : null;
+    var rows = (payload.bets || []).map(function(b) {
       return {
         user_id:      userId,
         user_phone:   userPhone,
-        draw_id:      b.draw_id || null,
+        draw_id:      b.draw_id   || null,
         bet_type:     b.bet_type,
         numbers:      typeof b.numbers === 'string' ? b.numbers : String(b.numbers || ''),
         amount:       b.amount,
         total_amount: b.amount,
         prize_amount: 0,
         status:       'pending',
-        ticket_code:  ticketCode
+        ticket_code:  ticketCode,
+        premio_ini:   b.premioInicio || 1,
+        premio_fim:   b.premioSel    || 1
       };
     });
-    return sbPost('apostas', rows).then(function(apostasRes) {
-      var total = (payload.bets || []).reduce(function(s, b) { return s + b.amount; }, 0);
-      // ── Descarrego assíncrono: confirma bilhete IMEDIATAMENTE, descarrego roda em background ──
-      var inserted = Array.isArray(apostasRes) ? apostasRes : [];
-      setTimeout(function() {
-        rows.forEach(function(row, idx) {
-          var ap = inserted[idx];
-          if (!ap || !ap.id) return;
-          var bt = (row.bet_type || '').toLowerCase();
-          var modalidade = bt.replace(/_\d+(?:_\d+)?$/, '') || bt;
-          var pm = bt.match(/_(\d+)(?:_(\d+))?$/);
-          var premios = [];
-          if (pm) {
-            var ps = parseInt(pm[1]), pe = pm[2] ? parseInt(pm[2]) : ps;
-            for (var i = ps; i <= pe; i++) premios.push(i);
-          } else { premios = [1]; }
-          sbRpc('aplicar_descarrego', {
-            p_sorteio_id:  Number(row.draw_id),
-            p_aposta_id:   Number(ap.id),
-            p_modalidade:  modalidade,
-            p_numero:      String(row.numbers || ''),
-            p_premios:     premios,
-            p_valor_total: Number(row.amount)
-          }).catch(function(e) { console.warn('[descarrego bg]', e && e.message); });
-        });
-      }, 0); // fire-and-forget: não bloqueia resposta ao terminal
-      // Retorna confirmação imediata
-      return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
-    });
+    return _apiFetch('/apostas/batch', { method: 'POST', body: JSON.stringify(rows) })
+      .then(function(res) {
+        var inserted = (res && res.apostas) ? res.apostas : [];
+        var total    = rows.reduce(function(s, r) { return s + Number(r.amount); }, 0);
+        // Descarrego aplicado server-side pelo backend
+        return { ticketId: ticketCode, ticket_id: ticketCode, totalAmount: total, total_amount: total };
+      });
   }
-  // Cotações
+  // Cotações (mantém Supabase)
   if (path.indexOf('/regions/quotations') === 0) {
-    return sbGet('commission_settings', 'limit=1');
+    return _apiFetch('/commission-settings');
   }
   // Resultados publicados
   if (path === '/draws/results') {
-    return sbGet('sorteios', 'select=id,title,date,hora,result,status,extracao_id,extracoes(name)&status=eq.closed&order=date.desc,hora.desc&limit=30');
+    return _apiFetch('/sorteios?status=closed&limit=30');
   }
   // Caixa – apostas do vendedor hoje
   if (path === '/caixa/hoje') {
     var uid3 = st.user && st.user.id;
-    var hoje = new Date(); hoje.setHours(0,0,0,0);
-    var isoHoje = hoje.toISOString().split('T')[0];
-    return sbGet('apostas', 'user_id=eq.' + uid3 + '&created_at=gte.' + isoHoje + 'T00:00:00&order=created_at.desc&limit=500');
+    return _apiFetch('/apostas?user_id=' + uid3 + '&limit=500');
   }
   // Caixa – todas as apostas do vendedor
   if (path === '/caixa/geral') {
     var uid4 = st.user && st.user.id;
-    return sbGet('apostas', 'user_id=eq.' + uid4 + '&order=created_at.desc&limit=200');
+    return _apiFetch('/apostas?user_id=' + uid4 + '&limit=200');
   }
   // Buscar bilhete por código
   if (path.indexOf('/bets/ticket/') === 0) {
     var code = path.replace('/bets/ticket/', '');
-    return sbGet('apostas', 'ticket_code=eq.' + encodeURIComponent(code) + '&order=id.asc');
+    return _apiFetch('/apostas?ticket_code=' + encodeURIComponent(code));
   }
   // Trocar senha
   if (path === '/change-password') {
     var uid5 = st.user && st.user.id;
-    return sbRpc('trocar_senha_vendedor', { p_id: uid5, p_senha_atual: body.senha_atual, p_nova_senha: body.nova_senha });
+    return _apiFetch('/vendedores/' + uid5 + '/change-password', {
+      method: 'POST', body: JSON.stringify(body)
+    });
+  }
+  // Buscar bilhete por código
+  if (path.indexOf('/apostas/ticket/') === 0) {
+    var code7 = path.replace('/apostas/ticket/', '');
+    return _apiFetch('/apostas/ticket/' + encodeURIComponent(code7));
   }
   // Fallback
   return Promise.reject(new Error('Rota não mapeada: ' + path));
 }
+
 
 function apiPublic(path) { return api(path, {}); }
 
@@ -1010,6 +1015,7 @@ function doLogin() {
 
 function logout() {
   localStorage.removeItem('user');
+  localStorage.removeItem('jwt_token');
   st.user = null; st.apostas = [];
   go('s-login');
 }
@@ -1134,11 +1140,7 @@ function loadMods() {
       };
       var btn  = document.createElement('button');
       btn.className = 'btn-tipo';
-      var mult = mod.multiplier ? Number(mod.multiplier).toLocaleString('pt-BR') + 'x' : '';
-      var cm   = (mod.charge_multiplier && Number(mod.charge_multiplier) > 1)
-        ? ' <span style="font-size:11px;color:#FFA726">×' + Number(mod.charge_multiplier) + ' sorteios</span>' : '';
-      btn.innerHTML = '<span>' + (mod.label || modLabel(mod)) + '</span>' +
-        '<span style="font-size:13px;opacity:.85">' + mult + '</span>' + cm;
+      btn.innerHTML = '<span>' + (mod.label || modLabel(mod)) + '</span>';
       btn.onclick = function() {
         st.mod = {
           bet_type: mod.bet_type,
@@ -1313,26 +1315,18 @@ function updPremio() {
   var fim  = st.premioSel    || 1;
   var row  = document.getElementById('premio-sel-row');
   if (row) {
-    // Build preset range buttons based on maxP
-    var presets = [];
-    if (maxP <= 5) {
-      // Only 1-P buttons (old behavior)
-      for (var p = 1; p <= maxP; p++) presets.push([1, p]);
-    } else {
-      // Extended: 1º, 1-2, 1-3, 1-4, 1-5, 1-6, 1-7, 1-8, 1-9, 1-10, 6-10, 1-10
-      for (var p = 1; p <= maxP; p++) presets.push([1, p]);
-      // Add split range (second half): 6-10 when maxP=10
-      var mid = Math.floor(maxP / 2) + 1;
-      presets.push([mid, maxP]);
+    var h = '';
+    h += '<span class="premio-grp-lbl">Faixa</span>';
+    h += '<button class="btn-premio faixa' + (ini===1&&fim===1?' on':'') + '" onclick="setPremio(1,1)">1º</button>';
+    if (maxP >= 5)  h += '<button class="btn-premio faixa' + (ini===1&&fim===5?' on':'') + '" onclick="setPremio(1,5)">1-5</button>';
+    if (maxP >= 10) h += '<button class="btn-premio faixa' + (ini===1&&fim===10?' on':'') + '" onclick="setPremio(1,10)">1-10</button>';
+    h += '<span class="premio-grp-sep"></span>';
+    h += '<span class="premio-grp-lbl">Esp.</span>';
+    for (var p = 1; p <= maxP; p++) {
+      var isOn = (ini === p && fim === p);
+      h += '<button class="btn-premio' + (isOn?' on':'') + '" onclick="setPremio(' + p + ',' + p + ')">' + p + 'º</button>';
     }
-    var html = '';
-    for (var i = 0; i < presets.length; i++) {
-      var pi = presets[i][0], pf = presets[i][1];
-      var isOn = (pi === ini && pf === fim);
-      var lbl  = (pi === 1 && pf === 1) ? '1º' : (pi === 1 ? '1-' + pf : pi + '-' + pf);
-      html += '<button class="btn-premio' + (isOn ? ' on' : '') + '" onclick="setPremio(' + pi + ',' + pf + ')">' + lbl + '</button>';
-    }
-    row.innerHTML = html;
+    row.innerHTML = h;
   }
   // Update display labels
   var lbl = (ini === 1 && fim === 1) ? '1º' : (ini === 1 ? '1-' + fim : ini + '-' + fim);
@@ -1837,13 +1831,7 @@ function consultarBilhete() {
   el.className = 'bil-cons-status';
   el.style.display = '';
   el.innerHTML = '🔄 Consultando...';
-  var SB_URL = 'https://kopdmeuihtkmpisaedxo.supabase.co';
-  var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtvcGRtZXVpaHRrbXBpc2FlZHhvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQ3MTc5NTksImV4cCI6MjEwMDI5Mzk1OX0.dsdxLF7aYDLFjqV_pmEyfFZ5y1LP_z1JCdg61h3rSaE';
-  fetch(SB_URL + '/rest/v1/apostas?ticket_code=eq.' + encodeURIComponent(code) +
-    '&select=*,sorteios(title,date,hora,result)', {
-    headers: { 'apikey': SB_KEY, 'Accept': 'application/json',
-      'Authorization': 'Bearer ' + (st.token || SB_KEY) }
-  }).then(function(r) { return r.json(); })
+  _apiFetch('/apostas?ticket_code=' + encodeURIComponent(code))
     .then(function(rows) {
       var a = Array.isArray(rows) ? rows[0] : null;
       if (!a) {
@@ -2322,7 +2310,8 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
   var hash = gerarHashBilhete(String(tid) + String(total) + String(now.getTime()));
 
   var t = '';
-  t += 'MONTE DE OURO\n';
+  t += getCmdFonte(); // apply configured font size
+  t += ((_impCfg && _impCfg.nomeCasa) || 'MONTE DE OURO') + '\n';
   t += 'Casa Lotérica\n';
   t += 'Data: ' + fmtData(now) + '\n';
   t += 'AGUARDANDO RESULTADO\n';
@@ -2421,18 +2410,10 @@ function formatarComprovante(tid, total, apostas, res, ticketCode) {
   });
 
   t += 'Total: ' + brNum(total) + '\n';
-  t += hash + '\n';
-  t += 'VALIDADE 15 DIAS ( BOA SORTE)\n';
-  // Código do bilhete + QR nativo via NSU
-  if (ticketCode) {
-    t += SEP + '\n';
-    t += centrar('COD. BILHETE', W) + '\n';
-    t += centrar(String(ticketCode), W) + '\n';
-    t += SEP + '\n';
-    // ESC a 1 = centralizar; NSU aciona QR code nativo no driver
-    t += '\x1b\x61\x01NSU: ' + String(ticketCode) + '\n';
-    t += '\x1b\x61\x00'; // volta alinhamento esquerdo
-  }
+  if (ticketCode) t += 'COD: ' + String(ticketCode) + '\n';
+  t += 'VALIDADE 15 DIAS (' + ((_impCfg && _impCfg.rodape)||'BOA SORTE!') + ')\n';
+
+  t += getCmdCorte();
   t += '\n\n';
 
   return t;
@@ -2944,7 +2925,7 @@ function colunas(esq, dir, w) {
 
 // ─── Carregar modalidades do Supabase ────────────────────────────────────────
 function loadModalidades() {
-  sbGet('v_modalidades_ativas', 'order=ordem_exibicao')
+  _apiFetch('/modalidades')
     .then(function(rows) {
       var lista = Array.isArray(rows) ? rows : (rows && rows.data ? rows.data : []);
       if (lista.length) {
@@ -3039,7 +3020,7 @@ function abrirRepetir() {
 function carregarRecentes() {
   var el = document.getElementById('list-repetir-recentes');
   if (!st.user) { el.innerHTML = '<div style="color:#aaa;font-size:13px">Faça login para ver recentes.</div>'; return; }
-  sbGet('apostas', 'user_id=eq.' + st.user.id + '&order=created_at.desc&limit=50')
+  _apiFetch('/apostas?user_id=' + st.user.id + '&limit=50')
     .then(function(lista) {
       lista = toArray(lista);
       // Deduplica por ticket_code preservando ordem
@@ -3108,14 +3089,80 @@ function abrirCaixa() {
 }
 function setCaixaTab(tab) {
   _caixaTab = tab;
-  var tHoje   = document.getElementById('cx-tab-hoje');
-  var tResumo = document.getElementById('cx-tab-resumo');
-  tHoje.style.color   = tab === 'hoje'   ? '#1B4332' : '#888';
-  tHoje.style.borderBottomColor   = tab === 'hoje'   ? '#2E7D32' : 'transparent';
-  tResumo.style.color = tab === 'resumo' ? '#1B4332' : '#888';
-  tResumo.style.borderBottomColor = tab === 'resumo' ? '#2E7D32' : 'transparent';
-  carregarCaixa();
+  ['hoje','extracao','resumo'].forEach(function(t) {
+    var el = document.getElementById('cx-tab-' + t);
+    if (!el) return;
+    var active = (t === tab);
+    el.style.color = active ? '#1B4332' : '#888';
+    el.style.borderBottomColor = active ? '#2E7D32' : 'transparent';
+    el.style.fontWeight = active ? '700' : '400';
+  });
+  if (tab === 'extracao') { carregarCaixaExtracao(); }
+  else { carregarCaixa(); }
 }
+// ── CAIXA: RELATÓRIO POR EXTRAÇÃO ────────────────────────────
+function carregarCaixaExtracao() {
+  var el = document.getElementById('caixa-content');
+  el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
+  var uid = st.user && st.user.id;
+  // Busca apostas de hoje agrupadas por draw_id
+  api('/caixa/hoje').then(function(lista) {
+    lista = toArray(lista);
+    if (!lista.length) {
+      el.innerHTML = '<div style="text-align:center;color:#888;padding:24px">Nenhuma aposta hoje.</div>';
+      return;
+    }
+    // Agrupar por extração (draw_id + título)
+    var extMap = {};
+    var extOrder = [];
+    var totalDia = 0;
+    lista.forEach(function(b) {
+      var eid   = b.draw_id || 'sem-extracao';
+      var enome = (b.draw_name || b.extracao_name || b.draw_title || eid);
+      if (!extMap[eid]) {
+        extMap[eid] = { nome: enome, total: 0, apostas: 0, bilhetes: {} };
+        extOrder.push(eid);
+      }
+      extMap[eid].total += Number(b.amount || 0);
+      extMap[eid].apostas += 1;
+      if (b.ticket_code) extMap[eid].bilhetes[b.ticket_code] = 1;
+      totalDia += Number(b.amount || 0);
+    });
+
+    var totalBilhetes = (function(){
+      var s = {}; lista.forEach(function(b){ if(b.ticket_code) s[b.ticket_code]=1; });
+      return Object.keys(s).length;
+    })();
+
+    var html2 = '<div style="background:#1B4332;color:#fff;border-radius:10px;padding:16px;margin-bottom:14px">' +
+      '<div style="font-size:11px;opacity:.75;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">Total do Dia</div>' +
+      '<div style="font-size:30px;font-weight:700">R$ ' + totalDia.toFixed(2).replace('.',',') + '</div>' +
+      '<div style="font-size:12px;margin-top:6px;opacity:.85">' + totalBilhetes + ' bilhete(s) · ' + lista.length + ' aposta(s) · ' + extOrder.length + ' extração(ões)</div>' +
+    '</div>';
+
+    extOrder.forEach(function(eid) {
+      var ext = extMap[eid];
+      var nBilhetes = Object.keys(ext.bilhetes).length;
+      html2 += '<div style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.1)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start">' +
+          '<div>' +
+            '<div style="font-size:14px;font-weight:700;color:#1B4332">' + ext.nome + '</div>' +
+            '<div style="font-size:11px;color:#888;margin-top:2px">' + nBilhetes + ' bilhete(s) · ' + ext.apostas + ' aposta(s)</div>' +
+          '</div>' +
+          '<div style="text-align:right">' +
+            '<div style="font-size:18px;font-weight:700;color:#2E7D32">R$ ' + ext.total.toFixed(2).replace('.',',') + '</div>' +
+            '<div style="font-size:11px;color:#aaa">' + (ext.total / totalDia * 100).toFixed(1) + '% do dia</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    });
+
+    el.innerHTML = html2;
+  }).catch(function(e) {
+    el.innerHTML = '<div style="color:#c62828;padding:20px">Erro: ' + e.message + '</div>';
+  });
+}
+
 function carregarCaixa() {
   var el = document.getElementById('caixa-content');
   el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
@@ -3136,11 +3183,30 @@ function carregarCaixa() {
       if (!ticketMap[tc]) { ticketMap[tc] = []; ticketOrder.push(tc); }
       ticketMap[tc].push(b);
     });
-    var html2 = '<div style="background:#2E7D32;color:#fff;border-radius:10px;padding:16px;margin-bottom:14px">' +
-      '<div style="font-size:12px;opacity:.8;margin-bottom:4px">' + titulo + '</div>' +
-      '<div style="font-size:28px;font-weight:700">R$ ' + total.toFixed(2).replace('.',',') + '</div>' +
-      '<div style="font-size:12px;margin-top:6px;opacity:.85">' + totalBilhetes + ' bilhete(s) · ' + totalApostas + ' aposta(s)</div>' +
+    var v1=0,v1_5=0,v6_10=0,vCan=0,bCan={},vSol=0,bSol={};
+    lista.forEach(function(b){
+      var bt=(b.bet_type||'').toLowerCase(),pm=bt.match(/_(\d+)(?:_(\d+))?$/);
+      var ps=pm?parseInt(pm[1]):1,pe=pm&&pm[2]?parseInt(pm[2]):ps,amt=Number(b.amount||0);
+      if(b.status==='cancelled'){vCan+=amt;if(b.ticket_code)bCan[b.ticket_code]=1;return;}
+      if(b.status==='cancel_requested'){vSol+=amt;if(b.ticket_code)bSol[b.ticket_code]=1;return;}
+      if(ps===1&&pe===1)v1+=amt;
+      if(ps===1&&pe>=5)v1_5+=amt;
+      if(ps>=6&&pe<=10)v6_10+=amt;
+    });
+    var v1_10=v1_5+v6_10;
+    var html2='<div style="background:#2E7D32;color:#fff;border-radius:10px;padding:16px;margin-bottom:14px">'+
+      '<div style="font-size:12px;opacity:.8;margin-bottom:4px">'+titulo+'</div>'+
+      '<div style="font-size:28px;font-weight:700">R$ '+total.toFixed(2).replace('.',',')+'</div>'+
+      '<div style="font-size:12px;margin-top:6px;opacity:.85">'+totalBilhetes+' bilhete(s) · '+totalApostas+' aposta(s)</div>'+
     '</div>';
+    html2+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">'+
+      '<div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 2px rgba(0,0,0,.08)"><div style="font-size:10px;color:#888;text-transform:uppercase">1 Prêmio</div><div style="font-weight:700;color:#2E7D32">R$ '+v1.toFixed(2).replace('.',',')+'</div></div>'+
+      '<div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 2px rgba(0,0,0,.08)"><div style="font-size:10px;color:#888;text-transform:uppercase">1 ao 5</div><div style="font-weight:700;color:#1565C0">R$ '+v1_5.toFixed(2).replace('.',',')+'</div></div>'+
+      '<div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 2px rgba(0,0,0,.08)"><div style="font-size:10px;color:#888;text-transform:uppercase">6 ao 10</div><div style="font-weight:700;color:#6A1B9A">R$ '+v6_10.toFixed(2).replace('.',',')+'</div></div>'+
+      '<div style="background:#fff;border-radius:8px;padding:10px;box-shadow:0 1px 2px rgba(0,0,0,.08)"><div style="font-size:10px;color:#888;text-transform:uppercase">1 ao 10</div><div style="font-weight:700;color:#E65100">R$ '+v1_10.toFixed(2).replace('.',',')+'</div></div>'+
+    '</div>';
+    if(Object.keys(bSol).length)html2+='<div style="background:#FFF9C4;border:1px solid #F9A825;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between"><span style="font-size:12px;color:#E65100">⏰ Aguard. cancel. ('+Object.keys(bSol).length+' bil.)</span><span style="font-weight:700;color:#E65100">R$ '+vSol.toFixed(2).replace('.',',')+'</span></div>';
+    if(Object.keys(bCan).length)html2+='<div style="background:#FFEBEE;border:1px solid #EF9A9A;border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between"><span style="font-size:12px;color:#C62828">🚫 Cancelados ('+Object.keys(bCan).length+' bil.)</span><span style="font-weight:700;color:#C62828">R$ '+vCan.toFixed(2).replace('.',',')+'</span></div>';
     if (!ticketOrder.length) {
       html2 += '<div style="text-align:center;color:#888;padding:20px">Nenhuma aposta no período.</div>';
     } else {
@@ -3166,15 +3232,7 @@ function carregarCaixa() {
   });
 }
 
-// ── SENHA ────────────────────────────────────────────────────
-function abrirSenha() {
-  go('s-senha');
-  document.getElementById('inp-senha-atual').value = '';
-  document.getElementById('inp-senha-nova').value = '';
-  document.getElementById('inp-senha-conf').value = '';
-  var msg = document.getElementById('senha-msg');
-  msg.style.display = 'none';
-}
+
 function salvarSenha() {
   var atual = document.getElementById('inp-senha-atual').value;
   var nova  = document.getElementById('inp-senha-nova').value;
@@ -3198,15 +3256,11 @@ function salvarSenha() {
   }).catch(function(e) { showMsg('Erro: ' + (e.message || 'Tente novamente.'), false); });
 }
 
-// ── COTAÇÕES ─────────────────────────────────────────────────
-function abrirCotacoes() {
-  go('s-cotacoes');
-  carregarCotacoes();
-}
+
 function carregarCotacoes() {
   var el = document.getElementById('list-cotacoes');
   el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Carregando...</div>';
-  sbGet('modality_settings', 'is_active=eq.true&order=id.asc').then(function(lista) {
+  _apiFetch('/modality-settings').then(function(lista) {
     _cotacoesCache = toArray(lista);
     lista = toArray(lista);
     if (!lista.length) { el.innerHTML = '<div style="text-align:center;padding:30px;color:#888">Sem cotações disponíveis.</div>'; return; }
@@ -3452,6 +3506,73 @@ function imprimirCotacoes() {
   );
 }
 
+
+
+
+// ─── Configuração de Impressão ────────────────────────────────────────────────
+var _impCfg = {fonte:'p', nomeCasa:'MONTE DE OURO', rodape:'BOA SORTE!', corte:false};
+
+function carregarConfImp() {
+  try {
+    var saved = JSON.parse(localStorage.getItem('imp_cfg') || '{}');
+    _impCfg.fonte     = saved.fonte     || 'p';
+    _impCfg.nomeCasa  = saved.nomeCasa  || 'MONTE DE OURO';
+    _impCfg.rodape    = saved.rodape    || 'BOA SORTE!';
+    _impCfg.corte     = saved.corte     || false;
+  } catch(e) {}
+}
+
+function salvarConfImp() {
+  var f = document.querySelector('input[name="fonte"]:checked');
+  _impCfg.fonte    = f ? f.value : _impCfg.fonte;
+  _impCfg.nomeCasa = (document.getElementById('imp-nome-casa').value || 'MONTE DE OURO').trim();
+  _impCfg.rodape   = (document.getElementById('imp-rodape').value || 'BOA SORTE!').trim();
+  _impCfg.corte    = document.getElementById('imp-corte').checked;
+  localStorage.setItem('imp_cfg', JSON.stringify(_impCfg));
+}
+
+function abrirConfImp() {
+  carregarConfImp();
+  // Seleciona radio certo
+  var radios = document.querySelectorAll('input[name="fonte"]');
+  radios.forEach(function(r) { r.checked = (r.value === _impCfg.fonte); });
+  document.getElementById('imp-nome-casa').value = _impCfg.nomeCasa;
+  document.getElementById('imp-rodape').value    = _impCfg.rodape;
+  document.getElementById('imp-corte').checked   = _impCfg.corte;
+}
+
+function getCmdFonte() {
+  var f = _impCfg ? _impCfg.fonte : 'p';
+  if (f === 'g') return '\x1b\x21\x30'; // double width + height
+  if (f === 'm') return '\x1b\x21\x10'; // double height only
+  return ''; // normal = sem comando extra (comportamento padrão da impressora)
+}
+
+function getCmdCorte() {
+  return (_impCfg && _impCfg.corte) ? '\x1d\x56\x01' : '';
+}
+
+function imprimirTeste() {
+  var t = getCmdFonte();
+  t += 'TESTE DE IMPRESSAO\n';
+  t += '------------------------\n';
+  t += 'Fonte: ' + (_impCfg.fonte==='g'?'Grande':_impCfg.fonte==='m'?'Media':'Normal') + '\n';
+  t += 'Casa: ' + _impCfg.nomeCasa + '\n';
+  t += '------------------------\n';
+  t += _impCfg.rodape + '\n';
+  t += getCmdCorte();
+  t += '\n\n';
+  if (window.NativePrinter) {
+    try { NativePrinter.print(t); } catch(e) { alert('Erro: ' + e.message); }
+  } else {
+    alert('Impressora não conectada (NativePrinter não disponível).');
+  }
+}
+
+// Carrega config ao iniciar
+carregarConfImp();
+
+
 </script>
 
 <!-- ═══════════ RESULTADOS ═══════════ -->
@@ -3480,7 +3601,7 @@ function imprimirCotacoes() {
     <div style="margin-bottom:14px">
       <div style="font-size:12px;color:#666;margin-bottom:6px;font-weight:600">CÓDIGO DO BILHETE</div>
       <div style="display:flex;gap:8px">
-        <input id="inp-repetir-cod" type="text" placeholder="Ex: MO-20260726-XXXX"
+        <input id="inp-repetir-cod" type="text" placeholder="Ex: 35892847"
           style="flex:1;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:14px;text-transform:uppercase"
           oninput="this.value=this.value.toUpperCase()">
         <button onclick="buscarBilhete()" style="background:#388E3C;color:#fff;border:none;border-radius:8px;padding:0 14px;font-size:14px;cursor:pointer">Buscar</button>
@@ -3511,7 +3632,8 @@ function imprimirCotacoes() {
   </div>
   <div style="display:flex;border-bottom:1px solid #e0e0e0">
     <button id="cx-tab-hoje" onclick="setCaixaTab('hoje')" style="flex:1;padding:11px;border:none;background:#fff;font-size:13px;font-weight:700;color:#1B4332;border-bottom:3px solid #2E7D32;cursor:pointer">Hoje</button>
-    <button id="cx-tab-resumo" onclick="setCaixaTab('resumo')" style="flex:1;padding:11px;border:none;background:#fff;font-size:13px;color:#888;border-bottom:3px solid transparent;cursor:pointer">Resumo Geral</button>
+    <button id="cx-tab-extracao" onclick="setCaixaTab('extracao')" style="flex:1;padding:11px;border:none;background:#fff;font-size:13px;color:#888;border-bottom:3px solid transparent;cursor:pointer">Por Extração</button>
+    <button id="cx-tab-resumo" onclick="setCaixaTab('resumo')" style="flex:1;padding:11px;border:none;background:#fff;font-size:13px;color:#888;border-bottom:3px solid transparent;cursor:pointer">Geral</button>
   </div>
   <div class="scroll-y lst-pad" id="caixa-content">
     <div style="text-align:center;padding:30px;color:#888">Carregando...</div>
@@ -3519,49 +3641,16 @@ function imprimirCotacoes() {
 </div>
 
 <!-- ═══════════ SENHA ═══════════ -->
-<div id="s-senha" class="sc">
-  <div class="hdr-green">
-    <button class="back" onclick="go('s-main')">‹</button>
-    <span>Alterar Senha</span>
-    <span></span>
-  </div>
-  <div class="scroll-y" style="padding:20px">
-    <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,.1)">
-      <div style="font-size:13px;color:#666;margin-bottom:16px">Insira sua senha atual e escolha uma nova senha segura.</div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:4px">SENHA ATUAL</label>
-        <input id="inp-senha-atual" type="password" placeholder="••••••••"
-          style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box">
-      </div>
-      <div style="margin-bottom:12px">
-        <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:4px">NOVA SENHA</label>
-        <input id="inp-senha-nova" type="password" placeholder="••••••••"
-          style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box">
-      </div>
-      <div style="margin-bottom:18px">
-        <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:4px">CONFIRMAR NOVA SENHA</label>
-        <input id="inp-senha-conf" type="password" placeholder="••••••••"
-          style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:15px;box-sizing:border-box">
-      </div>
-      <div id="senha-msg" style="display:none;margin-bottom:12px;font-size:13px;padding:8px 10px;border-radius:6px"></div>
-      <button onclick="salvarSenha()" style="width:100%;background:#2E7D32;color:#fff;border:none;border-radius:8px;padding:13px;font-size:15px;font-weight:700;cursor:pointer">Alterar Senha</button>
-    </div>
-  </div>
-</div>
 
-<!-- ═══════════ COTAÇÕES ═══════════ -->
-<div id="s-cotacoes" class="sc">
-  <div class="hdr-green" id="hdr-cotacoes">
-    <button class="back" id="cot-btn-back" onclick="go('s-main')">‹</button>
-    <span>Cotações</span>
-    <div style="display:flex;gap:4px">
-      <button id="cot-btn-print" onclick="imprimirCotacoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">🖨</button>
-      <button id="cot-btn-ref" onclick="carregarCotacoes()" style="background:none;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px">↺</button>
-    </div>
   </div>
   <div class="scroll-y lst-pad" id="list-cotacoes">
     <div style="text-align:center;padding:30px;color:#888">Carregando...</div>
   </div>
 </div>
+
+
+
+<!-- ═══════════ IMPRESSORA CONFIG ═══════════ -->
+
 </body>
 </html>
