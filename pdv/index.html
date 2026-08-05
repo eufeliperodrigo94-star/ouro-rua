@@ -619,15 +619,15 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
       <button class="btn-mn" style="background:#D81B60" onclick="abrirRegulamento()"><span class="mn-ico">📜</span>Regulamento</button>
       <button class="btn-mn" style="background:#78909C" onclick="abrirSenha()"><span class="mn-ico">🔑</span>Senha</button>
       <button class="btn-mn" style="background:#00897B" onclick="abrirCotacoes()"><span class="mn-ico">💱</span>Cotações</button>
-      <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria 160</button>
+      <button class="btn-mn" style="background:#5D4037" onclick="abrirSangriaAuditoria()"><span class="mn-ico">🔬</span>Auditoria POS</button>
       <button class="btn-mn" style="background:#3949AB" onclick="abrirExtracoes()"><span class="mn-ico">🗓️</span>Extrações</button>
     </div>
     <div class="sair" onclick="logout()">Sair</div>
-    <div class="ver">versão 7.19 · TESTE · MonteDeOuroPOS</div>
+    <div class="ver">versão 7.20 · TESTE · MonteDeOuroPOS</div>
   </div>
 </div>
 
-<!-- Modo exclusivo do APK de teste: 40 modalidades x MM/MD/DM/DD. -->
+<!-- Modo exclusivo do APK de teste: matriz conforme os controles exibidos. -->
 <div id="s-audit" class="sc">
   <div class="hdr-green">
     <button class="back" onclick="go('s-main')">‹</button>
@@ -637,11 +637,12 @@ html, body { width: 100%; height: 100%; overflow: hidden; background: #1B4332; }
   <div class="scroll-y" style="padding:18px">
     <div style="background:#FFF3E0;border:2px solid #E65100;border-radius:10px;padding:14px;color:#4E342E;font-size:14px;line-height:1.5">
       <b>AMBIENTE DE TESTE</b><br>
-      Gera um único bilhete com 160 casos: 40 modalidades nos modos MM, MD, DM e DD.
-      Cada caso usa dois jogos vencedores para exercer os dois controles.
+      Gera um único bilhete com a matriz real dos controles. Modalidades com um
+      controle recebem M e D; modalidades com dois controles recebem MM, MD, DM e DD.
+      Cada caso usa dois jogos vencedores para validar valor, API, payout e comprovante.
     </div>
     <div id="audit-status" style="white-space:pre-wrap;font-family:monospace;background:#ECEFF1;border-radius:8px;padding:12px;margin-top:12px;min-height:150px;font-size:12px;line-height:1.45">Aguardando preparação.</div>
-    <button id="audit-prepare" onclick="prepararSangriaAuditoria()" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:8px;background:#1565C0;color:white;font-size:16px;font-weight:700">PREPARAR 160 CASOS</button>
+    <button id="audit-prepare" onclick="prepararSangriaAuditoria()" style="width:100%;margin-top:14px;padding:16px;border:0;border-radius:8px;background:#1565C0;color:white;font-size:16px;font-weight:700">PREPARAR MATRIZ DE CONTROLES</button>
     <button id="audit-preview" onclick="simularSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:14px;border:0;border-radius:8px;background:#6A1B9A;color:white;font-size:15px;font-weight:700;opacity:.45">SIMULAR BILHETE DA SANGRIA</button>
     <button id="audit-send" onclick="enviarSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:16px;border:0;border-radius:8px;background:#B71C1C;color:white;font-size:16px;font-weight:700;opacity:.45">ENVIAR BILHETE DE AUDITORIA</button>
     <button id="audit-print" onclick="imprimirSangriaAuditoria()" disabled style="width:100%;margin-top:10px;padding:14px;border:0;border-radius:8px;background:#2E7D32;color:white;font-size:15px;font-weight:700;opacity:.45">IMPRIMIR SANGRIA NO POS</button>
@@ -1299,7 +1300,7 @@ function auditNormalizeMod(raw) {
 
 function auditPayloadRows(draw, mod, mode) {
   var entry = auditRepeatedEntry(mod);
-  var values = calculatedModeValues(mode.value, mode.p, mode.r, mod, entry);
+  var values = calculatedModeValues(mode.value, mode.p, mode.r || 'm', mod, entry);
   var accounting = betAccounting(mod, entry, values.total, values.gameTotals);
   return accounting.games.map(function(game, index) {
     var row = {
@@ -1311,6 +1312,24 @@ function auditPayloadRows(draw, mod, mode) {
     if (mod.multiplier != null) row.multiplier = Number(mod.multiplier);
     return row;
   });
+}
+
+function auditModesFor(mod) {
+  // The duplicated entry keeps two games to exercise Control 1 (M/D).
+  // Control 2 exists only when the value screen actually displays it.
+  var info = modalityRuleInfo(mod, auditRepeatedEntry(mod));
+  var firstControl = [
+    { code:'M', p:'m', r:null, value:1.00 },
+    { code:'D', p:'d', r:null, value:1.00 }
+  ];
+  if (info.factor <= 1) return firstControl;
+
+  return [
+    { code:'MM', p:'m', r:'m', value:1.00 },
+    { code:'MD', p:'m', r:'d', value:1.00 },
+    { code:'DM', p:'d', r:'m', value:1.00 },
+    { code:'DD', p:'d', r:'d', value:1.00 }
+  ];
 }
 
 function prepararSangriaAuditoria() {
@@ -1337,15 +1356,14 @@ function prepararSangriaAuditoria() {
 
     // A sangria usa o valor-base real de R$ 1,00 em todos os casos.
     // MM/MD/DM/DD continuam rastreáveis pela ordem determinística das linhas.
-    var modes = [
-      { code:'MM', p:'m', r:'m', value:1.00 },
-      { code:'MD', p:'m', r:'d', value:1.00 },
-      { code:'DM', p:'d', r:'m', value:1.00 },
-      { code:'DD', p:'d', r:'d', value:1.00 }
-    ];
     var auditId = 'POS160-' + Date.now().toString(36).toUpperCase();
     var cases = [], bets = [];
-    mods.forEach(function(mod) {
+    var singleControlModalities = 0;
+    var doubleControlModalities = 0;
+    mods.forEach(function(mod, modalityIndex) {
+      var modes = auditModesFor(mod);
+      if (modes.length === 2) singleControlModalities++;
+      else doubleControlModalities++;
       modes.forEach(function(mode) {
         var rows = auditPayloadRows(draws[0], mod, mode);
         var caseIndex = cases.length + 1;
@@ -1362,7 +1380,7 @@ function prepararSangriaAuditoria() {
           modality: mod.bet_type,
           modality_label: mod.label,
           control_1: mode.p === 'm' ? 'MULTIPLICAR' : 'DIVIDIR',
-          control_2: mode.r === 'm' ? 'MULTIPLICAR' : 'DIVIDIR',
+          control_2: mode.r ? (mode.r === 'm' ? 'MULTIPLICAR' : 'DIVIDIR') : 'NÃO SE APLICA',
           mode: mode.code,
           entered_amount: mode.value,
           charged_amount: expectedTotal,
@@ -1371,6 +1389,7 @@ function prepararSangriaAuditoria() {
         rows.forEach(function(row) { row.audit_metadata = auditMetadata; });
         cases.push({
           index: caseIndex,
+          modality_index: modalityIndex + 1,
           bet_type: mod.bet_type,
           modality_label: mod.label,
           mode: mode.code,
@@ -1385,12 +1404,13 @@ function prepararSangriaAuditoria() {
         bets = bets.concat(rows);
       });
     });
-    if (cases.length !== 160) throw new Error('Matriz incompleta: ' + cases.length + ' casos.');
     _audit160 = {
       audit_id: auditId,
       draw: draws[0],
       cases: cases,
-      bets: bets
+      bets: bets,
+      single_control_modalities: singleControlModalities,
+      double_control_modalities: doubleControlModalities
     };
     var expected = cases.reduce(function(sum, item) { return sum + item.expected_total; }, 0);
     status.textContent =
@@ -1398,7 +1418,9 @@ function prepararSangriaAuditoria() {
       'Auditoria: ' + _audit160.audit_id + '\n' +
       'Sorteio: #' + draws[0].id + ' ' + draws[0].title + '\n' +
       'Modalidades: ' + mods.length + '\n' +
-      'Casos: ' + cases.length + ' (MM/MD/DM/DD)\n' +
+      '1 controle: ' + singleControlModalities + ' modalidades × M/D\n' +
+      '2 controles: ' + doubleControlModalities + ' modalidades × MM/MD/DM/DD\n' +
+      'Casos: ' + cases.length + '\n' +
       'Registros API previstos: ' + bets.length + '\n' +
       'Custo previsto: R$ ' + expected.toFixed(2) + '\n\n' +
       'Toque ENVIAR somente para executar a sangria.';
@@ -1423,7 +1445,7 @@ function enviarSangriaAuditoria() {
     status.textContent += '\n\nEnvio cancelado: frase de confirmação incorreta.';
     return;
   }
-  if (!confirm('Enviar agora 160 casos pelo POS para o host de TESTE?')) return;
+  if (!confirm('Enviar agora a matriz de ' + _audit160.cases.length + ' casos pelo POS para o host de TESTE?')) return;
   send.disabled = true;
   send.style.opacity = '.45';
   status.textContent += '\n\nENVIANDO PELO POS...';
@@ -1446,6 +1468,8 @@ function enviarSangriaAuditoria() {
       draw_id: _audit160.draw.id,
       ticket_id: _audit160.ticket_id,
       cases: _audit160.cases,
+      single_control_modalities: _audit160.single_control_modalities,
+      double_control_modalities: _audit160.double_control_modalities,
       total_amount: _audit160.total_amount,
       fictitious_balance_before: _audit160.fictitious_balance_before,
       fictitious_balance_after: _audit160.fictitious_balance_after,
@@ -1453,7 +1477,7 @@ function enviarSangriaAuditoria() {
     }));
     status.textContent +=
       '\nSUCESSO\nBilhete: ' + _audit160.ticket_id +
-      '\nCasos: 160\nRegistros enviados: ' + _audit160.bets.length +
+      '\nCasos: ' + _audit160.cases.length + '\nRegistros enviados: ' + _audit160.bets.length +
       '\nTotal API: R$ ' + _audit160.total_amount.toFixed(2) +
       '\nSaldo fictício: R$ ' + _audit160.fictitious_balance_before.toFixed(2) +
       ' → R$ ' + _audit160.fictitious_balance_after.toFixed(2) +
@@ -1502,10 +1526,16 @@ function montarBilheteSangriaAuditoria() {
   texto += 'Saldo: FICTICIO DE AUDITORIA\n';
   texto += 'Saldo real: NAO ALTERADO\n';
   texto += 'Extracao:\n' + quebrarTextoTermico(_audit160.draw.title, W) + '\n';
-  texto += 'Casos: 160 (40 x MM/MD/DM/DD)\n';
+  texto += 'Casos: ' + _audit160.cases.length + '\n';
+  texto += '1C: ' + Number(_audit160.single_control_modalities || 0) + ' x M/D\n';
+  texto += '2C: ' + Number(_audit160.double_control_modalities || 0) + ' x MM/MD/DM/DD\n';
   texto += SEP + '\n';
-  for (var inicio = 0; inicio < _audit160.cases.length; inicio += 4) {
-    var grupo = _audit160.cases.slice(inicio, inicio + 4);
+  for (var inicio = 0; inicio < _audit160.cases.length;) {
+    var primeiroIndice = inicio;
+    var modalidadeIndice = _audit160.cases[primeiroIndice].modality_index;
+    while (inicio < _audit160.cases.length &&
+      _audit160.cases[inicio].modality_index === modalidadeIndice) inicio++;
+    var grupo = _audit160.cases.slice(primeiroIndice, inicio);
     var primeiro = grupo[0];
     texto += primeiro.modality_label + '\n';
     texto += String(primeiro.numbers || '').replace(/,/g, ' ') + '\n';
@@ -1534,7 +1564,7 @@ function montarBilheteSangriaAuditoria() {
 
 function simularSangriaAuditoria() {
   var texto = montarBilheteSangriaAuditoria();
-  if (!texto) { alert('Prepare os 160 casos antes de simular.'); return; }
+  if (!texto) { alert('Prepare a matriz de controles antes de simular.'); return; }
   mostrarSimulacaoResultado(texto, true);
 }
 
