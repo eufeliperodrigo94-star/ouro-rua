@@ -1233,7 +1233,7 @@ function abrirSangriaAuditoria() {
   var send = document.getElementById('audit-send');
   var preview = document.getElementById('audit-preview');
   var print = document.getElementById('audit-print');
-  status.textContent = 'Aguardando preparação.\n\nRequer sorteio PENDING com título iniciado por AUDITORIA POS 160.';
+  status.textContent = 'Aguardando preparação.\n\nRequer sorteio PENDING com título AUDITORIA.';
   send.disabled = true;
   send.style.opacity = '.45';
   preview.disabled = true;
@@ -1339,13 +1339,13 @@ function prepararSangriaAuditoria() {
   var preview = document.getElementById('audit-preview');
   prepare.disabled = true;
   status.textContent = 'Consultando sorteio e modalidades no host...';
-  Promise.all([api('/draws?pos_audit_160=1'), apiPublic('/modality-settings')]).then(function(all) {
+  Promise.all([api('/draws?pos_audit=1'), apiPublic('/modality-settings')]).then(function(all) {
     var draws = toArray(all[0]).filter(function(draw) {
       return String(draw.status || '').toLowerCase() === 'pending' &&
-        String(draw.title || '').toUpperCase().indexOf('AUDITORIA POS 160') === 0;
+        String(draw.title || '').trim().toUpperCase() === 'AUDITORIA';
     });
     if (draws.length !== 1) {
-      throw new Error('Esperado exatamente 1 sorteio PENDING AUDITORIA POS 160; encontrados: ' + draws.length);
+      throw new Error('Esperado exatamente 1 sorteio PENDING AUDITORIA; encontrados: ' + draws.length);
     }
     var mods = toArray(all[1]).filter(function(mod) {
       var active = mod.is_active;
@@ -1356,7 +1356,7 @@ function prepararSangriaAuditoria() {
 
     // A sangria usa o valor-base real de R$ 1,00 em todos os casos.
     // MM/MD/DM/DD continuam rastreáveis pela ordem determinística das linhas.
-    var auditId = 'POS160-' + Date.now().toString(36).toUpperCase();
+    var auditId = 'AUDITORIA-' + Date.now().toString(36).toUpperCase();
     var cases = [], bets = [];
     var singleControlModalities = 0;
     var doubleControlModalities = 0;
@@ -1440,8 +1440,8 @@ function enviarSangriaAuditoria() {
   if (!_audit160) return;
   var status = document.getElementById('audit-status');
   var send = document.getElementById('audit-send');
-  var phrase = prompt('Operação financeira de teste.\nDigite SANGRIA 160 para confirmar:');
-  if (phrase !== 'SANGRIA 160') {
+  var phrase = prompt('Operação financeira de teste.\nDigite AUDITORIA para confirmar:');
+  if (phrase !== 'AUDITORIA') {
     status.textContent += '\n\nEnvio cancelado: frase de confirmação incorreta.';
     return;
   }
@@ -4155,7 +4155,7 @@ function imprimirCotacoes() {
       <p><b>Padrão:</b> o POS inicia em Multiplicar/Multiplicar. A divisão só deve ser selecionada quando solicitada pelo cliente.</p>
       <p><b>Premiação:</b> utiliza a saída final dos controles multiplicada pela cotação efetiva da região do vendedor. O resultado e a situação do bilhete dependem da extração oficial finalizada.</p>
       <p><b>Bilhete:</b> confira extração, modalidade, números, controles e valor antes de finalizar. O código único identifica a aposta para consulta e baixa.</p>
-      <p><b>Auditoria 160:</b> recurso de teste que usa saldo fictício e não altera o saldo real. Ele não substitui uma aposta comercial.</p>
+      <p><b>Auditoria:</b> recurso de teste que usa saldo fictício e não altera o saldo real. Ele não substitui uma aposta comercial.</p>
       <div id="reg-modalidades" style="margin-top:14px;padding:12px;border-radius:8px;background:#E8F5E9;color:#1B5E20;font-weight:600">Consultando modalidades ativas...</div>
     </div>
   </div>
