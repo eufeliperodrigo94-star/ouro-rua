@@ -2115,7 +2115,7 @@ function admBuildPermsUI(currentPerms){
   var container=document.getElementById('adm-perms-list');
   container.innerHTML=ADM_PAGES.map(function(p){
     var checked=(currentPerms===null||currentPerms.indexOf(p.id)>-1)?'checked':'';
-    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:3px;" onmouseover="this.style.background='#f0f0f0'" onmouseout="this.style.background=''"> '
+    return '<label style="display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer;padding:2px 4px;border-radius:3px;" onmouseover="this.style.background=\'#f0f0f0\'" onmouseout="this.style.background=\'\'"> '
       +'<input type="checkbox" value="'+p.id+'" '+checked+' style="cursor:pointer;"> '+p.label+'</label>';
   }).join('');
 }
