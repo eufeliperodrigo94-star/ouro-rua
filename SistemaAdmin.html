@@ -5249,6 +5249,12 @@ function loadRelPremio() {
         var ini = parseInt(b.premio_ini || 1);
         var fim = parseInt(b.premio_fim || 1);
 
+        // fallback: if fim=1 but bet_type encodes a range (e.g. milhar_1_10), extract from name
+        if (fim <= 1) {
+          var _btm = (b.bet_type || '').toLowerCase().match(/_(\d+)_(\d+)$/);
+          if (_btm) { ini = parseInt(_btm[1]); fim = parseInt(_btm[2]); }
+        }
+
         // split proportionally for bets spanning both ranges (e.g. 1-10)
         var totalP = Math.max(1, fim - ini + 1);
         var p1c = Math.max(0, Math.min(5, fim) - Math.max(1, ini) + 1);
