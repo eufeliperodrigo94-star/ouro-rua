@@ -768,6 +768,7 @@
     <button id="desc-btn-limites"   onclick="setDescTab('limites')"   style="padding:7px 18px;border:none;border-bottom:3px solid #1565c0;background:none;font-size:13px;font-weight:600;color:#1565c0;cursor:pointer;">Limites por Vendedor</button>
     <button id="desc-btn-exposicao" onclick="setDescTab('exposicao')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Exposição</button>
     <button id="desc-btn-historico" onclick="setDescTab('historico')" style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Histórico</button>
+    <button id="desc-btn-importar"  onclick="setDescTab('importar')"  style="padding:7px 18px;border:none;border-bottom:3px solid transparent;background:none;font-size:13px;color:#666;cursor:pointer;">Importar</button>
   </div>
 
   <!-- ── TAB: Limites por Vendedor ── -->
@@ -856,6 +857,45 @@
         </tr></thead>
         <tbody id="desc-hist-body"><tr><td colspan="8" class="loading">Selecione um sorteio.</td></tr></tbody>
       </table>
+    </div>
+  </div>
+
+  <!-- ── TAB: Importar ── -->
+  <div id="desc-tab-importar" style="display:none;">
+    <div class="form-wrap" style="max-width:680px;">
+      <div class="form-row">
+        <label>Extração:</label>
+        <select id="idc-extracao" style="width:100%;"><option value="">Selecione a extração...</option></select>
+      </div>
+      <div class="form-row">
+        <label>Data:</label>
+        <input type="date" id="idc-data" style="width:180px;">
+      </div>
+      <div class="form-row">
+        <label style="align-self:flex-start;margin-top:6px;">Números (um por linha):</label>
+        <textarea id="idc-numeros" rows="10"
+          style="width:100%;font-family:monospace;font-size:13px;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;box-sizing:border-box;"
+          placeholder="Ex:&#10;00 100.00&#10;11 50.00&#10;22 75.00&#10;&#10;Formato: NUMERO VALOR&#10;Ou apenas o número (usa valor padrão)"></textarea>
+      </div>
+      <div class="form-row">
+        <label>Valor padrão (R$):</label>
+        <input type="number" id="idc-valor-padrao" value="10" min="0.01" step="0.01" style="width:120px;">
+      </div>
+      <div class="form-row">
+        <label>Modalidade:</label>
+        <select id="idc-modalidade" style="width:220px;">
+          <option value="dezena">Dezena</option>
+          <option value="centena">Centena</option>
+          <option value="milhar">Milhar</option>
+          <option value="grupo">Grupo</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:14px;">
+        <button class="btn-blue" style="background:#2E7D32;" onclick="importarDescarrego()">⬇ Importar</button>
+        <button class="btn-blue" style="background:#555;" onclick="document.getElementById('idc-numeros').value='';">Limpar</button>
+        <span id="idc-msg" style="font-weight:600;font-size:13px;"></span>
+      </div>
+      <div id="idc-preview" style="margin-top:16px;"></div>
     </div>
   </div>
 
@@ -1548,50 +1588,6 @@
 </div>
 
 <!-- ============================================================ -->
-<!-- p-importar-descarrego — IMPORTAR DESCARREGO -->
-<!-- ============================================================ -->
-<div class="page" id="p-importar-descarrego">
-  <div class="page-header">Importar Descarrego</div>
-  <div class="form-wrap" style="max-width:680px;">
-    <div class="form-row">
-      <label>Extração:</label>
-      <select id="idc-extracao" style="width:100%;">
-        <option value="">Selecione a extração...</option>
-      </select>
-    </div>
-    <div class="form-row">
-      <label>Data:</label>
-      <input type="date" id="idc-data" style="width:180px;">
-    </div>
-    <div class="form-row">
-      <label style="align-self:flex-start;margin-top:6px;">Números (um por linha):</label>
-      <textarea id="idc-numeros" rows="10"
-        style="width:100%;font-family:monospace;font-size:13px;padding:10px;border:1px solid #ccc;border-radius:6px;resize:vertical;box-sizing:border-box;"
-        placeholder="Ex:&#10;00 100.00&#10;11 50.00&#10;22 75.00&#10;&#10;Formato: NUMERO VALOR&#10;Ou apenas o número (usa valor padrão)"></textarea>
-    </div>
-    <div class="form-row">
-      <label>Valor padrão (R$):</label>
-      <input type="number" id="idc-valor-padrao" value="10" min="0.01" step="0.01" style="width:120px;">
-    </div>
-    <div class="form-row">
-      <label>Modalidade:</label>
-      <select id="idc-modalidade" style="width:220px;">
-        <option value="dezena">Dezena</option>
-        <option value="centena">Centena</option>
-        <option value="milhar">Milhar</option>
-        <option value="grupo">Grupo</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:10px;align-items:center;margin-top:14px;">
-      <button class="btn-blue" style="background:#2E7D32;" onclick="importarDescarrego()">⬇ Importar</button>
-      <button class="btn-blue" style="background:#555;" onclick="document.getElementById('idc-numeros').value='';">Limpar</button>
-      <span id="idc-msg" style="font-weight:600;font-size:13px;"></span>
-    </div>
-    <div id="idc-preview" style="margin-top:16px;"></div>
-  </div>
-</div>
-
-<!-- ============================================================ -->
 <!-- p-vend-comissao — VENDEDOR × COMISSÃO/MODALIDADE -->
 <!-- ============================================================ -->
 <div class="page" id="p-vend-comissao">
@@ -1712,7 +1708,6 @@ var SB_URL="https://kopdmeuihtkmpisaedxo.supabase.co",SB_KEY="eyJhbGciOiJIUzI1Ni
 {id:"p-sorteios",label:"Sorteios",load:loadSorteiosPage,r:['admin','gerente']},
 {id:"p-descarrego",label:"Descarrego",load:loadDescarregoPage,r:['admin','gerente']},
 {id:"p-risco",label:"Motor de Risco",load:initRiscoPage,r:['admin']},
-{id:"p-importar-descarrego",label:"Importar Descarrego",load:initImportarDescarrego,r:['admin']},
 {id:"p-coletas",label:"Coletas",load:initColetas,r:['admin','gerente']},
 {id:"p-terminais-a",label:"Terminais",load:initTerminais,r:['admin']},
 {id:"p-digitacao",label:"Digitação",load:initDigitacao,r:['admin','gerente']},
@@ -2184,13 +2179,13 @@ var _descTab = 'limites';
 
 function showDescTab(tab) {
   _descTab = tab;
-  ['limites','exposicao','historico'].forEach(function(t) {
+  ['limites','exposicao','historico','importar'].forEach(function(t) {
     document.getElementById('desc-tab-' + t).style.display = t === tab ? '' : 'none';
   });
 }
 
 function setDescTab(tab) {
-  ['limites','exposicao','historico'].forEach(function(t) {
+  ['limites','exposicao','historico','importar'].forEach(function(t) {
     var panel = document.getElementById('desc-tab-' + t);
     var btn   = document.getElementById('desc-btn-' + t);
     if (panel) panel.style.display = (t === tab) ? '' : 'none';
@@ -2207,6 +2202,7 @@ function loadDescarregoPage() {
   loadDescargaLimites();
   loadExtracoesDlSel();
   loadSorteiosDescSel();
+  initImportarDescarrego();
 }
 
 /* ── DESCARREGO (novo padrão JBet) ── */
