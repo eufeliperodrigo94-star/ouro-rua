@@ -2140,16 +2140,12 @@ function saveAdminUser(){
   if(!phone){err.textContent='Informe o login (telefone).';return;}
   var perms=role==='admin'?null:admGetCheckedPerms();
   // Save user
-  _rpc('upsert_vendedor',{p_id:id?+id:null,p_phone:phone,p_name:nome||phone,p_password:senha||null,p_balance:0,p_is_active:status==='active'})
+  _rpc('upsert_vendedor',{p_id:id?+id:null,p_phone:phone,p_name:nome||phone,p_password:senha||null,p_balance:0,p_is_active:status==='active',p_role:role})
   .then(function(res){
-    // Set role via PATCH
-    var patchUrl=id?SB_URL+'/rest/v1/vendedores?id=eq.'+id:SB_URL+'/rest/v1/vendedores?phone=eq.'+encodeURIComponent(phone);
-    return fetch(patchUrl,{method:'PATCH',headers:_sbH({Prefer:'return=representation'}),body:JSON.stringify({role:role})})
-      .then(_sbResp).then(function(updated){
-        var uid=(Array.isArray(updated)&&updated[0]&&updated[0].id)||id;
-        if(!uid)return;
-        return _saveAdminPerms(String(uid),perms);
-      });
+    // res é o row retornado pela RPC (SECURITY DEFINER já salva o role)
+    var uid=(res&&res.id)||id;
+    if(!uid)return;
+    return _saveAdminPerms(String(uid),perms);
   }).then(function(){
     err.style.color='#4CAF50';err.textContent='Salvo com sucesso!';
     setTimeout(function(){document.getElementById('adm-form-panel').style.display='none';loadAdminsPage();},800);
